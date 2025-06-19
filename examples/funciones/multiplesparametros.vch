@@ -1,0 +1,17 @@
+fn calcular(a float64, b float64, operacion string) float64 {
+    if operacion == "suma" {
+        return a + b
+    } else if operacion == "resta" {
+        return a - b
+    } else if operacion == "multiplicacion" {
+        return a * b
+    } else if operacion == "division" {
+        return a / b
+    }
+    return 0.0
+}
+
+fn main() {
+    resultado := calcular(10.5, 2.5, "suma")
+    println("Resultado:", resultado)
+}

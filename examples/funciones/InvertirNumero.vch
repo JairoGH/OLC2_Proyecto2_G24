@@ -1,0 +1,68 @@
+fn invertir_numero(n int, resultado int) int {
+    if n == 0 {
+        return resultado
+    }
+    return invertir_numero(n / 10, resultado * 10 + (n % 10))
+}
+
+fn main() {
+    mut puntos_recur := 0
+    println("\n==== Inversión de número ====")
+    mut invertido := invertir_numero(12345, 0)
+    println("12345 invertido es:", invertido)
+    if invertido == 54321 {
+        puntos_recur += 2
+        println("OK invertir_numero: correcto")
+    } else {
+        println("X invertir_numero: incorrecto")
+    }
+    println("Puntos obtenidos:", puntos_recur)
+}
+
+fn mcd(a int, b int) int {
+    if b == 0 {
+        return a
+    }
+    return mcd(b, a % b)
+}
+
+fn main() {
+    mut puntos_recur := 0
+    println("\n==== Máximo Común Divisor ====")
+    mut resultado := mcd(48, 18)
+    println("MCD de 48 y 18:", resultado)
+    if resultado == 6 {
+        puntos_recur += 2
+        println("OK mcd: correcto")
+    } else {
+        println("X mcd: incorrecto")
+    }
+    println("Puntos obtenidos:", puntos_recur)
+}
+
+fn es_palindromo_rec(n int, original int, digitos int) bool {
+    if n == 0 {
+        return original == digitos
+    }
+    return es_palindromo_rec(n / 10, original, digitos * 10 + (n % 10))
+}
+
+fn es_palindromo(n int) bool {
+    return es_palindromo_rec(n, n, 0)
+}
+
+fn main() {
+    mut puntos_recur := 0
+    println("\n==== Verificar palíndromo ====")
+    mut es_pal := es_palindromo(12321)
+    print("¿12321 es palíndromo? ")
+    if es_pal {
+        println("Sí")
+        puntos_recur += 2
+        println("OK es_palindromo: correcto")
+    } else {
+        println("No")
+        println("X es_palindromo: incorrecto")
+    }
+    println("Puntos obtenidos:", puntos_recur)
+}

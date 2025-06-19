@@ -1,0 +1,70 @@
+fn factorial(n int) int {
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+fn fibonacci(n int) int {
+    if n <= 1 {
+        return n
+    }
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+fn esPrimo(num int) int {
+    if num <= 1 {
+        return 0  // false
+    }
+    if num <= 3 {
+        return 1  // true
+    }
+    
+    mut i := 2
+    while i * i <= num {
+        if num % i == 0 {
+            return 0  // false
+        }
+        i++
+    }
+    return 1  // true
+}
+
+fn potencia(base int, exponente int) int {
+    if exponente == 0 {
+        return 1
+    }
+    
+    mut resultado := 1
+    mut i := 0
+    while i < exponente {
+        resultado = resultado * base
+        i++
+    }
+    return resultado
+}
+
+fn main() {
+    println("=== Generador Matemático Cherry ===")
+    
+    num := 5
+    
+    println("Número:", num)
+    println("Factorial de", num, ":", factorial(num))
+    println("Fibonacci de", num, ":", fibonacci(num))
+    
+    if esPrimo(num) == 1 {
+        println(num, "es primo")
+    } else {
+        println(num, "no es primo")
+    }
+    
+    println(num, "^3 =", potencia(num, 3))
+    
+    println("\n=== Serie Fibonacci ===")
+    mut i := 0
+    while i <= 10 {
+        println("F(", i, ") =", fibonacci(i))
+        i++
+    }
+}

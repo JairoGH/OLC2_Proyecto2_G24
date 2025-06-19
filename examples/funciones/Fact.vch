@@ -1,0 +1,20 @@
+fn factorial(n int) int {
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+fn main() {
+mut puntos_recur := 0
+    println("\n==== Funciones recursivas ====")
+    mut fact := factorial(5)
+    println("Factorial de 5:", fact)
+    if fact == 120 {
+        puntos_recur += 2
+        println("OK factorial: correcto")
+    } else {
+        println("X factorial: incorrecto")
+    }
+ 
+}

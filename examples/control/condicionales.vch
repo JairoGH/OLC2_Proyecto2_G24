@@ -1,0 +1,19 @@
+fn main() {
+    mut edad := 18
+    
+    if edad >= 18 {
+        println("Eres mayor de edad")
+    } else {
+        println("Eres menor de edad")
+    }
+    
+    // Condicional múltiple
+    mut nota := 85
+    if nota >= 90 {
+        println("Excelente")
+    } else if nota >= 70 {
+        println("Bueno")
+    } else {
+        println("Necesitas mejorar")
+    }
+}

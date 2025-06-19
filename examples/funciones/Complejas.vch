@@ -1,0 +1,65 @@
+fn factorial(n int) int {
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+fn fibonacci(n int) int {
+    if n <= 1 {
+        return n
+    }
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+fn potencia(base int, exp int) int {
+    if exp == 0 {
+        return 1
+    }
+    return base * potencia(base, exp - 1)
+}
+
+fn main() {
+    mut puntos_recur := 0
+    
+    println("\n==== BATERÍA DE PRUEBAS RECURSIVAS ====")
+    
+    // Test 1: Factorial
+    mut fact := factorial(5)
+    print("Factorial de 5: ", fact, " - ")
+    if fact == 120 {
+        puntos_recur += 2
+        println("✓ CORRECTO")
+    } else {
+        println("✗ INCORRECTO")
+    }
+    
+    // Test 2: Fibonacci
+    mut fib := fibonacci(8)
+    print("Fibonacci de 8: ", fib, " - ")
+    if fib == 21 {
+        puntos_recur += 2
+        println("✓ CORRECTO")
+    } else {
+        println("✗ INCORRECTO")
+    }
+    
+    // Test 3: Potencia
+    mut pot := potencia(3, 4)
+    print("3 elevado a 4: ", pot, " - ")
+    if pot == 81 {
+        puntos_recur += 2
+        println("✓ CORRECTO")
+    } else {
+        println("✗ INCORRECTO")
+    }
+    
+    println("\n==== RESULTADO FINAL ====")
+    println("Puntos totales obtenidos:", puntos_recur, "/ 6")
+    
+    if puntos_recur == 6 {
+        println("🎉 ¡EXCELENTE! Todas las funciones recursivas funcionan correctamente")
+    } else {
+        println("⚠️  Algunas funciones necesitan revisión")
+    }
+}

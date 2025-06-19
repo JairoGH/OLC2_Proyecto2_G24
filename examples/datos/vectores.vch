@@ -1,0 +1,13 @@
+fn main() {
+    // Declaración de vector
+    mut numeros := {1, 2, 3, 4, 5}
+    println("Vector:",numeros)
+    
+    // Acceso a elementos
+    println("Primer elemento:", numeros[0])
+    println("Último elemento:", numeros[4])
+    
+    // Modificar elementos
+    numeros[2] = 10
+    println("Vector modificado:", numeros)
+}

@@ -1,0 +1,22 @@
+struct Persona {
+    string nombre 
+    int edad 
+    bool activo 
+}
+
+fn main() {
+    // Crear instancia de struct
+    persona := Persona{
+        nombre: "Juan",
+        edad: 30,
+        activo: true
+    }
+    
+    println("Nombre:", persona.nombre)
+    println("Edad:", persona.edad)
+    println("Activo:", persona.activo)
+    
+    // Modificar propiedades
+    persona.edad = 31
+    println("Nueva edad:", persona.edad)
+}

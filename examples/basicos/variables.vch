@@ -1,0 +1,17 @@
+fn main() {
+    // Declaración con tipo explícito
+    mut entero int = 42
+    mut decimal float64 = 3.14159
+    mut texto string = "Hola, Cherry!"
+    mut booleano bool = true
+    
+    // Declaración con inferencia de tipo
+    mut edad := 25
+    mut pi := 3.14
+    mut nombre := "V-Lang Cherry"
+    
+    println("entero:", entero)
+    println("decimal:", decimal)
+    println("texto:", texto)
+    println("booleano:", booleano)
+}

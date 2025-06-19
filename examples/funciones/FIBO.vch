@@ -1,0 +1,19 @@
+fn fibonacci(n int) int {
+    if n <= 1 {
+        return n
+    }
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+
+
+fn main() {
+   mut fibo := fibonacci(10)
+    println("Fibonacci de 10:", fibo)
+    if fibo == 55 {
+    
+        println("OK fibonacci: correcto")
+    } else {
+        println("X fibonacci: incorrecto")
+    }
+}

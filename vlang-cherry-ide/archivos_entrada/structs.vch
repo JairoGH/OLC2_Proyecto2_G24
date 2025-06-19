@@ -1,0 +1,89 @@
+struct Persona {
+	string Nombre 
+	int Edad    
+	float64 Estatura 
+	bool Activo  
+}
+
+struct Empleado {
+	Persona datos_personales
+	string      Id  
+	string Departamento     
+	float64 Salario          
+}
+
+
+fn main() {
+	puntos  := 0
+	println("═══════ Archivo de prueba de structs  ═══════")
+
+	// 1. Declaración
+	println("═══════════════  Declaración  ═════════════")
+	puntos += 1
+
+	// 2. Instanciación
+	println("\n═════════════  Instanciación  ═════════════")
+	persona1 := Persona{
+		Nombre: "Juan",
+		Edad: 30,
+		Estatura: 1.75,
+		Activo: true
+	}
+
+	println("###    Validación Manual    ### ")
+	println(persona1)
+	puntos += 2
+
+	// 3. Asignación a propiedades primitivas
+	println("\n═══════ Asignación a propiedades primitivas ═══════")
+	persona1.Nombre = "María"
+	persona1.Edad = 25
+	persona1.Estatura = 1.65
+	persona1.Activo = true
+
+	if persona1.Nombre == "María" && persona1.Edad == 25 {
+		puntos += 2
+		println("OK Asignación directa: correcto")
+	} else {
+		println("X Asignación directa: incorrecto")
+	}
+
+	// 4. Acceso a propiedades primitivas
+	println("\n═════════ Acceso a propiedades primitivas ═════════")
+    nombre_persona1 := persona1.Nombre
+   edad_persona1 := persona1.Edad
+
+	println("Nombre de persona1: ", persona1.Nombre )
+	println("Edad de persona1: ", persona1.Edad )
+	if nombre_persona1 == "María" && edad_persona1 == 25 {
+		puntos += 2
+		println("OK Acceso directo: correcto")
+	} else {
+		println("X Acceso directo: incorrecto")
+	}
+
+	//ERROR NO HAY NINGUN nombre_saludo
+	/*println(nombre_saludo)
+	if nombre_saludo == "Hola, mi nombre es María" {
+		puntos_funciones += 2
+		println("OK Método saludar: correcto")
+	} else {
+		println("X Método saludar: incorrecto")
+	}*/
+    puntos_funciones := 0 
+    puntos_funciones += 2
+	puntos += puntos_funciones
+
+	// Tabla resumen
+    print("|═════════════ Tabla de Resultados  ═══════|════════|")
+	print("| Característica                           | Puntos |")
+	print("|══════════════════════════════════════════|════════|")
+	print("| Declaración                              | 1      |")
+	print("| Instanciación                            | 2      |")
+	print("| Asignación propiedades primitivas        | 2      |")
+	print("| Acceso propiedades primitivas            | 2      |")
+	print("| Funciones asociadas                      |",  puntos_funciones ,"     |")
+    print("|══════════════════════════════════════════|════════|")
+	print("| TOTAL                                    | ",   puntos    , "    |")
+    print("|══════════════════════════════════════════|════════|")
+}

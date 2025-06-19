@@ -1,0 +1,15 @@
+fn main() {
+    mut a := 10
+    mut b := 5
+    
+    println("Suma:", a + b)        // 15
+    println("Resta:", a - b)       // 5
+    println("Multiplicación:", a * b) // 50
+    println("División:", a / b)    // 2
+    println("Módulo:", a % b)      // 0
+    
+    // Operaciones con decimales
+    mut x := 10.5
+    mut y := 2.5
+    println("Decimal:", x + y)     // 13.0
+}

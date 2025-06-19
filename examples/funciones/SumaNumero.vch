@@ -1,0 +1,20 @@
+fn suma_natural(n int) int {
+    if n <= 1 {
+        return n
+    }
+    return n + suma_natural(n - 1)
+}
+
+fn main() {
+    mut puntos_recur := 0
+    println("\n==== Suma de números naturales ====")
+    mut suma := suma_natural(10)
+    println("Suma de 1 a 10:", suma)
+    if suma == 55 {
+        puntos_recur += 2
+        println("OK suma_natural: correcto")
+    } else {
+        println("X suma_natural: incorrecto")
+    }
+    println("Puntos obtenidos:", puntos_recur)
+}

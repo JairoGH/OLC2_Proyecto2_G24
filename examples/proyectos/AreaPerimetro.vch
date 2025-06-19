@@ -1,0 +1,26 @@
+fn areaRectangulo(ancho float64, alto float64) float64 {
+    return ancho * alto
+}
+
+fn perimetroRectangulo(ancho float64, alto float64) float64 {
+    return 2.0 * (ancho + alto)
+}
+
+fn areaCirculo(radio float64) float64 {
+    return 3.14159 * radio * radio
+}
+
+fn main() {
+    println("=== Calculadora Geométrica ===")
+    
+    ancho := 5.5
+    alto := 3.2
+    radio := 4.0
+    
+    println("Rectángulo", ancho, "x", alto)
+    println("Área:", areaRectangulo(ancho, alto))
+    println("Perímetro:", perimetroRectangulo(ancho, alto))
+    
+    println("\nCírculo radio:", radio)
+    println("Área:", areaCirculo(radio))
+}

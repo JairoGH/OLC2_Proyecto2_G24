@@ -1,0 +1,20 @@
+fn contar_digitos(n int) int {
+    if n < 10 {
+        return 1
+    }
+    return 1 + contar_digitos(n / 10)
+}
+
+fn main() {
+    mut puntos_recur := 0
+    println("\n==== Contar dígitos ====")
+    mut cantidad := contar_digitos(12345)
+    println("Cantidad de dígitos en 12345:", cantidad)
+    if cantidad == 5 {
+        puntos_recur += 2
+        println("OK contar_digitos: correcto")
+    } else {
+        println("X contar_digitos: incorrecto")
+    }
+    println("Puntos obtenidos:", puntos_recur)
+}
