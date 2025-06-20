@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"main/crearArbol"
 	"main/models"
+	"os"
+	"path/filepath"
 
 	// Imports del backend original - ajusta las rutas según tu estructura
 	errores "main/Errores"
@@ -68,6 +70,30 @@ func (a *AnalyzerService) AnalyzeCode(code, filename string) (*models.AnalysisRe
 	// === CONVERTIR A FORMATO DEL FRONTEND ===
 	success := len(replVisitor.TablaError.Errores) == 0
 
+	// === COMPILACIÓN A ARM64 (SOLO SI NO HAY ERRORES) ===
+	var armInfo string
+	if success {
+		// Generar código ARM64
+		armVisitor := instrucciones.NewVisitorARM64()
+		armVisitor.Visit(tree) // Mismo árbol que usó el intérprete
+		armCode := armVisitor.GetCodigo()
+
+		// Crear directorio output si no existe
+		outputDir := "output"
+		os.MkdirAll(outputDir, 0755)
+
+		// Guardar archivo ARM64
+		archivoAsm := filepath.Join(outputDir, "programa.s")
+		err := os.WriteFile(archivoAsm, []byte(armCode), 0644)
+		if err != nil {
+			armInfo = fmt.Sprintf("⚠️ Error al guardar archivo ARM64: %v", err)
+		} else {
+			armInfo = fmt.Sprintf("✅ Código ARM64 generado exitosamente en: %s\n\n=== CÓDIGO ARM64 GENERADO ===\n%s", archivoAsm, armCode)
+		}
+	} else {
+		armInfo = "❌ No se generó código ARM64 porque hubo errores."
+	}
+
 	// Convertir errores - usando la estructura real correcta
 	frontendErrors := []models.ErrorReport{}
 	for _, err := range replVisitor.TablaError.Errores {
@@ -92,6 +118,9 @@ func (a *AnalyzerService) AnalyzeCode(code, filename string) (*models.AnalysisRe
 		}
 	}
 
+	// Agregar información de ARM64 al output de consola
+	consoleOutput += "\n\n=== GENERACIÓN DE CÓDIGO ARM64 ===\n" + armInfo
+
 	result := &models.AnalysisResponse{
 		Success:       success,
 		AST:           "Árbol de Sintaxis Abstracta generado exitosamente",
@@ -107,89 +136,89 @@ func (a *AnalyzerService) AnalyzeCode(code, filename string) (*models.AnalysisRe
 
 // Convertir tabla de símbolos del backend al formato del frontend
 func (a *AnalyzerService) convertSymbolTable(registroAmbito instrucciones.ReporteTabla) []models.SymbolEntry {
-    var symbolTable []models.SymbolEntry
+	var symbolTable []models.SymbolEntry
 
-    // Función recursiva con jerarquía de puntos
-    var procesarAmbitoRecursivo func(ambito instrucciones.ReporteAmbito, rutaScope string)
-    
-    procesarAmbitoRecursivo = func(ambito instrucciones.ReporteAmbito, rutaScope string) {
-        // Procesar variables del ámbito actual
-        for _, variable := range ambito.Variables {
-            line := variable.Linea
-            column := variable.Columna
-            if line == 0 && column == 0 {
-                line = 1
-                column = 1
-            }
-            
-            symbolTable = append(symbolTable, models.SymbolEntry{
-                ID:         variable.Nombre,
-                SymbolType: "Variable",
-                DataType:   variable.Tipo,
-                Scope:      rutaScope,
-                Line:       line,
-                Column:     column,
-            })
-        }
+	// Función recursiva con jerarquía de puntos
+	var procesarAmbitoRecursivo func(ambito instrucciones.ReporteAmbito, rutaScope string)
 
-        // Procesar funciones del ámbito actual
-        for _, function := range ambito.Funciones {
-            line := function.Linea
-            column := function.Columna
-            if line == 0 && column == 0 {
-                line = 1
-                column = 1
-            }
-            
-            symbolTable = append(symbolTable, models.SymbolEntry{
-                ID:         function.Nombre,
-                SymbolType: "Function",
-                DataType:   function.Tipo,
-                Scope:      rutaScope,
-                Line:       line,
-                Column:     column,
-            })
-        }
+	procesarAmbitoRecursivo = func(ambito instrucciones.ReporteAmbito, rutaScope string) {
+		// Procesar variables del ámbito actual
+		for _, variable := range ambito.Variables {
+			line := variable.Linea
+			column := variable.Columna
+			if line == 0 && column == 0 {
+				line = 1
+				column = 1
+			}
 
-        // Procesar estructuras del ámbito actual
-        for _, estructura := range ambito.Estructuras {
-            line := estructura.Linea
-            column := estructura.Columna
-            if line == 0 && column == 0 {
-                line = 1
-                column = 1
-            }
-            
-            symbolTable = append(symbolTable, models.SymbolEntry{
-                ID:         estructura.Nombre,
-                SymbolType: "Struct",
-                DataType:   estructura.Tipo,
-                Scope:      rutaScope,
-                Line:       line,
-                Column:     column,
-            })
-        }
+			symbolTable = append(symbolTable, models.SymbolEntry{
+				ID:         variable.Nombre,
+				SymbolType: "Variable",
+				DataType:   variable.Tipo,
+				Scope:      rutaScope,
+				Line:       line,
+				Column:     column,
+			})
+		}
 
-        // Procesar ámbitos hijos con nueva ruta
-        for i, hijo := range ambito.AmbitosHijos {
-            // Crear nombre del ámbito hijo
-            nombreHijo := hijo.Nombre
-            if nombreHijo == "" {
-                nombreHijo = fmt.Sprintf("block_%d", i+1)
-            }
-            
-            // Crear ruta jerárquica con puntos
-            nuevaRuta := rutaScope + "." + nombreHijo
-            
-            // Llamada recursiva
-            procesarAmbitoRecursivo(hijo, nuevaRuta)
-        }
-    }
+		// Procesar funciones del ámbito actual
+		for _, function := range ambito.Funciones {
+			line := function.Linea
+			column := function.Columna
+			if line == 0 && column == 0 {
+				line = 1
+				column = 1
+			}
 
-    // Iniciar desde global
-    procesarAmbitoRecursivo(registroAmbito.AmbitoGlobal, "global")
+			symbolTable = append(symbolTable, models.SymbolEntry{
+				ID:         function.Nombre,
+				SymbolType: "Function",
+				DataType:   function.Tipo,
+				Scope:      rutaScope,
+				Line:       line,
+				Column:     column,
+			})
+		}
 
-    return symbolTable
+		// Procesar estructuras del ámbito actual
+		for _, estructura := range ambito.Estructuras {
+			line := estructura.Linea
+			column := estructura.Columna
+			if line == 0 && column == 0 {
+				line = 1
+				column = 1
+			}
+
+			symbolTable = append(symbolTable, models.SymbolEntry{
+				ID:         estructura.Nombre,
+				SymbolType: "Struct",
+				DataType:   estructura.Tipo,
+				Scope:      rutaScope,
+				Line:       line,
+				Column:     column,
+			})
+		}
+
+		// Procesar ámbitos hijos con nueva ruta
+		for i, hijo := range ambito.AmbitosHijos {
+			// Crear nombre del ámbito hijo
+			nombreHijo := hijo.Nombre
+			if nombreHijo == "" {
+				nombreHijo = fmt.Sprintf("block_%d", i+1)
+			}
+
+			// Crear ruta jerárquica con puntos
+			nuevaRuta := rutaScope + "." + nombreHijo
+
+			// Llamada recursiva
+			procesarAmbitoRecursivo(hijo, nuevaRuta)
+		}
+	}
+
+	// Iniciar desde global
+	procesarAmbitoRecursivo(registroAmbito.AmbitoGlobal, "global")
+
+	return symbolTable
 }
 
 // ValidateCode valida la sintaxis del código

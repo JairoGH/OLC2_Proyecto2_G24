@@ -1,4 +1,4 @@
-// Generated from /home/daaniieel/Escritorio/PROYECTO1/vlang-cherry-ide/parser/VLexer.g4 by ANTLR 4.13.1
+// Generated from /home/daaniieel/Escritorio/PROYECTO2/vlang-cherry-ide/parser/VLexer.g4 by ANTLR 4.13.1
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
