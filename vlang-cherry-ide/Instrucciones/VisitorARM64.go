@@ -2,18 +2,18 @@ package instrucciones
 
 import (
 	"fmt"
-	assembly "main/Assembly" // Importar el package assembly
+	assembly "main/Assembly"
 	"main/parser"
 	"strconv"
-	"strings"
 
 	"github.com/antlr4-go/antlr/v4"
 )
 
 type VisitorARM64 struct {
 	parser.BaseVGrammarVisitor
-	armGen           *assembly.ARMGenerator // Usar el tipo del package assembly
+	armGen           *assembly.ARMGenerator
 	tmpCounter       int
+	tmpFloatCounter  int // ← Contador separado para registros float
 	contadorVar      int
 	contadorEtiqueta int
 	contadorMensaje  int
@@ -31,7 +31,7 @@ type ResultadoExpresion struct {
 
 func NewVisitorARM64() *VisitorARM64 {
 	return &VisitorARM64{
-		armGen:          assembly.NewARMGenerator(), // Usar el constructor del package assembly
+		armGen:          assembly.NewARMGenerator(),
 		MensajesDatos:   []string{},
 		contadorMensaje: 1,
 	}
@@ -51,9 +51,29 @@ func (v *VisitorARM64) nuevoRegistroTmp() string {
 	if 9+v.tmpCounter > 30 {
 		panic("Se agotaron los registros temporales disponibles (x9-x30)")
 	}
-	reg := fmt.Sprintf("X%d", 9+v.tmpCounter)
+	reg := fmt.Sprintf("x%d", 9+v.tmpCounter)
 	v.tmpCounter++
 	return reg
+}
+
+// ✅ NUEVO: Registros float (d0-d31)
+func (v *VisitorARM64) nuevoRegistroFloatTmp() string {
+	if v.tmpFloatCounter > 31 {
+		panic("Se agotaron los registros float temporales disponibles (d0-d31)")
+	}
+	reg := fmt.Sprintf("d%d", v.tmpFloatCounter)
+	v.tmpFloatCounter++
+	return reg
+}
+
+// ✅ MEJORADO: Determinar tipo resultante de operación
+func (v *VisitorARM64) determinarTipoResultante(tipo1, tipo2 string) string {
+	// Si cualquiera es float, el resultado es float
+	if tipo1 == "float" || tipo2 == "float" {
+		return "float"
+	}
+	// Si ambos son int, el resultado es int
+	return "int"
 }
 
 func (v *VisitorARM64) Visit(tree antlr.ParseTree) interface{} {
@@ -81,9 +101,12 @@ func (v *VisitorARM64) VisitProgram(ctx *parser.ProgramContext) interface{} {
 	return nil
 }
 
+// En VisitorARM64.go
 func (v *VisitorARM64) VisitFuncionMain(ctx *parser.FuncionMainContext) interface{} {
-	// Procesar todas las sentencias dentro de main
 	for _, stmt := range ctx.AllStmt() {
+		// Resetear contadores para evitar agotar registros
+		v.tmpCounter = 0
+		v.tmpFloatCounter = 0
 		v.Visit(stmt)
 	}
 
@@ -192,8 +215,21 @@ func (v *VisitorARM64) VisitBinarioExp(ctx *parser.BinarioExpContext) interface{
 
 	left := leftResult.(*ResultadoExpresion)
 	right := rightResult.(*ResultadoExpresion)
+	operador := ctx.GetOp().GetText()
 
-	// Generar código ARM64 para realizar la operación
+	// Determinar tipo resultante
+	tipoResultante := v.determinarTipoResultante(left.Tipo, right.Tipo)
+
+	// ✅ MANEJAR OPERACIONES POR TIPO
+	if tipoResultante == "float" {
+		return v.procesarOperacionFloat(left, right, operador)
+	} else {
+		return v.procesarOperacionInt(left, right, operador)
+	}
+}
+
+// ✅ NUEVO: Procesar operaciones enteras
+func (v *VisitorARM64) procesarOperacionInt(left, right *ResultadoExpresion, operador string) *ResultadoExpresion {
 	registroIzq := v.nuevoRegistroTmp()
 	registroDer := v.nuevoRegistroTmp()
 	registroResultado := v.nuevoRegistroTmp()
@@ -201,6 +237,9 @@ func (v *VisitorARM64) VisitBinarioExp(ctx *parser.BinarioExpContext) interface{
 	// Cargar operando izquierdo
 	if left.EsLiteral && left.Tipo == "int" {
 		v.armGen.Mov(registroIzq, left.Valor.(int))
+	} else if left.EsLiteral && left.Tipo == "float" {
+		// Convertir float literal a int
+		v.armGen.Mov(registroIzq, int(left.Valor.(float64)))
 	} else {
 		v.armGen.MovReg(registroIzq, left.Registro)
 	}
@@ -208,12 +247,14 @@ func (v *VisitorARM64) VisitBinarioExp(ctx *parser.BinarioExpContext) interface{
 	// Cargar operando derecho
 	if right.EsLiteral && right.Tipo == "int" {
 		v.armGen.Mov(registroDer, right.Valor.(int))
+	} else if right.EsLiteral && right.Tipo == "float" {
+		// Convertir float literal a int
+		v.armGen.Mov(registroDer, int(right.Valor.(float64)))
 	} else {
 		v.armGen.MovReg(registroDer, right.Registro)
 	}
 
-	// Generar operación ARM64
-	operador := ctx.GetOp().GetText()
+	// Generar operación
 	switch operador {
 	case "+":
 		v.armGen.Add(registroResultado, registroIzq, registroDer)
@@ -224,24 +265,80 @@ func (v *VisitorARM64) VisitBinarioExp(ctx *parser.BinarioExpContext) interface{
 	case "/":
 		v.armGen.Div(registroResultado, registroIzq, registroDer)
 	case "%":
-		// Módulo: result = left - (left/right) * right
-		tempDiv := v.nuevoRegistroTmp()
-		tempMul := v.nuevoRegistroTmp()
-		v.armGen.Div(tempDiv, registroIzq, registroDer)
-		v.armGen.Mul(tempMul, tempDiv, registroDer)
-		v.armGen.Sub(registroResultado, registroIzq, tempMul)
-	default:
-		v.armGen.Comment(fmt.Sprintf("Operador no soportado: %s", operador))
-		return &ResultadoExpresion{
-			Registro:  registroResultado,
-			Tipo:      "int",
-			EsLiteral: false,
-		}
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("udiv %s, %s, %s", registroResultado, registroIzq, registroDer),
+			fmt.Sprintf("msub %s, %s, %s, %s", registroResultado, registroResultado, registroDer, registroIzq))
 	}
 
 	return &ResultadoExpresion{
 		Registro:  registroResultado,
 		Tipo:      "int",
+		EsLiteral: false,
+	}
+}
+
+// ✅ NUEVO: Procesar operaciones float
+func (v *VisitorARM64) procesarOperacionFloat(left, right *ResultadoExpresion, operador string) *ResultadoExpresion {
+	registroIzq := v.nuevoRegistroFloatTmp()
+	registroDer := v.nuevoRegistroFloatTmp()
+	registroResultado := v.nuevoRegistroFloatTmp()
+
+	// Cargar operando izquierdo
+	if left.EsLiteral {
+		if left.Tipo == "float" {
+			v.armGen.FMovImm(registroIzq, left.Valor.(float64))
+		} else if left.Tipo == "int" {
+			// Convertir int a float
+			regTmp := v.nuevoRegistroTmp()
+			v.armGen.Mov(regTmp, left.Valor.(int))
+			v.armGen.ScvtfIntToFloat(registroIzq, regTmp)
+		}
+	} else {
+		if left.Tipo == "int" {
+			// Convertir registro int a float
+			v.armGen.ScvtfIntToFloat(registroIzq, left.Registro)
+		} else {
+			v.armGen.FMov(registroIzq, left.Registro)
+		}
+	}
+
+	// Cargar operando derecho
+	if right.EsLiteral {
+		if right.Tipo == "float" {
+			v.armGen.FMovImm(registroDer, right.Valor.(float64))
+		} else if right.Tipo == "int" {
+			// Convertir int a float
+			regTmp := v.nuevoRegistroTmp()
+			v.armGen.Mov(regTmp, right.Valor.(int))
+			v.armGen.ScvtfIntToFloat(registroDer, regTmp)
+		}
+	} else {
+		if right.Tipo == "int" {
+			// Convertir registro int a float
+			v.armGen.ScvtfIntToFloat(registroDer, right.Registro)
+		} else {
+			v.armGen.FMov(registroDer, right.Registro)
+		}
+	}
+
+	// Generar operación float
+	switch operador {
+	case "+":
+		v.armGen.FAdd(registroResultado, registroIzq, registroDer)
+	case "-":
+		v.armGen.FSub(registroResultado, registroIzq, registroDer)
+	case "*":
+		v.armGen.FMul(registroResultado, registroIzq, registroDer)
+	case "/":
+		v.armGen.FDiv(registroResultado, registroIzq, registroDer)
+	case "%":
+		v.armGen.Comment("Operador % no soportado para floats")
+		// Para floats, % no está definido, usar fmod si fuera necesario
+	}
+
+	return &ResultadoExpresion{
+		Registro:  registroResultado,
+		Tipo:      "float",
 		EsLiteral: false,
 	}
 }
@@ -384,42 +481,58 @@ func (v *VisitorARM64) VisitID_Patron(ctx *parser.ID_PatronContext) interface{} 
 
 // Generar código ARM64 para imprimir el resultado (usando funciones auxiliares)
 func (v *VisitorARM64) generarCodigoImpresion(resultado *ResultadoExpresion, esPrintln bool) {
-    var registroResultado string
+	var registroResultado string
 
-    if resultado.EsLiteral {
-        // Si es literal, cargar directamente el valor
-        registroResultado = v.nuevoRegistroTmp()
-        switch resultado.Tipo {
-        case "int":
-            valor := resultado.Valor.(int)
-            v.armGen.Mov(registroResultado, valor)
-        case "float":
-            valor := int(resultado.Valor.(float64))
-            v.armGen.Mov(registroResultado, valor)
-        }
-    } else {
-        // Si no es literal, ya tenemos el registro con el resultado
-        registroResultado = resultado.Registro
-    }
+	if resultado.EsLiteral {
+		if resultado.Tipo == "int" {
+			registroResultado = v.nuevoRegistroTmp()
+			valor := resultado.Valor.(int)
+			v.armGen.Mov(registroResultado, valor)
 
-    // Usar las funciones auxiliares para imprimir el número
-    v.armGen.Instructions = append(v.armGen.Instructions,
-        "// Imprimir resultado",
-        fmt.Sprintf("mov x0, %s", strings.ToLower(registroResultado)),
-        "bl print_int")
+			// Imprimir entero
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				"// Imprimir entero",
+				fmt.Sprintf("mov x0, %s", registroResultado),
+				"bl print_int")
 
-    if esPrintln {
-        // println(): Agregar DOS saltos de línea (línea en blanco)
-        v.armGen.Instructions = append(v.armGen.Instructions,
-            "// println: Agregar dos saltos de línea",
-            "bl print_newline",  // Primer salto de línea
-            "bl print_newline")  // Segundo salto de línea (línea en blanco)
-    } else {
-        // print(): Agregar UN salto de línea
-        v.armGen.Instructions = append(v.armGen.Instructions,
-            "// print: Agregar un salto de línea",
-            "bl print_newline")  // Solo un salto de línea
-    }
+		} else if resultado.Tipo == "float" {
+			registroResultado = v.nuevoRegistroFloatTmp()
+			valor := resultado.Valor.(float64)
+			v.armGen.FMovImm(registroResultado, valor)
 
-    v.armGen.Instructions = append(v.armGen.Instructions, "")
+			// Imprimir float
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				"// Imprimir float",
+				fmt.Sprintf("fmov d0, %s", registroResultado),
+				"bl print_float")
+		}
+	} else {
+		registroResultado = resultado.Registro
+
+		if resultado.Tipo == "int" {
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				"// Imprimir entero",
+				fmt.Sprintf("mov x0, %s", registroResultado),
+				"bl print_int")
+		} else if resultado.Tipo == "float" {
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				"// Imprimir float",
+				fmt.Sprintf("fmov d0, %s", registroResultado),
+				"bl print_float")
+		}
+	}
+
+	// Agregar saltos de línea
+	if esPrintln {
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			"// println: Agregar dos saltos de línea",
+			"bl print_newline",
+			"bl print_newline")
+	} else {
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			"// print: Agregar un salto de línea",
+			"bl print_newline")
+	}
+
+	v.armGen.Instructions = append(v.armGen.Instructions, "")
 }
