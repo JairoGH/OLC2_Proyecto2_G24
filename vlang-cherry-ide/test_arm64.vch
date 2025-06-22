@@ -1,7 +1,72 @@
 fn main() {
+
+    println("HOLA" + "MUNDO")  
+    println("V" + "lang")  
     println(1 + 20 * (4 - 2))
-    print(2*10-2)
-    print(20/2)
+    print(2*10-2.1)
+    print(20/2.5)
     print(10-2)
     print(11%2)
+    print(true)     
+    println(false)
+
+        // Comparación de enteros
+    println(5 == 5)        // 1 (true)
+    println(5 != 3)        // 1 (true)
+    println(10 == 3)       // 0 (false)
+    
+    // Comparación de floats
+    println(3.14 == 3.14)  // 1 (true)
+    println(2.5 != 3.7)    // 1 (true)
+    
+    // Comparación de strings
+    println("Hola" == "Hola")     // 1 (true)
+    println("ABC" != "XYZ")       // 1 (true)
+    println("Test" == "Prueba")   // 0 (false)
+    
+    // Comparación de booleanos
+    println(true == true)   // 1 (true)
+    println(false != true)  // 1 (true)
+
+    // === ENTEROS ===
+    println(50 < 10)       //0 (false)
+    println(15 > 10)      // 1 (true) 
+    println(10 <= 10)     // 1 (true)
+    println(10 >= 5)      // 1 (true)
+    
+    // === MIXTOS (int vs float) ===
+    println(5 < 5.5)      // 1 (true) 
+    println(6.7 > 6)      // 1 (true) 
+    println(10 >= 10.0)   // 1 (true) 
+    println(4.2 <= 5)     // 1 (true)
+
+     // === OPERADOR AND (&&) ===
+    println(true && true)    // 1 (true)
+    println(true && false)   // 0 (false)
+    println(false && true)   // 0 (false)
+    println(false && false)  // 0 (false)
+    
+    // === OPERADOR OR (||) ===
+    println(true || true)    // 1 (true)
+    println(true || false)   // 1 (true)
+    println(false || true)   // 1 (true)
+    println(false || false)  // 0 (false)
+    
+    // === OPERADOR NOT (!) ===
+    println(!true)           // 0 (false)
+    println(!false)          // 1 (true)
+    
+    // === COMBINACIONES COMPLEJAS ===
+    println((5 > 3) && (2 < 4))   // 1 (true && true = true)
+    println((5 < 3) || (2 < 4))   // 1 (false || true = true)
+    println(!(5 > 10))            // 1 (!false = true)
+    
+    // === CORTOCIRCUITO ===
+    println(false && true)        // 0 (no evalúa el segundo operando)
+    println(true || false)        // 1 (no evalúa el segundo operando) 
+
+    // === COMBINACIONES COMPLEJAS ===
+    println((5 > 3) && (2 < 4))   // 1 (true && true = true)
+    println((5 < 3) || (2 < 4))   // 1 (false || true = true)
+    println(!(5 > 10))            // 1 (!false = true)
 }

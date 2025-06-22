@@ -147,7 +147,7 @@ expr:
     | op = (OP_NOT | OP_RESTA) expr							 # UnarioExp 	
     | left = expr op = (OP_MULT | OP_DIV | OP_MOD) right = expr	# BinarioExp
     | left = expr op = (OP_SUMA | OP_RESTA) right = expr		# BinarioExp 
-    | left = expr op = (OP_MENORQ | OP_MENORIGUAL | OP_MAYORQ | OP_MAYORIGUAL ) right = expr												# BinarioExp 
+    | left = expr op = (OP_MENORQ | OP_MENORIGUAL | OP_MAYORQ | OP_MAYORIGUAL ) right = expr# BinarioExp 
     | left = expr op = (OP_IGUAL | OP_DIFERENTE) right = expr	# BinarioExp 
     | left = expr op = OP_AND right = expr						# BinarioExp 
     | left = expr op = OP_OR right = expr						# BinarioExp;

@@ -7,15 +7,41 @@ import (
 
 // ARMGenerator genera instrucciones ARM en formato texto
 type ARMGenerator struct {
-	Instructions   []string
-	FloatConstants map[string]string // Para almacenar constantes float
+	Instructions    []string
+	FloatConstants  map[string]string
+	StringConstants map[string]string
+	FuncionesUsadas map[string]bool
 }
 
 // Constructor
 func NewARMGenerator() *ARMGenerator {
 	return &ARMGenerator{
-		Instructions:   []string{},
-		FloatConstants: make(map[string]string),
+		Instructions:    []string{},
+		FloatConstants:  make(map[string]string),
+		StringConstants: make(map[string]string),
+		FuncionesUsadas: make(map[string]bool),
+	}
+}
+
+// ============= FUNCIONES AUXILIARES A USAR =============
+func (g *ARMGenerator) UsarFuncion(nombreFuncion string) {
+	g.FuncionesUsadas[nombreFuncion] = true
+
+	// Registrar dependencias automáticamente
+	switch nombreFuncion {
+	case "print_int":
+		g.FuncionesUsadas["print_char"] = true
+	case "print_float":
+		g.FuncionesUsadas["print_int"] = true
+		g.FuncionesUsadas["print_char"] = true
+	case "print_string":
+		g.FuncionesUsadas["strlen"] = true
+	case "concat_strings":
+		// No tiene dependencias adicionales
+	case "strcmp":
+		// No tiene dependencias adicionales
+	case "print_bool":
+		g.FuncionesUsadas["print_char"] = true
 	}
 }
 
@@ -55,6 +81,101 @@ func (g *ARMGenerator) FMul(rd, rs1, rs2 string) {
 
 func (g *ARMGenerator) FDiv(rd, rs1, rs2 string) {
 	g.Instructions = append(g.Instructions, fmt.Sprintf("fdiv %s, %s, %s", strings.ToLower(rd), strings.ToLower(rs1), strings.ToLower(rs2)))
+}
+
+// ============= OPERACIONES STRING =============
+
+func (g *ARMGenerator) LoadString(rd, stringLabel string) {
+	g.Instructions = append(g.Instructions,
+		fmt.Sprintf("adr %s, %s", strings.ToLower(rd), stringLabel))
+}
+
+func (g *ARMGenerator) ConcatStrings(destReg, src1Reg, src2Reg string) {
+	g.UsarFuncion("concat_strings") // ✅ REGISTRAR USO
+	g.Instructions = append(g.Instructions,
+		fmt.Sprintf("// Concatenar strings: %s = %s + %s", destReg, src1Reg, src2Reg),
+		fmt.Sprintf("mov x0, %s", strings.ToLower(src1Reg)),
+		fmt.Sprintf("mov x1, %s", strings.ToLower(src2Reg)),
+		fmt.Sprintf("mov x2, %s", strings.ToLower(destReg)),
+		"bl concat_strings")
+}
+
+func (g *ARMGenerator) AddStringConstant(value string) string {
+	constName := fmt.Sprintf("str_const_%d", len(g.StringConstants))
+	g.StringConstants[constName] = value
+	return constName
+}
+
+func (g *ARMGenerator) StrLen(destReg, srcReg string) {
+	g.UsarFuncion("strlen") // ✅ REGISTRAR USO
+	g.Instructions = append(g.Instructions,
+		fmt.Sprintf("mov x0, %s", strings.ToLower(srcReg)),
+		"bl strlen",
+		fmt.Sprintf("mov %s, x0", strings.ToLower(destReg)))
+}
+
+// ============= OPERACIONES DE COMPARACIÓN =============
+
+// Comparaciones enteras
+func (g *ARMGenerator) Cmp(rs1, rs2 string) {
+	g.Instructions = append(g.Instructions, fmt.Sprintf("cmp %s, %s", strings.ToLower(rs1), strings.ToLower(rs2)))
+}
+
+// Establecer registro basado en condición
+func (g *ARMGenerator) CSet(rd, condition string) {
+	g.Instructions = append(g.Instructions, fmt.Sprintf("cset %s, %s", strings.ToLower(rd), condition))
+}
+
+// Comparaciones float
+func (g *ARMGenerator) FCmp(rs1, rs2 string) {
+	g.Instructions = append(g.Instructions, fmt.Sprintf("fcmp %s, %s", strings.ToLower(rs1), strings.ToLower(rs2)))
+}
+
+// Comparar strings (llamada a función auxiliar)
+func (g *ARMGenerator) StrCmp(rs1, rs2, resultReg string) {
+	g.UsarFuncion("strcmp") // ✅ REGISTRAR USO
+	g.Instructions = append(g.Instructions,
+		fmt.Sprintf("mov x0, %s", strings.ToLower(rs1)),
+		fmt.Sprintf("mov x1, %s", strings.ToLower(rs2)),
+		"bl strcmp",
+		fmt.Sprintf("mov %s, x0", strings.ToLower(resultReg)))
+}
+
+// ✅ NUEVO: Método para agregar llamada a función auxiliar manualmente
+func (g *ARMGenerator) LlamarFuncion(nombreFuncion string) {
+	g.UsarFuncion(nombreFuncion)
+	g.Instructions = append(g.Instructions, fmt.Sprintf("bl %s", nombreFuncion))
+}
+
+// ============= OPERACIONES LOGICAS =============
+// AND lógico bit a bit
+func (g *ARMGenerator) And(rd, rs1, rs2 string) {
+	g.Instructions = append(g.Instructions, fmt.Sprintf("and %s, %s, %s", strings.ToLower(rd), strings.ToLower(rs1), strings.ToLower(rs2)))
+}
+
+// OR lógico bit a bit
+func (g *ARMGenerator) Orr(rd, rs1, rs2 string) {
+	g.Instructions = append(g.Instructions, fmt.Sprintf("orr %s, %s, %s", strings.ToLower(rd), strings.ToLower(rs1), strings.ToLower(rs2)))
+}
+
+// XOR (para negación lógica)
+func (g *ARMGenerator) Eor(rd, rs1, rs2 string) {
+	g.Instructions = append(g.Instructions, fmt.Sprintf("eor %s, %s, %s", strings.ToLower(rd), strings.ToLower(rs1), strings.ToLower(rs2)))
+}
+
+// XOR con inmediato (para negación lógica con constante)
+func (g *ARMGenerator) EorImm(rd, rs string, imm int) {
+	g.Instructions = append(g.Instructions, fmt.Sprintf("eor %s, %s, #%d", strings.ToLower(rd), strings.ToLower(rs), imm))
+}
+
+// Salto condicional - Branch if Equal
+func (g *ARMGenerator) Beq(label string) {
+	g.Instructions = append(g.Instructions, fmt.Sprintf("beq %s", label))
+}
+
+// Salto incondicional - Branch
+func (g *ARMGenerator) B(label string) {
+	g.Instructions = append(g.Instructions, fmt.Sprintf("b %s", label))
 }
 
 // ============= MOVIMIENTOS =============

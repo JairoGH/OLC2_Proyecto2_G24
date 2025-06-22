@@ -402,7 +402,7 @@ var NotExpresion = ExpresionTipoIgual("!=", func(left, right tiposDeDato.ValorIn
 // MenorExpresion: maneja comparaciones menor que entre enteros, decimales y cadenas
 var MenorExpresion = MetodoBinario{
 	Nombre:               "<",
-	Viceversa:            true,
+	Viceversa:            false, 
 	EvaluacionPorDefecto: nil,
 	Validaciones: []VerificacionBinaria{
 		{
@@ -428,6 +428,36 @@ var MenorExpresion = MetodoBinario{
 			},
 		},
 		{
+			TipoIzq:  tiposDeDato.TIPO_ENTERO,
+			TipoDcha: tiposDeDato.TIPO_DECIMAL,
+			ConvIzq: func(v tiposDeDato.ValorInterno) tiposDeDato.ValorInterno {
+				return &tiposDeDato.ValorDecimal{
+					InternalValor: float64(v.(*tiposDeDato.ValorEntero).ValorInterno),
+				}
+			},
+			ConvDcha: nil,
+			Evaluar: func(left, right tiposDeDato.ValorInterno) (bool, string, tiposDeDato.ValorInterno) {
+				return true, "", &tiposDeDato.ValorBool{
+					InternalValor: left.(*tiposDeDato.ValorDecimal).InternalValor < right.(*tiposDeDato.ValorDecimal).InternalValor,
+				}
+			},
+		},
+		{
+			TipoIzq:  tiposDeDato.TIPO_DECIMAL,
+			TipoDcha: tiposDeDato.TIPO_ENTERO,
+			ConvIzq:  nil,
+			ConvDcha: func(v tiposDeDato.ValorInterno) tiposDeDato.ValorInterno {
+				return &tiposDeDato.ValorDecimal{
+					InternalValor: float64(v.(*tiposDeDato.ValorEntero).ValorInterno),
+				}
+			},
+			Evaluar: func(left, right tiposDeDato.ValorInterno) (bool, string, tiposDeDato.ValorInterno) {
+				return true, "", &tiposDeDato.ValorBool{
+					InternalValor: left.(*tiposDeDato.ValorDecimal).InternalValor < right.(*tiposDeDato.ValorDecimal).InternalValor,
+				}
+			},
+		},
+		{
 			TipoIzq:  tiposDeDato.TIPO_CADENA,
 			TipoDcha: tiposDeDato.TIPO_CADENA,
 			ConvIzq:  nil,
@@ -444,7 +474,7 @@ var MenorExpresion = MetodoBinario{
 // MenorQueExpresion: maneja comparaciones menor o igual que
 var MenorQueExpresion = MetodoBinario{
 	Nombre:               "<=",
-	Viceversa:            true,
+	Viceversa:            false, 
 	EvaluacionPorDefecto: nil,
 	Validaciones: []VerificacionBinaria{
 		{
@@ -470,6 +500,36 @@ var MenorQueExpresion = MetodoBinario{
 			},
 		},
 		{
+			TipoIzq:  tiposDeDato.TIPO_ENTERO,
+			TipoDcha: tiposDeDato.TIPO_DECIMAL,
+			ConvIzq: func(v tiposDeDato.ValorInterno) tiposDeDato.ValorInterno {
+				return &tiposDeDato.ValorDecimal{
+					InternalValor: float64(v.(*tiposDeDato.ValorEntero).ValorInterno),
+				}
+			},
+			ConvDcha: nil,
+			Evaluar: func(left, right tiposDeDato.ValorInterno) (bool, string, tiposDeDato.ValorInterno) {
+				return true, "", &tiposDeDato.ValorBool{
+					InternalValor: left.(*tiposDeDato.ValorDecimal).InternalValor <= right.(*tiposDeDato.ValorDecimal).InternalValor,
+				}
+			},
+		},
+		{
+			TipoIzq:  tiposDeDato.TIPO_DECIMAL,
+			TipoDcha: tiposDeDato.TIPO_ENTERO,
+			ConvIzq:  nil,
+			ConvDcha: func(v tiposDeDato.ValorInterno) tiposDeDato.ValorInterno {
+				return &tiposDeDato.ValorDecimal{
+					InternalValor: float64(v.(*tiposDeDato.ValorEntero).ValorInterno),
+				}
+			},
+			Evaluar: func(left, right tiposDeDato.ValorInterno) (bool, string, tiposDeDato.ValorInterno) {
+				return true, "", &tiposDeDato.ValorBool{
+					InternalValor: left.(*tiposDeDato.ValorDecimal).InternalValor <= right.(*tiposDeDato.ValorDecimal).InternalValor,
+				}
+			},
+		},
+		{
 			TipoIzq:  tiposDeDato.TIPO_CADENA,
 			TipoDcha: tiposDeDato.TIPO_CADENA,
 			ConvIzq:  nil,
@@ -486,7 +546,7 @@ var MenorQueExpresion = MetodoBinario{
 // MayorExpresion: maneja comparaciones mayor que
 var MayorExpresion = MetodoBinario{
 	Nombre:               ">",
-	Viceversa:            true,
+	Viceversa:            false, 
 	EvaluacionPorDefecto: nil,
 	Validaciones: []VerificacionBinaria{
 		{
@@ -512,6 +572,36 @@ var MayorExpresion = MetodoBinario{
 			},
 		},
 		{
+			TipoIzq:  tiposDeDato.TIPO_ENTERO,
+			TipoDcha: tiposDeDato.TIPO_DECIMAL,
+			ConvIzq: func(v tiposDeDato.ValorInterno) tiposDeDato.ValorInterno {
+				return &tiposDeDato.ValorDecimal{
+					InternalValor: float64(v.(*tiposDeDato.ValorEntero).ValorInterno),
+				}
+			},
+			ConvDcha: nil,
+			Evaluar: func(left, right tiposDeDato.ValorInterno) (bool, string, tiposDeDato.ValorInterno) {
+				return true, "", &tiposDeDato.ValorBool{
+					InternalValor: left.(*tiposDeDato.ValorDecimal).InternalValor > right.(*tiposDeDato.ValorDecimal).InternalValor,
+				}
+			},
+		},
+		{
+			TipoIzq:  tiposDeDato.TIPO_DECIMAL,
+			TipoDcha: tiposDeDato.TIPO_ENTERO,
+			ConvIzq:  nil,
+			ConvDcha: func(v tiposDeDato.ValorInterno) tiposDeDato.ValorInterno {
+				return &tiposDeDato.ValorDecimal{
+					InternalValor: float64(v.(*tiposDeDato.ValorEntero).ValorInterno),
+				}
+			},
+			Evaluar: func(left, right tiposDeDato.ValorInterno) (bool, string, tiposDeDato.ValorInterno) {
+				return true, "", &tiposDeDato.ValorBool{
+					InternalValor: left.(*tiposDeDato.ValorDecimal).InternalValor > right.(*tiposDeDato.ValorDecimal).InternalValor,
+				}
+			},
+		},
+		{
 			TipoIzq:  tiposDeDato.TIPO_CADENA,
 			TipoDcha: tiposDeDato.TIPO_CADENA,
 			ConvIzq:  nil,
@@ -528,7 +618,7 @@ var MayorExpresion = MetodoBinario{
 // MayorQueExpresion: maneja comparaciones mayor o igual que
 var MayorQueExpresion = MetodoBinario{
 	Nombre:               ">=",
-	Viceversa:            true,
+	Viceversa:            false, 
 	EvaluacionPorDefecto: nil,
 	Validaciones: []VerificacionBinaria{
 		{
@@ -547,6 +637,36 @@ var MayorQueExpresion = MetodoBinario{
 			TipoDcha: tiposDeDato.TIPO_DECIMAL,
 			ConvIzq:  nil,
 			ConvDcha: nil,
+			Evaluar: func(left, right tiposDeDato.ValorInterno) (bool, string, tiposDeDato.ValorInterno) {
+				return true, "", &tiposDeDato.ValorBool{
+					InternalValor: left.(*tiposDeDato.ValorDecimal).InternalValor >= right.(*tiposDeDato.ValorDecimal).InternalValor,
+				}
+			},
+		},
+		{
+			TipoIzq:  tiposDeDato.TIPO_ENTERO,
+			TipoDcha: tiposDeDato.TIPO_DECIMAL,
+			ConvIzq: func(v tiposDeDato.ValorInterno) tiposDeDato.ValorInterno {
+				return &tiposDeDato.ValorDecimal{
+					InternalValor: float64(v.(*tiposDeDato.ValorEntero).ValorInterno),
+				}
+			},
+			ConvDcha: nil,
+			Evaluar: func(left, right tiposDeDato.ValorInterno) (bool, string, tiposDeDato.ValorInterno) {
+				return true, "", &tiposDeDato.ValorBool{
+					InternalValor: left.(*tiposDeDato.ValorDecimal).InternalValor >= right.(*tiposDeDato.ValorDecimal).InternalValor,
+				}
+			},
+		},
+		{
+			TipoIzq:  tiposDeDato.TIPO_DECIMAL,
+			TipoDcha: tiposDeDato.TIPO_ENTERO,
+			ConvIzq:  nil,
+			ConvDcha: func(v tiposDeDato.ValorInterno) tiposDeDato.ValorInterno {
+				return &tiposDeDato.ValorDecimal{
+					InternalValor: float64(v.(*tiposDeDato.ValorEntero).ValorInterno),
+				}
+			},
 			Evaluar: func(left, right tiposDeDato.ValorInterno) (bool, string, tiposDeDato.ValorInterno) {
 				return true, "", &tiposDeDato.ValorBool{
 					InternalValor: left.(*tiposDeDato.ValorDecimal).InternalValor >= right.(*tiposDeDato.ValorDecimal).InternalValor,

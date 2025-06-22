@@ -26,25 +26,32 @@ func GenerateCode(visitor VisitorARM64Interface) string {
 	// Salida del programa
 	codigo += generarSalidaPrograma()
 
-	// Funciones auxiliares
-	codigo += generarFuncionesAuxiliares()
+	// Solo funciones auxiliares necesarias
+	codigo += generarFuncionesAuxiliaresDinamicas(visitor.GetARMGenerator())
 
 	return codigo
 }
 
-// generarSeccionDatos genera la sección .data con constantes float
+// generarSeccionDatos genera la sección .data con constantes float y string
 func generarSeccionDatos(armGen *ARMGenerator) string {
 	codigo := ".section .data\n"
 	codigo += "buffer_int: .skip 32\n"
 	codigo += "buffer_float: .skip 64\n"
+	codigo += "buffer_string: .skip 512\n"
+	codigo += "temp_buffer: .skip 256\n"
 	codigo += "msg_nl: .asciz \"\\n\"\n"
 	codigo += "msg_menos: .asciz \"-\"\n"
 	codigo += "msg_punto: .asciz \".\"\n"
-	codigo += "const_100: .double 100.0\n" // ✅ AGREGAR constante 100.0
+	codigo += "const_100: .double 100.0\n"
 
-	// ✅ AGREGAR CONSTANTES FLOAT
+	// CONSTANTES FLOAT
 	for constName, value := range armGen.FloatConstants {
 		codigo += fmt.Sprintf("%s: .double %s\n", constName, value)
+	}
+
+	// CONSTANTES STRING
+	for constName, value := range armGen.StringConstants {
+		codigo += fmt.Sprintf("%s: .asciz \"%s\"\n", constName, value)
 	}
 
 	codigo += "\n"
@@ -88,130 +95,310 @@ func generarSalidaPrograma() string {
 	return codigo
 }
 
-// ✅ CORREGIR función print_float
-func generarFuncionesAuxiliares() string {
-	return `// --------------------------------------------------------
-// FUNCIONES AUXILIARES ARM64
-// --------------------------------------------------------
+// Generar solo las funciones auxiliares que se usan
+func generarFuncionesAuxiliaresDinamicas(armGen *ARMGenerator) string {
+	var codigo strings.Builder
 
-print_int:
-    stp   x29, x30, [sp, #-16]!
+	funcionesUsadas := armGen.FuncionesUsadas
+
+	// Si no se usa ninguna función auxiliar, no generar nada
+	if len(funcionesUsadas) == 0 {
+		return ""
+	}
+
+	codigo.WriteString("// --------------------------------------------------------\n")
+	codigo.WriteString("//            FUNCIONES AUXILIARES ARM64\n")
+	codigo.WriteString("// --------------------------------------------------------\n\n")
+
+	// ✅ GENERAR SOLO LAS FUNCIONES USADAS
+
+	if funcionesUsadas["print_int"] {
+		codigo.WriteString(getFuncionPrintInt())
+	}
+
+	if funcionesUsadas["print_float"] {
+		codigo.WriteString(getFuncionPrintFloat())
+	}
+
+	if funcionesUsadas["print_string"] {
+		codigo.WriteString(getFuncionPrintString())
+	}
+
+	if funcionesUsadas["print_bool"] {
+		codigo.WriteString(getFuncionPrintBool())
+	}
+
+	if funcionesUsadas["print_char"] {
+		codigo.WriteString(getFuncionPrintChar())
+	}
+
+	if funcionesUsadas["print_newline"] {
+		codigo.WriteString(getFuncionPrintNewline())
+	}
+
+	if funcionesUsadas["strlen"] {
+		codigo.WriteString(getFuncionStrlen())
+	}
+
+	if funcionesUsadas["strcmp"] {
+		codigo.WriteString(getFuncionStrcmp())
+	}
+
+	if funcionesUsadas["concat_strings"] {
+		codigo.WriteString(getFuncionConcatStrings())
+	}
+
+	return codigo.String()
+}
+
+// Funciones individuales para cada función auxiliar
+
+func getFuncionPrintInt() string {
+	return `print_int:
+    stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register
     mov   x29, sp
-    stp   x1, x2, [sp, #-16]!
+    stp   x1, x2, [sp, #-16]!     // Guardar registros que vamos a usar
     stp   x3, x4, [sp, #-16]!
     stp   x5, x6, [sp, #-16]!
 
-    cmp   x0, #0
+    cmp   x0, #0                  // ¿Es negativo?
     bge   .Lpi_pos
     // negativo
-    mov   x8, #64
-    ldr   x1, =msg_menos
+    mov   x8, #64                 // Syscall write
+    ldr   x1, =msg_menos          // Imprimir "-"
     mov   x2, #1
     mov   x0, #1
     svc   0
-    neg   x0, x0
+    neg   x0, x0                  // Hacer positivo
 
 .Lpi_pos:
-    ldr   x2, =buffer_int
-    add   x2, x2, #32
-    mov   x3, #0
-    mov   x6, #10
+    ldr   x2, =buffer_int         // Buffer para dígitos
+    add   x2, x2, #32             // Empezar desde el final
+    mov   x3, #0                  // Contador de dígitos
+    mov   x6, #10                 // Divisor
 
 .Lpi_loop:
-    udiv  x4, x0, x6
-    msub  x5, x4, x6, x0
-    add   x5, x5, #48
-    sub   x2, x2, #1
-    strb  w5, [x2]
-    mov   x0, x4
-    add   x3, x3, #1
+    udiv  x4, x0, x6              // x4 = x0 / 10
+    msub  x5, x4, x6, x0          // x5 = x0 % 10 (resto)
+    add   x5, x5, #48             // Convertir a ASCII
+    sub   x2, x2, #1              // Retroceder en buffer
+    strb  w5, [x2]                // Guardar dígito
+    mov   x0, x4                  // Siguiente iteración
+    add   x3, x3, #1              // Incrementar contador
     cmp   x0, #0
     bne   .Lpi_loop
 
-    mov   x0, #1
-    mov   x1, x2
-    mov   x2, x3
-    mov   x8, #64
+    mov   x0, #1                  // stdout
+    mov   x1, x2                  // Buffer con dígitos
+    mov   x2, x3                  // Cantidad de dígitos
+    mov   x8, #64                 // Syscall write
     svc   0
 
-    ldp   x5, x6, [sp], #16
+    ldp   x5, x6, [sp], #16       // Restaurar registros
     ldp   x3, x4, [sp], #16
     ldp   x1, x2, [sp], #16
     ldp   x29, x30, [sp], #16
     ret
 
-print_float:
-    stp   x29, x30, [sp, #-16]!    // frame
+`
+}
+
+func getFuncionPrintFloat() string {
+	return `print_float:
+    stp   x29, x30, [sp, #-16]!   // Guardar frame
     mov   x29, sp
-    stp   x19, x20, [sp, #-16]!    // salvar callee‐saved
+    stp   x19, x20, [sp, #-16]!   // Guardar registros
     stp   x21, x22, [sp, #-16]!
 
-    // 1) Parte entera → x20
-    fcvtzs  x20, d0
+    fcvtzs  x20, d0               // Convertir parte entera
     mov     x0, x20
-    bl      print_int
+    bl      print_int             // Imprimir parte entera
 
-    // 2) Punto decimal
-    mov     x8, #64
+    mov     x8, #64               // Imprimir punto decimal
     ldr     x1, =msg_punto
     mov     x2, #1
     mov     x0, #1
     svc     0
 
-    // 3) Fracción * 100
-    scvtf   d1, x20              // d1 = float(int(d0))
-    fsub    d2, d0, d1           // d2 = fractional part
+    scvtf   d1, x20               // Convertir entero a float
+    fsub    d2, d0, d1            // d2 = parte fraccionaria
     mov     x2, #100
-    scvtf   d1, x2               // d1 = 100.0
-    fmul    d2, d2, d1           // d2 = fraction * 100
-    fcvtzs  x20, d2              // x20 = trunc(d2)
+    scvtf   d1, x2                // d1 = 100.0
+    fmul    d2, d2, d1            // Multiplicar por 100
+    fcvtzs  x20, d2               // Convertir a entero
 
-    // 4) Valor absoluto
-    cmp     x20, #0
+    cmp     x20, #0               // Valor absoluto
     bge     .Lpf_pos
     neg     x20, x20
 .Lpf_pos:
 
-    // 5) Extraer dos dígitos
-    mov     x19, #10
-    udiv    x21, x20, x19        // x21 = tens digit
-    msub    x22, x21, x19, x20   // x22 = ones digit
-    add     w21, w21, #48        // ASCII tens
-    add     w22, w22, #48        // ASCII ones
+    mov     x19, #10              // Extraer dígitos
+    udiv    x21, x20, x19         // Decenas
+    msub    x22, x21, x19, x20    // Unidades
+    add     w21, w21, #48         // Convertir a ASCII
+    add     w22, w22, #48
 
-    // 6) Imprimir dígitos
-    mov     x0, x21
+    mov     x0, x21               // Imprimir dígitos
     bl      print_char
     mov     x0, x22
     bl      print_char
 
-    // Restaurar y return
-    ldp   x21, x22, [sp], #16
+    ldp   x21, x22, [sp], #16     // Restaurar registros
     ldp   x19, x20, [sp], #16
     ldp   x29, x30, [sp], #16
     ret
 
-print_char:
-    stp   x29, x30, [sp, #-16]!
-    mov   x29, sp
+`
+}
 
-    strb  w0, [sp, #-1]!       // apilar carácter
-    mov   x0, #1
-    mov   x1, sp
-    mov   x2, #1
-    mov   x8, #64
+func getFuncionPrintString() string {
+	return `print_string:
+    stp   x29, x30, [sp, #-16]!   // Guardar frame
+    mov   x29, sp
+    mov   x19, x0                 // Guardar dirección del string
+
+    bl    strlen                  // Calcular longitud
+    mov   x2, x0                  // x2 = longitud
+    mov   x1, x19                 // x1 = dirección string
+    mov   x0, #1                  // stdout
+    mov   x8, #64                 // Syscall write
     svc   0
-    add   sp, sp, #1           // desapilar
 
     ldp   x29, x30, [sp], #16
     ret
 
-print_newline:
-    mov   x0, #1
-    ldr   x1, =msg_nl
-    mov   x2, #1
-    mov   x8, #64
+`
+}
+
+func getFuncionPrintBool() string {
+	return `print_bool:
+    stp   x29, x30, [sp, #-16]!   // Guardar frame
+    mov   x29, sp
+
+    add   w0, w0, #48             // 0→'0', 1→'1' (ASCII)
+    bl    print_char              // Imprimir carácter
+
+    ldp   x29, x30, [sp], #16
+    ret
+
+`
+}
+
+func getFuncionPrintChar() string {
+	return `print_char:
+    stp   x29, x30, [sp, #-16]!   // Guardar frame
+    mov   x29, sp
+
+    strb  w0, [sp, #-1]!          // Poner carácter en stack
+    mov   x0, #1                  // stdout
+    mov   x1, sp                  // Dirección del carácter
+    mov   x2, #1                  // 1 byte
+    mov   x8, #64                 // Syscall write
+    svc   0
+    add   sp, sp, #1              // Limpiar stack
+
+    ldp   x29, x30, [sp], #16
+    ret
+
+`
+}
+
+func getFuncionPrintNewline() string {
+	return `print_newline:
+    mov   x0, #1                  // stdout
+    ldr   x1, =msg_nl             // "\n"
+    mov   x2, #1                  // 1 byte
+    mov   x8, #64                 // Syscall write
     svc   0
     ret
+
+`
+}
+
+func getFuncionStrlen() string {
+	return `strlen:
+    mov   x1, #0                  // contador = 0
+.Lstrlen_loop:
+    ldrb  w2, [x0, x1]           // Cargar byte
+    cmp   w2, #0                 // ¿Es '\0'?
+    beq   .Lstrlen_end
+    add   x1, x1, #1             // Incrementar contador
+    b     .Lstrlen_loop
+.Lstrlen_end:
+    mov   x0, x1                 // Retornar longitud
+    ret
+
+`
+}
+
+func getFuncionStrcmp() string {
+	return `strcmp:
+    stp   x29, x30, [sp, #-16]!   // Guardar frame
+    mov   x29, sp
+    stp   x2, x3, [sp, #-16]!
+
+strcmp_loop:
+    ldrb  w2, [x0], #1            // Cargar char de string1
+    ldrb  w3, [x1], #1            // Cargar char de string2
+    
+    cmp   w2, w3                  // Comparar caracteres
+    bne   strcmp_different
+    
+    cmp   w2, #0                  // ¿Final de string?
+    beq   strcmp_equal
+    
+    b     strcmp_loop
+    
+strcmp_equal:
+    mov   x0, #0                  // Iguales = 0
+    b     strcmp_end
+    
+strcmp_different:
+    mov   x0, #1                  // Diferentes = 1
+    
+strcmp_end:
+    ldp   x2, x3, [sp], #16       // Restaurar registros
+    ldp   x29, x30, [sp], #16
+    ret
+
+`
+}
+
+func getFuncionConcatStrings() string {
+	return `concat_strings:
+    stp   x29, x30, [sp, #-16]!   // Guardar frame
+    mov   x29, sp
+    stp   x19, x20, [sp, #-16]!   // Guardar registros
+    stp   x21, x22, [sp, #-16]!
+
+    mov   x19, x0                 // string1
+    mov   x20, x1                 // string2
+    mov   x21, x2                 // buffer destino
+    mov   x22, #0                 // índice destino
+
+.Lconcat_copy1:                   // Copiar string1
+    ldrb  w3, [x19], #1           // Cargar byte y avanzar
+    cmp   w3, #0                  // ¿Es '\0'?
+    beq   .Lconcat_copy2
+    strb  w3, [x21, x22]          // Guardar en destino
+    add   x22, x22, #1            // Avanzar índice
+    b     .Lconcat_copy1
+
+.Lconcat_copy2:                   // Copiar string2
+    ldrb  w3, [x20], #1           // Cargar byte y avanzar
+    strb  w3, [x21, x22]          // Guardar (incluye '\0')
+    cmp   w3, #0                  // ¿Era '\0'?
+    beq   .Lconcat_end
+    add   x22, x22, #1            // Avanzar índice
+    b     .Lconcat_copy2
+
+.Lconcat_end:
+    mov   x0, x21                 // Retornar resultado
+
+    ldp   x21, x22, [sp], #16     // Restaurar registros
+    ldp   x19, x20, [sp], #16
+    ldp   x29, x30, [sp], #16
+    ret
+
 `
 }
