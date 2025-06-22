@@ -91,129 +91,127 @@ func generarSalidaPrograma() string {
 // ✅ CORREGIR función print_float
 func generarFuncionesAuxiliares() string {
 	return `// --------------------------------------------------------
-// FUNCIONES: print_int, print_float y print_newline
+// FUNCIONES AUXILIARES ARM64
 // --------------------------------------------------------
 
 print_int:
-    stp x29, x30, [sp, #-16]!
-    mov x29, sp
-    stp x1, x2, [sp, #-16]!
-    stp x3, x4, [sp, #-16]!
-    stp x5, x6, [sp, #-16]!
+    stp   x29, x30, [sp, #-16]!
+    mov   x29, sp
+    stp   x1, x2, [sp, #-16]!
+    stp   x3, x4, [sp, #-16]!
+    stp   x5, x6, [sp, #-16]!
 
-    cmp x0, #0
-    bge .Lpositive_int
-    mov x8, #64
-    ldr x1, =msg_menos
-    mov x2, #1
-    mov x0, #1
-    svc 0
-    neg x0, x0
+    cmp   x0, #0
+    bge   .Lpi_pos
+    // negativo
+    mov   x8, #64
+    ldr   x1, =msg_menos
+    mov   x2, #1
+    mov   x0, #1
+    svc   0
+    neg   x0, x0
 
-.Lpositive_int:
-    ldr x2, =buffer_int
-    add x2, x2, #32
-    mov x3, #0
-    mov x6, #10
+.Lpi_pos:
+    ldr   x2, =buffer_int
+    add   x2, x2, #32
+    mov   x3, #0
+    mov   x6, #10
 
-.Lloop:
-    udiv x4, x0, x6
-    msub x5, x4, x6, x0
-    add x5, x5, #48
-    sub x2, x2, #1
-    strb w5, [x2]
-    mov x0, x4
-    add x3, x3, #1
-    cmp x0, #0
-    bne .Lloop
+.Lpi_loop:
+    udiv  x4, x0, x6
+    msub  x5, x4, x6, x0
+    add   x5, x5, #48
+    sub   x2, x2, #1
+    strb  w5, [x2]
+    mov   x0, x4
+    add   x3, x3, #1
+    cmp   x0, #0
+    bne   .Lpi_loop
 
-    mov x0, #1
-    mov x1, x2
-    mov x2, x3
-    mov x8, #64
-    svc 0
+    mov   x0, #1
+    mov   x1, x2
+    mov   x2, x3
+    mov   x8, #64
+    svc   0
 
-    ldp x5, x6, [sp], #16
-    ldp x3, x4, [sp], #16
-    ldp x1, x2, [sp], #16
-    ldp x29, x30, [sp], #16
+    ldp   x5, x6, [sp], #16
+    ldp   x3, x4, [sp], #16
+    ldp   x1, x2, [sp], #16
+    ldp   x29, x30, [sp], #16
     ret
 
 print_float:
-    stp x29, x30, [sp, #-16]!
-    mov x29, sp
-    stp x1, x2, [sp, #-16]!
-    stp x3, x4, [sp, #-16]!
-    stp x5, x6, [sp, #-16]!
-    stp d1, d2, [sp, #-16]!
+    stp   x29, x30, [sp, #-16]!    // frame
+    mov   x29, sp
+    stp   x19, x20, [sp, #-16]!    // salvar callee‐saved
+    stp   x21, x22, [sp, #-16]!
 
-    // Convertir float a entero para la parte entera
-    fcvtzs x1, d0
-    
-    // Imprimir parte entera
-    mov x0, x1
-    bl print_int
-    
-    // Imprimir punto decimal
-    mov x8, #64
-    ldr x1, =msg_punto
-    mov x2, #1
-    mov x0, #1
-    svc 0
-    
-    // Para simplificar, imprimir solo 2 decimales
-    // Obtener parte fraccionaria: (float - int) * 100
-    scvtf d1, x1           // Convertir entero de vuelta a float
-    fsub d2, d0, d1        // d2 = parte fraccionaria
-    ldr d1, =const_100     // ✅ CORREGIDO: Cargar 100.0 desde memoria
-    fmul d2, d2, d1        // d2 = fraccionaria * 100
-    fcvtzs x1, d2          // Convertir a entero
-    
-    // Asegurar que sea valor absoluto
-    cmp x1, #0
-    bge .Lpositive_frac
-    neg x1, x1
-.Lpositive_frac:
-    
-    // Imprimir parte fraccionaria (siempre 2 dígitos)
-    mov x2, #10
-    udiv x3, x1, x2        // Primer dígito
-    msub x4, x3, x2, x1    // Segundo dígito
-    
-    add x3, x3, #48        // Convertir a ASCII
-    add x4, x4, #48        // Convertir a ASCII
-    
-    // Imprimir primer dígito
-    strb w3, [sp, #-1]!
-    mov x8, #64
-    mov x1, sp
-    mov x2, #1
-    mov x0, #1
-    svc 0
-    add sp, sp, #1
-    
-    // Imprimir segundo dígito
-    strb w4, [sp, #-1]!
-    mov x8, #64
-    mov x1, sp
-    mov x2, #1
-    mov x0, #1
-    svc 0
-    add sp, sp, #1
+    // 1) Parte entera → x20
+    fcvtzs  x20, d0
+    mov     x0, x20
+    bl      print_int
 
-    ldp d1, d2, [sp], #16
-    ldp x5, x6, [sp], #16
-    ldp x3, x4, [sp], #16
-    ldp x1, x2, [sp], #16
-    ldp x29, x30, [sp], #16
+    // 2) Punto decimal
+    mov     x8, #64
+    ldr     x1, =msg_punto
+    mov     x2, #1
+    mov     x0, #1
+    svc     0
+
+    // 3) Fracción * 100
+    scvtf   d1, x20              // d1 = float(int(d0))
+    fsub    d2, d0, d1           // d2 = fractional part
+    mov     x2, #100
+    scvtf   d1, x2               // d1 = 100.0
+    fmul    d2, d2, d1           // d2 = fraction * 100
+    fcvtzs  x20, d2              // x20 = trunc(d2)
+
+    // 4) Valor absoluto
+    cmp     x20, #0
+    bge     .Lpf_pos
+    neg     x20, x20
+.Lpf_pos:
+
+    // 5) Extraer dos dígitos
+    mov     x19, #10
+    udiv    x21, x20, x19        // x21 = tens digit
+    msub    x22, x21, x19, x20   // x22 = ones digit
+    add     w21, w21, #48        // ASCII tens
+    add     w22, w22, #48        // ASCII ones
+
+    // 6) Imprimir dígitos
+    mov     x0, x21
+    bl      print_char
+    mov     x0, x22
+    bl      print_char
+
+    // Restaurar y return
+    ldp   x21, x22, [sp], #16
+    ldp   x19, x20, [sp], #16
+    ldp   x29, x30, [sp], #16
+    ret
+
+print_char:
+    stp   x29, x30, [sp, #-16]!
+    mov   x29, sp
+
+    strb  w0, [sp, #-1]!       // apilar carácter
+    mov   x0, #1
+    mov   x1, sp
+    mov   x2, #1
+    mov   x8, #64
+    svc   0
+    add   sp, sp, #1           // desapilar
+
+    ldp   x29, x30, [sp], #16
     ret
 
 print_newline:
-    mov x0, #1
-    ldr x1, =msg_nl
-    mov x2, #1
-    mov x8, #64
-    svc 0
+    mov   x0, #1
+    ldr   x1, =msg_nl
+    mov   x2, #1
+    mov   x8, #64
+    svc   0
     ret
 `
 }

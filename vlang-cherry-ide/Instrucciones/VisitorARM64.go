@@ -5,6 +5,7 @@ import (
 	assembly "main/Assembly"
 	"main/parser"
 	"strconv"
+	"strings"
 
 	"github.com/antlr4-go/antlr/v4"
 )
@@ -44,7 +45,46 @@ func (v *VisitorARM64) GetARMGenerator() *assembly.ARMGenerator {
 
 // GetCodigo utiliza el generador de código del package assembly
 func (v *VisitorARM64) GetCodigo() string {
-	return assembly.GenerateCode(v)
+	codigoBase := assembly.GenerateCode(v)
+	if len(v.MensajesDatos) == 0 {
+		return codigoBase
+	}
+
+	lines := strings.Split(codigoBase, "\n")
+	var out []string
+	inserted := false
+
+	for _, line := range lines {
+		out = append(out, line)
+		if !inserted && strings.Contains(line, ".section .data") {
+			out = append(out,
+				"    .align 3    // alinea dobles a 8 bytes",
+			)
+			for _, c := range v.MensajesDatos {
+				out = append(out, "    "+c)
+			}
+			inserted = true
+		}
+	}
+
+	// Fallback: si no vio .data, lo mete antes de .text
+	if !inserted {
+		for i, line := range out {
+			if strings.Contains(line, ".section .text") {
+				prefix := append([]string{}, out[:i]...)
+				prefix = append(prefix,
+					"    .align 3    // alinea dobles a 8 bytes",
+				)
+				for _, c := range v.MensajesDatos {
+					prefix = append(prefix, "    "+c)
+				}
+				out = append(prefix, out[i:]...)
+				break
+			}
+		}
+	}
+
+	return strings.Join(out, "\n")
 }
 
 func (v *VisitorARM64) nuevoRegistroTmp() string {
@@ -59,7 +99,7 @@ func (v *VisitorARM64) nuevoRegistroTmp() string {
 // ✅ NUEVO: Registros float (d0-d31)
 func (v *VisitorARM64) nuevoRegistroFloatTmp() string {
 	if v.tmpFloatCounter > 31 {
-		panic("Se agotaron los registros float temporales disponibles (d0-d31)")
+		panic("Se agotaron los registros float d0–d31")
 	}
 	reg := fmt.Sprintf("d%d", v.tmpFloatCounter)
 	v.tmpFloatCounter++
@@ -286,7 +326,7 @@ func (v *VisitorARM64) procesarOperacionFloat(left, right *ResultadoExpresion, o
 	// Cargar operando izquierdo
 	if left.EsLiteral {
 		if left.Tipo == "float" {
-			v.armGen.FMovImm(registroIzq, left.Valor.(float64))
+			v.cargarConstanteFloat(registroIzq, left.Valor.(float64))
 		} else if left.Tipo == "int" {
 			// Convertir int a float
 			regTmp := v.nuevoRegistroTmp()
@@ -295,7 +335,6 @@ func (v *VisitorARM64) procesarOperacionFloat(left, right *ResultadoExpresion, o
 		}
 	} else {
 		if left.Tipo == "int" {
-			// Convertir registro int a float
 			v.armGen.ScvtfIntToFloat(registroIzq, left.Registro)
 		} else {
 			v.armGen.FMov(registroIzq, left.Registro)
@@ -305,16 +344,14 @@ func (v *VisitorARM64) procesarOperacionFloat(left, right *ResultadoExpresion, o
 	// Cargar operando derecho
 	if right.EsLiteral {
 		if right.Tipo == "float" {
-			v.armGen.FMovImm(registroDer, right.Valor.(float64))
+			v.cargarConstanteFloat(registroDer, right.Valor.(float64))
 		} else if right.Tipo == "int" {
-			// Convertir int a float
 			regTmp := v.nuevoRegistroTmp()
 			v.armGen.Mov(regTmp, right.Valor.(int))
 			v.armGen.ScvtfIntToFloat(registroDer, regTmp)
 		}
 	} else {
 		if right.Tipo == "int" {
-			// Convertir registro int a float
 			v.armGen.ScvtfIntToFloat(registroDer, right.Registro)
 		} else {
 			v.armGen.FMov(registroDer, right.Registro)
@@ -332,8 +369,8 @@ func (v *VisitorARM64) procesarOperacionFloat(left, right *ResultadoExpresion, o
 	case "/":
 		v.armGen.FDiv(registroResultado, registroIzq, registroDer)
 	case "%":
-		v.armGen.Comment("Operador % no soportado para floats")
-		// Para floats, % no está definido, usar fmod si fuera necesario
+		// como antes, sólo un comentario
+		v.armGen.Comment("Operador % no soportado directamente para floats")
 	}
 
 	return &ResultadoExpresion{
@@ -481,58 +518,132 @@ func (v *VisitorARM64) VisitID_Patron(ctx *parser.ID_PatronContext) interface{} 
 
 // Generar código ARM64 para imprimir el resultado (usando funciones auxiliares)
 func (v *VisitorARM64) generarCodigoImpresion(resultado *ResultadoExpresion, esPrintln bool) {
-	var registroResultado string
-
-	if resultado.EsLiteral {
-		if resultado.Tipo == "int" {
-			registroResultado = v.nuevoRegistroTmp()
-			valor := resultado.Valor.(int)
-			v.armGen.Mov(registroResultado, valor)
-
-			// Imprimir entero
+	if resultado.Tipo == "string" {
+		// Manejar strings
+		if resultado.EsLiteral {
+			etiqueta := v.agregarMensajeString(resultado.Valor.(string))
+			regTmp := v.nuevoRegistroTmp()
 			v.armGen.Instructions = append(v.armGen.Instructions,
-				"// Imprimir entero",
-				fmt.Sprintf("mov x0, %s", registroResultado),
-				"bl print_int")
-
-		} else if resultado.Tipo == "float" {
-			registroResultado = v.nuevoRegistroFloatTmp()
-			valor := resultado.Valor.(float64)
-			v.armGen.FMovImm(registroResultado, valor)
-
-			// Imprimir float
-			v.armGen.Instructions = append(v.armGen.Instructions,
-				"// Imprimir float",
-				fmt.Sprintf("fmov d0, %s", registroResultado),
-				"bl print_float")
+				fmt.Sprintf("adrp %s, %s@PAGE", regTmp, etiqueta),
+				fmt.Sprintf("add x0, %s, %s@PAGEOFF", regTmp, etiqueta),
+				"bl print_string")
 		}
-	} else {
-		registroResultado = resultado.Registro
-
-		if resultado.Tipo == "int" {
+	} else if resultado.Tipo == "int" {
+		// Manejar enteros
+		if resultado.EsLiteral {
+			registroResultado := v.nuevoRegistroTmp()
+			v.armGen.Mov(registroResultado, resultado.Valor.(int))
 			v.armGen.Instructions = append(v.armGen.Instructions,
-				"// Imprimir entero",
 				fmt.Sprintf("mov x0, %s", registroResultado),
 				"bl print_int")
-		} else if resultado.Tipo == "float" {
+		} else {
 			v.armGen.Instructions = append(v.armGen.Instructions,
-				"// Imprimir float",
-				fmt.Sprintf("fmov d0, %s", registroResultado),
-				"bl print_float")
+				fmt.Sprintf("mov x0, %s", resultado.Registro),
+				"bl print_int")
+		}
+	} else if resultado.Tipo == "float" {
+		if resultado.EsLiteral {
+			regTmp := v.nuevoRegistroFloatTmp()
+			v.generarFloatInmediato(regTmp, resultado.Valor.(float64))
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("fmov d0, %s", regTmp),
+				"bl print_float",
+			)
+		} else {
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("fmov d0, %s", resultado.Registro),
+				"bl print_float",
+			)
+		}
+
+	} else if resultado.Tipo == "bool" {
+		// Manejar booleanos
+		if resultado.EsLiteral {
+			valor := 0
+			if resultado.Valor.(bool) {
+				valor = 1
+			}
+			registroResultado := v.nuevoRegistroTmp()
+			v.armGen.Mov(registroResultado, valor)
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov x0, %s", registroResultado),
+				"bl print_bool")
+		} else {
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov x0, %s", resultado.Registro),
+				"bl print_bool")
 		}
 	}
 
 	// Agregar saltos de línea
 	if esPrintln {
 		v.armGen.Instructions = append(v.armGen.Instructions,
-			"// println: Agregar dos saltos de línea",
 			"bl print_newline",
 			"bl print_newline")
 	} else {
 		v.armGen.Instructions = append(v.armGen.Instructions,
-			"// print: Agregar un salto de línea",
 			"bl print_newline")
 	}
+}
 
-	v.armGen.Instructions = append(v.armGen.Instructions, "")
+func (v *VisitorARM64) agregarMensajeString(mensaje string) string {
+	etiqueta := fmt.Sprintf("msg_%d", v.contadorMensaje)
+	v.contadorMensaje++
+	v.MensajesDatos = append(v.MensajesDatos,
+		fmt.Sprintf("%s: .string \"%s\"", etiqueta, mensaje))
+	return etiqueta
+}
+
+func (v *VisitorARM64) generarFloatInmediato(registro string, valor float64) {
+	// 1) Cero → fmov inmediato válido
+	if valor == 0.0 {
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("fmov %s, wzr", registro),
+		)
+		return
+	}
+
+	// 2) Literal pequeño → fmov inmediato (opcional)
+	if esFloatInmediato(valor) {
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("fmov %s, #%.2f", registro, valor),
+		)
+		return
+	}
+
+	// 3) Cualquiera → cargar desde memoria (.double) usando relocations GNU as
+	etiqueta := v.agregarConstanteFloat(valor)
+	regTmp := v.nuevoRegistroTmp()
+	v.armGen.Instructions = append(v.armGen.Instructions,
+		// ADRP obtiene los 21 bits altos de la dirección de etiqueta
+		fmt.Sprintf("adrp %s, :pg_hi21:%s", regTmp, etiqueta),
+		// LDR suma el desplazamiento bajo de 12 bits y carga 64 bits
+		fmt.Sprintf("ldr  %s, [%s, :lo12:%s]", registro, regTmp, etiqueta),
+	)
+}
+
+// 2. Función auxiliar para verificar si un float se puede cargar como inmediato
+func esFloatInmediato(_ float64) bool {
+	return false
+}
+
+// 3. Agregar constantes float a la sección de datos
+func (v *VisitorARM64) agregarConstanteFloat(valor float64) string {
+	etiqueta := fmt.Sprintf("float_const_%d", v.contadorMensaje)
+	v.contadorMensaje++
+	v.MensajesDatos = append(v.MensajesDatos,
+		fmt.Sprintf("%s: .double %.6f", etiqueta, valor),
+	)
+	return etiqueta
+}
+
+// 4. Cargar constante float desde memoria
+func (v *VisitorARM64) cargarConstanteFloat(registro string, valor float64) {
+	etiqueta := v.agregarConstanteFloat(valor)
+	regTmp := v.nuevoRegistroTmp()
+
+	// Usar adr para cargar la dirección, luego ldr para cargar el valor
+	v.armGen.Instructions = append(v.armGen.Instructions,
+		fmt.Sprintf("adr %s, %s", regTmp, etiqueta),
+		fmt.Sprintf("ldr %s, [%s]", registro, regTmp))
 }
