@@ -13,14 +13,17 @@ type VisitorARM64 struct {
 	parser.BaseVGrammarVisitor
 	armGen               *assembly.ARMGenerator
 	expresionesProcessor *assembly.ExpresionesProcessor
+	variablesProcessor   *assembly.VariablesProcessor
 	TablaError           *TablaError
 }
 
 func NewVisitorARM64() *VisitorARM64 {
 	armGen := assembly.NewARMGenerator()
+	expresionesProcessor := assembly.NewExpresionesProcessor(armGen)
 	return &VisitorARM64{
 		armGen:               armGen,
-		expresionesProcessor: assembly.NewExpresionesProcessor(armGen),
+		expresionesProcessor: expresionesProcessor,
+		variablesProcessor:   assembly.NewVariablesProcessor(armGen, expresionesProcessor), // ✅ PASAR expresionesProcessor
 	}
 }
 
@@ -99,23 +102,169 @@ func (v *VisitorARM64) VisitFuncionMain(ctx *parser.FuncionMainContext) interfac
 	for _, stmt := range ctx.AllStmt() {
 		// Resetear contadores para evitar agotar registros
 		v.expresionesProcessor.ResetearContadores()
+
+		// ✅ AGREGAR DEBUG AQUÍ
+		fmt.Printf("DEBUG: Procesando statement: %s\n", stmt.GetText())
+
 		v.Visit(stmt)
 	}
 	return nil
 }
 
+func (v *VisitorARM64) VisitDeclararSlice(ctx *parser.DeclararSliceContext) interface{} {
+	v.armGen.Comment("Declaración de slice no implementada aún")
+	return nil
+}
+
+func (v *VisitorARM64) VisitStmt_asignar(ctx *parser.Stmt_asignarContext) interface{} {
+	if ctx.GetChildCount() > 0 {
+		if child, ok := ctx.GetChild(0).(antlr.ParseTree); ok {
+			return v.Visit(child)
+		}
+	}
+	return nil
+}
+
+func (v *VisitorARM64) VisitStmt_declaracion(ctx *parser.Stmt_declaracionContext) interface{} {
+	if ctx.GetChildCount() > 0 {
+		if child, ok := ctx.GetChild(0).(antlr.ParseTree); ok {
+			return v.Visit(child)
+		}
+	}
+	return nil
+}
+
+func (v *VisitorARM64) VisitAsignacionDirecta(ctx *parser.AsignacionDirectaContext) interface{} {
+	nombreVar := ctx.PatronId().GetText()
+	exprResult := v.Visit(ctx.Expr())
+	valor := exprResult.(*assembly.ResultadoExpresion)
+
+	err := v.variablesProcessor.AsignarVariable(nombreVar, valor)
+	if err != nil {
+		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
+	}
+	return nil
+}
+
+func (v *VisitorARM64) VisitAsignacionAritmetica(ctx *parser.AsignacionAritmeticaContext) interface{} {
+	v.armGen.Comment("Asignación aritmética no implementada aún")
+	return nil
+}
+
+// ✅ AGREGAR - Asignaciones a slice (por ahora comentar)
+func (v *VisitorARM64) VisitAsignacionSliceItem(ctx *parser.AsignacionSliceItemContext) interface{} {
+	v.armGen.Comment("Asignación a slice no implementada aún")
+	return nil
+}
+
+func (v *VisitorARM64) VisitAsignacionSlice(ctx *parser.AsignacionSliceContext) interface{} {
+	v.armGen.Comment("Asignación a slice no implementada aún")
+	return nil
+}
+
+// ✅ AGREGAR - Método auxiliar para obtener tipo como string
+func (v *VisitorARM64) obtenerTipoString(tipoCtx parser.ITipoContext) string {
+	if tipoCtx.RW_INT() != nil {
+		return "int"
+	} else if tipoCtx.RW_FLOAT64() != nil {
+		return "float"
+	} else if tipoCtx.RW_STRING() != nil {
+		return "string"
+	} else if tipoCtx.RW_BOOL() != nil {
+		return "bool"
+	} else if tipoCtx.ID() != nil {
+		return tipoCtx.ID().GetText() // Para structs
+	}
+	return "unknown"
+}
+
+func (v *VisitorARM64) VisitDeclararSinMutValor(ctx *parser.DeclararSinMutValorContext) interface{} {
+	nombre := ctx.ID().GetText()
+	tipo := v.obtenerTipoString(ctx.Tipo())
+	exprResult := v.Visit(ctx.Expr())
+	valor := exprResult.(*assembly.ResultadoExpresion)
+
+	err := v.variablesProcessor.DeclararVariable(nombre, tipo, valor)
+	if err != nil {
+		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
+	}
+	return nil
+}
+
+func (v *VisitorARM64) VisitDeclararTipo(ctx *parser.DeclararTipoContext) interface{} {
+	nombre := ctx.ID().GetText()
+	tipo := v.obtenerTipoString(ctx.Tipo())
+
+	err := v.variablesProcessor.DeclararVariable(nombre, tipo, nil)
+	if err != nil {
+		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
+	}
+	return nil
+}
+
+func (v *VisitorARM64) VisitDeclaraTipoValor(ctx *parser.DeclaraTipoValorContext) interface{} {
+	nombre := ctx.ID().GetText()
+	tipo := v.obtenerTipoString(ctx.Tipo())
+	exprResult := v.Visit(ctx.Expr())
+	valor := exprResult.(*assembly.ResultadoExpresion)
+
+	err := v.variablesProcessor.DeclararVariable(nombre, tipo, valor)
+	if err != nil {
+		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
+	}
+	return nil
+}
+
+func (v *VisitorARM64) VisitDeclararInferencia(ctx *parser.DeclararInferenciaContext) interface{} {
+	nombre := ctx.ID().GetText()
+	exprResult := v.Visit(ctx.Expr())
+	valor := exprResult.(*assembly.ResultadoExpresion)
+	tipo := valor.Tipo
+
+	err := v.variablesProcessor.DeclararVariable(nombre, tipo, valor)
+	if err != nil {
+		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
+	}
+	return nil
+}
+
+func (v *VisitorARM64) VisitDeclararInferenciaMut(ctx *parser.DeclararInferenciaMutContext) interface{} {
+	nombre := ctx.ID().GetText()
+	exprResult := v.Visit(ctx.Expr())
+	if exprResult == nil {
+		v.armGen.Comment(fmt.Sprintf("Error: expresión inválida para %s", nombre))
+		return nil
+	}
+
+	valor, ok := exprResult.(*assembly.ResultadoExpresion)
+	if !ok {
+		v.armGen.Comment(fmt.Sprintf("Error: tipo de expresión inválido para %s", nombre))
+		return nil
+	}
+
+	tipo := valor.Tipo
+	err := v.variablesProcessor.DeclararVariable(nombre, tipo, valor)
+	if err != nil {
+		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
+	} else {
+		v.armGen.Comment(fmt.Sprintf("Declaración mut inferida: mut %s := ?", nombre))
+	}
+
+	return nil
+}
+
 func (v *VisitorARM64) VisitStmt(ctx *parser.StmtContext) interface{} {
-	// 1) Declaraciones
+	// 1) Declaraciones ✅ - USAR LA SINTAXIS CORRECTA
 	if ds := ctx.Stmt_declaracion(); ds != nil {
-		return nil
+		return v.Visit(ds)
 	}
 
-	// 2) Asignaciones
+	// 2) Asignaciones ✅ - USAR LA SINTAXIS CORRECTA
 	if ctx.Stmt_asignar() != nil {
-		return nil
+		return v.Visit(ctx.Stmt_asignar())
 	}
 
-	// 3) Resto de sentencias
+	// 3) Resto de sentencias (igual que antes)
 	switch {
 	case ctx.If_stmt() != nil:
 		return nil
@@ -141,23 +290,30 @@ func (v *VisitorARM64) VisitStmt(ctx *parser.StmtContext) interface{} {
 		return nil
 	}
 }
-
 func (v *VisitorARM64) VisitLlamarFuncion(ctx *parser.LlamarFuncionContext) interface{} {
 	nombreFuncion := ctx.PatronId().GetText()
+
+	// Agregar debug
+	fmt.Printf("DEBUG: VisitLlamarFuncion - función: %s\n", nombreFuncion)
 
 	if (nombreFuncion == "print" || nombreFuncion == "println") && ctx.Lista_argumentos() != nil {
 		// Procesar argumentos de print/println
 		argumentosResult := v.Visit(ctx.Lista_argumentos())
 		if argumentosResult == nil {
+			fmt.Println("DEBUG: No se obtuvieron argumentos")
 			return nil
 		}
 
 		argumentos, ok := argumentosResult.([]interface{})
 		if !ok {
+			fmt.Println("DEBUG: Argumentos no son del tipo esperado")
 			return nil
 		}
 
-		for _, arg := range argumentos {
+		fmt.Printf("DEBUG: Procesando %d argumentos\n", len(argumentos))
+
+		for i, arg := range argumentos {
+			fmt.Printf("DEBUG: Argumento %d tipo: %T\n", i, arg)
 			if resultado, ok := arg.(*assembly.ResultadoExpresion); ok {
 				v.generarCodigoImpresion(resultado, nombreFuncion == "println")
 			}
@@ -169,21 +325,29 @@ func (v *VisitorARM64) VisitLlamarFuncion(ctx *parser.LlamarFuncionContext) inte
 func (v *VisitorARM64) VisitListaArgumentos(ctx *parser.ListaArgumentosContext) interface{} {
 	var argumentos []interface{}
 
-	for _, argCtx := range ctx.AllArgumento_fun() {
+	fmt.Printf("DEBUG: VisitListaArgumentos - %d argumentos\n", len(ctx.AllArgumento_fun()))
+
+	for i, argCtx := range ctx.AllArgumento_fun() {
+		fmt.Printf("DEBUG: Procesando argumento %d\n", i)
 		argResult := v.Visit(argCtx)
 		if argResult != nil {
 			argumentos = append(argumentos, argResult)
+		} else {
+			fmt.Println("DEBUG: Argumento resultó nil")
 		}
 	}
 
 	return argumentos
 }
-
 func (v *VisitorARM64) VisitFuncionArg(ctx *parser.FuncionArgContext) interface{} {
+	fmt.Printf("DEBUG: VisitFuncionArg\n")
+
 	if ctx.Expr() != nil {
+		fmt.Println("DEBUG: Procesando expresión en argumento")
 		return v.Visit(ctx.Expr())
 	}
 	if ctx.PatronId() != nil {
+		fmt.Println("DEBUG: Procesando PatronId en argumento")
 		return v.Visit(ctx.PatronId())
 	}
 	return nil
@@ -232,14 +396,21 @@ func (v *VisitorARM64) VisitUnarioExp(ctx *parser.UnarioExpContext) interface{} 
 
 func (v *VisitorARM64) VisitIdExp(ctx *parser.IdExpContext) interface{} {
 	nombreVariable := ctx.PatronId().GetText()
-	v.armGen.Comment(fmt.Sprintf("Variable no soportada: %s", nombreVariable))
 
-	return &assembly.ResultadoExpresion{
-		Registro:  "",
-		Tipo:      "int",
-		EsLiteral: true,
-		Valor:     0,
+	// Intentar cargar variable
+	resultado, err := v.variablesProcessor.CargarVariable(nombreVariable, "")
+	if err != nil {
+		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
+		return &assembly.ResultadoExpresion{
+			Registro:  "",
+			Tipo:      "int",
+			EsLiteral: true,
+			Valor:     0,
+		}
 	}
+
+	v.armGen.Comment(fmt.Sprintf("Uso de variable: %s", nombreVariable))
+	return resultado
 }
 
 func (v *VisitorARM64) VisitLlamarFuncionExp(ctx *parser.LlamarFuncionExpContext) interface{} {
@@ -282,81 +453,95 @@ func (v *VisitorARM64) VisitParentecisExp(ctx *parser.ParentecisExpContext) inte
 }
 
 func (v *VisitorARM64) VisitID_Patron(ctx *parser.ID_PatronContext) interface{} {
-	return ctx.GetText()
+	nombreVariable := ctx.GetText()
+
+	// Intentar cargar variable desde el stack
+	resultado, err := v.variablesProcessor.CargarVariable(nombreVariable, "")
+	if err != nil {
+		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
+		return &assembly.ResultadoExpresion{
+			Registro:  "",
+			Tipo:      "int",
+			EsLiteral: true,
+			Valor:     0,
+		}
+	}
+
+	return resultado
 }
 
 // ============= IMPRESIÓN - LÓGICA ESPECÍFICA DEL VISITOR =============
 
 func (v *VisitorARM64) generarCodigoImpresion(resultado *assembly.ResultadoExpresion, esPrintln bool) {
-    v.armGen.Comment(fmt.Sprintf("=== IMPRIMIR %s ===", strings.ToUpper(resultado.Tipo)))
+	v.armGen.Comment(fmt.Sprintf("=== IMPRIMIR %s ===", strings.ToUpper(resultado.Tipo)))
 
-    if resultado.Tipo == "string" {
-        // Manejar strings
-        if resultado.EsLiteral {
-            etiqueta := v.expresionesProcessor.AgregarMensajeString(resultado.Valor.(string))
-            regTmp := v.expresionesProcessor.NuevoRegistroTmp()
-            v.armGen.Instructions = append(v.armGen.Instructions,
-                fmt.Sprintf("adr %s, %s", regTmp, etiqueta),
-                fmt.Sprintf("mov x0, %s", regTmp))
-            v.armGen.LlamarFuncion("print_string") 
-        } else {
-            v.armGen.Instructions = append(v.armGen.Instructions,
-                fmt.Sprintf("mov x0, %s", resultado.Registro))
-            v.armGen.LlamarFuncion("print_string") 
-        }
-    } else if resultado.Tipo == "int" {
-        // Manejar enteros
-        if resultado.EsLiteral {
-            registroResultado := v.expresionesProcessor.NuevoRegistroTmp()
-            v.armGen.Mov(registroResultado, resultado.Valor.(int))
-            v.armGen.Instructions = append(v.armGen.Instructions,
-                fmt.Sprintf("mov x0, %s", registroResultado))
-            v.armGen.LlamarFuncion("print_int") 
-        } else {
-            v.armGen.Instructions = append(v.armGen.Instructions,
-                fmt.Sprintf("mov x0, %s", resultado.Registro))
-            v.armGen.LlamarFuncion("print_int")
-        }
-    } else if resultado.Tipo == "float" {
-        if resultado.EsLiteral {
-            regTmp := v.expresionesProcessor.NuevoRegistroFloatTmp()
-            v.generarFloatInmediato(regTmp, resultado.Valor.(float64))
-            v.armGen.Instructions = append(v.armGen.Instructions,
-                fmt.Sprintf("fmov d0, %s", regTmp))
-            v.armGen.LlamarFuncion("print_float")
-        } else {
-            v.armGen.Instructions = append(v.armGen.Instructions,
-                fmt.Sprintf("fmov d0, %s", resultado.Registro))
-            v.armGen.LlamarFuncion("print_float") 
-        }
-    } else if resultado.Tipo == "bool" {
-        // Manejar booleanos
-        if resultado.EsLiteral {
-            valor := 0
-            if resultado.Valor.(bool) {
-                valor = 1
-            }
-            registroResultado := v.expresionesProcessor.NuevoRegistroTmp()
-            v.armGen.Mov(registroResultado, valor)
-            v.armGen.Instructions = append(v.armGen.Instructions,
-                fmt.Sprintf("mov x0, %s", registroResultado))
-            v.armGen.LlamarFuncion("print_bool") 
-        } else {
-            v.armGen.Instructions = append(v.armGen.Instructions,
-                fmt.Sprintf("mov x0, %s", resultado.Registro))
-            v.armGen.LlamarFuncion("print_bool") 
-        }
-    }
+	if resultado.Tipo == "string" {
+		// Manejar strings
+		if resultado.EsLiteral {
+			etiqueta := v.expresionesProcessor.AgregarMensajeString(resultado.Valor.(string))
+			regTmp := v.expresionesProcessor.NuevoRegistroTmp()
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("adr %s, %s", regTmp, etiqueta),
+				fmt.Sprintf("mov x0, %s", regTmp))
+			v.armGen.LlamarFuncion("print_string")
+		} else {
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov x0, %s", resultado.Registro))
+			v.armGen.LlamarFuncion("print_string")
+		}
+	} else if resultado.Tipo == "int" {
+		// Manejar enteros
+		if resultado.EsLiteral {
+			registroResultado := v.expresionesProcessor.NuevoRegistroTmp()
+			v.armGen.Mov(registroResultado, resultado.Valor.(int))
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov x0, %s", registroResultado))
+			v.armGen.LlamarFuncion("print_int")
+		} else {
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov x0, %s", resultado.Registro))
+			v.armGen.LlamarFuncion("print_int")
+		}
+	} else if resultado.Tipo == "float" {
+		if resultado.EsLiteral {
+			regTmp := v.expresionesProcessor.NuevoRegistroFloatTmp()
+			v.generarFloatInmediato(regTmp, resultado.Valor.(float64))
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("fmov d0, %s", regTmp))
+			v.armGen.LlamarFuncion("print_float")
+		} else {
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("fmov d0, %s", resultado.Registro))
+			v.armGen.LlamarFuncion("print_float")
+		}
+	} else if resultado.Tipo == "bool" {
+		// Manejar booleanos
+		if resultado.EsLiteral {
+			valor := 0
+			if resultado.Valor.(bool) {
+				valor = 1
+			}
+			registroResultado := v.expresionesProcessor.NuevoRegistroTmp()
+			v.armGen.Mov(registroResultado, valor)
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov x0, %s", registroResultado))
+			v.armGen.LlamarFuncion("print_bool")
+		} else {
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov x0, %s", resultado.Registro))
+			v.armGen.LlamarFuncion("print_bool")
+		}
+	}
 
-    // Agregar saltos de línea
-    if esPrintln {
-        v.armGen.LlamarFuncion("print_newline") 
-        v.armGen.LlamarFuncion("print_newline") 
-    } else {
-        v.armGen.LlamarFuncion("print_newline") 
-    }
+	// Agregar saltos de línea
+	if esPrintln {
+		v.armGen.LlamarFuncion("print_newline")
+		v.armGen.LlamarFuncion("print_newline")
+	} else {
+		v.armGen.LlamarFuncion("print_newline")
+	}
 
-    v.armGen.Instructions = append(v.armGen.Instructions, "")
+	v.armGen.Instructions = append(v.armGen.Instructions, "")
 }
 
 func (v *VisitorARM64) generarFloatInmediato(registro string, valor float64) {
