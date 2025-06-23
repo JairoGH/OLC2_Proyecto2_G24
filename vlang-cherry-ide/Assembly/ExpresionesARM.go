@@ -11,6 +11,12 @@ type ResultadoExpresion struct {
 	Tipo      string
 	EsLiteral bool
 	Valor     interface{}
+	 SliceInfo   *SliceAccessInfo `json:"-"` 
+}
+
+type SliceAccessInfo struct {
+    NombreSlice string
+    IndiceExpr  *ResultadoExpresion
 }
 
 // ExpresionesProcessor maneja todas las operaciones de expresiones
@@ -35,21 +41,22 @@ func NewExpresionesProcessor(armGen *ARMGenerator) *ExpresionesProcessor {
 // ============= GESTIÓN DE REGISTROS =============
 
 func (ep *ExpresionesProcessor) NuevoRegistroTmp() string {
-	if 9+ep.tmpCounter > 30 {
-		panic("Se agotaron los registros temporales disponibles (x9-x30)")
-	}
-	reg := fmt.Sprintf("x%d", 9+ep.tmpCounter)
-	ep.tmpCounter++
-	return reg
+    if 9+ep.tmpCounter > 30 {  
+        panic("Se agotaron los registros temporales disponibles (x9-x30)")
+    }
+    reg := fmt.Sprintf("x%d", 9+ep.tmpCounter)
+    ep.tmpCounter++
+    return reg
 }
 
 func (ep *ExpresionesProcessor) NuevoRegistroFloatTmp() string {
-	if ep.tmpFloatCounter > 31 {
-		panic("Se agotaron los registros float d0–d31")
-	}
-	reg := fmt.Sprintf("d%d", ep.tmpFloatCounter)
-	ep.tmpFloatCounter++
-	return reg
+    // AGREGAR campo faltante si no existe
+    if ep.tmpFloatCounter > 31 {
+        ep.tmpFloatCounter = 0 // Reciclar registros
+    }
+    reg := fmt.Sprintf("d%d", ep.tmpFloatCounter)
+    ep.tmpFloatCounter++
+    return reg
 }
 
 func (ep *ExpresionesProcessor) ResetearContadores() {
@@ -704,12 +711,17 @@ func (ep *ExpresionesProcessor) AgregarConstanteFloat(valor float64) string {
 }
 
 func (ep *ExpresionesProcessor) CargarConstanteFloat(registro string, valor float64) {
-	etiqueta := ep.AgregarConstanteFloat(valor)
-	regTmp := ep.NuevoRegistroTmp()
+    if valor == 0.0 {
+        ep.armGen.Instructions = append(ep.armGen.Instructions,
+            fmt.Sprintf("fmov %s, wzr", registro))
+        return
+    }
 
-	ep.armGen.Instructions = append(ep.armGen.Instructions,
-		fmt.Sprintf("adr %s, %s", regTmp, etiqueta),
-		fmt.Sprintf("ldr %s, [%s]", registro, regTmp))
+    etiqueta := ep.AgregarConstanteFloat(valor)
+    regTmp := ep.NuevoRegistroTmp()
+    ep.armGen.Instructions = append(ep.armGen.Instructions,
+        fmt.Sprintf("adr %s, %s", regTmp, etiqueta),
+        fmt.Sprintf("ldr %s, [%s]", registro, regTmp))
 }
 
 func (ep *ExpresionesProcessor) CrearLiteralInt(valor string) *ResultadoExpresion {
@@ -755,4 +767,8 @@ func (ep *ExpresionesProcessor) CrearLiteralBool(valor string) *ResultadoExpresi
 
 func (ep *ExpresionesProcessor) GetMensajesDatos() []string {
 	return ep.MensajesDatos
+}
+func (ep *ExpresionesProcessor) GetContadorEtiqueta() int {
+    ep.contadorEtiqueta++
+    return ep.contadorEtiqueta
 }

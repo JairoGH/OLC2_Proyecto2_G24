@@ -43,6 +43,7 @@ func generarSeccionDatos(armGen *ARMGenerator) string {
 	codigo += "msg_menos: .asciz \"-\"\n"
 	codigo += "msg_punto: .asciz \".\"\n"
 	codigo += "const_100: .double 100.0\n"
+    codigo += "str_empty: .asciz \"\"\n" 
 
 	// CONSTANTES FLOAT
 	for constName, value := range armGen.FloatConstants {
@@ -88,11 +89,14 @@ func generarInstruccionesPrograma(armGen *ARMGenerator) string {
 
 // generarSalidaPrograma genera el código de salida del programa
 func generarSalidaPrograma() string {
-	codigo := "\n    // Salir del programa\n"
-	codigo += "    mov x8, #93\n"
-	codigo += "    mov x0, #0\n"
-	codigo += "    svc 0\n\n"
-	return codigo
+    codigo := "\n"
+    codigo += "    // Limpiar stack de slices antes de salir\n"
+    codigo += "    add sp, sp, #256\n"
+    codigo += "    // Salir del programa\n"
+    codigo += "    mov x8, #93\n"
+    codigo += "    mov x0, #0\n"
+    codigo += "    svc 0\n\n"
+    return codigo
 }
 
 // Generar solo las funciones auxiliares que se usan
@@ -110,7 +114,7 @@ func generarFuncionesAuxiliaresDinamicas(armGen *ARMGenerator) string {
 	codigo.WriteString("//            FUNCIONES AUXILIARES ARM64\n")
 	codigo.WriteString("// --------------------------------------------------------\n\n")
 
-	// ✅ GENERAR SOLO LAS FUNCIONES USADAS
+	//  GENERAR SOLO LAS FUNCIONES USADAS
 
 	if funcionesUsadas["print_int"] {
 		codigo.WriteString(getFuncionPrintInt())
@@ -154,22 +158,32 @@ func generarFuncionesAuxiliaresDinamicas(armGen *ARMGenerator) string {
 // Funciones individuales para cada función auxiliar
 
 func getFuncionPrintInt() string {
-	return `print_int:
+    return `print_int:
     stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register
     mov   x29, sp
     stp   x1, x2, [sp, #-16]!     // Guardar registros que vamos a usar
     stp   x3, x4, [sp, #-16]!
     stp   x5, x6, [sp, #-16]!
 
-    cmp   x0, #0                  // ¿Es negativo?
+    //  Usar comparación con registro zero, no inmediato
+    cmp   x0, xzr                 // ¿Es negativo? (usar xzr en lugar de #0)
     bge   .Lpi_pos
-    // negativo
+    
+    //  Manejar números negativos - GUARDAR x0 original
+    stp   x7, x8, [sp, #-16]!     // Guardar más registros
+    mov   x7, x0                  // GUARDAR valor original en x7
+    
+    // Imprimir signo menos
     mov   x8, #64                 // Syscall write
     ldr   x1, =msg_menos          // Imprimir "-"
     mov   x2, #1
     mov   x0, #1
     svc   0
+    
+    //  RESTAURAR y negar el valor original
+    mov   x0, x7                  // Restaurar valor original
     neg   x0, x0                  // Hacer positivo
+    ldp   x7, x8, [sp], #16       // Restaurar registros
 
 .Lpi_pos:
     ldr   x2, =buffer_int         // Buffer para dígitos

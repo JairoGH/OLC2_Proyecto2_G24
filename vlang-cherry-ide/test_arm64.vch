@@ -69,4 +69,43 @@ fn main() {
     println((5 > 3) && (2 < 4))   // 1 (true && true = true)
     println((5 < 3) || (2 < 4))   // 1 (false || true = true)
     println(!(5 > 10))            // 1 (!false = true)
+
+     // ═══════════════════════════ DECLARACIÓN DE SLICES ═══════════════════════════
+    print("🔹 DECLARACIÓN DE SLICES:\n")
+    numeros = []int{10, 20, 30}
+    palabras = []string{"hola", "mundo"}
+
+    print("Numeros originales: ", numeros)
+    print("Palabras originales: ",palabras)
+    // ═══════════════════════════ FUNCIÓN LEN ═══════════════════════════
+    print("🔹 FUNCIÓN LEN (longitud):\n")
+    print("No. Numeros:",len(numeros))
+    print("No. Palabras: ",len(palabras))
+    // ═══════════════════════════ ACCESO POR ÍNDICE ═══════════════════════════
+    print("🔹 ACCESO POR ÍNDICE:\n")
+    print("Elemento en Posicion: ",numeros[1])
+    // ═══════════════════════════ ASIGNACIÓN POR ÍNDICE ═══════════════════════════
+    print("🔹 ASIGNACIÓN POR ÍNDICE:\n")
+    numeros[1] = 99
+    print("Después de numeros[1] = 99: ", numeros[0])
+    // ═══════════════════════════ FUNCIÓN APPEND ═══════════════════════════
+    print("🔹 FUNCIÓN APPEND (agregar elementos):\n")
+    numeros = append(numeros, 77)
+    print("Después de append(numeros, 77): " , numeros)
+    print(" Cantidas de Elementos " ,len(numeros) )
+    // ═══════════════════════════ FUNCIÓN INDEXOF ═══════════════════════════
+    print("🔹 FUNCIÓN INDEXOF (buscar elementos):\n")
+    print("Posicion de No. 99 : ",indexOf(numeros, 99))
+    print("Posicion de No. 999 : ",indexOf(numeros, 999)) // No existe, debería retornar -1
+    // ═══════════════════════════ FUNCIÓN JOIN ═══════════════════════════
+    print("🔹 FUNCIÓN JOIN (concatenar con separador):\n")
+    print("JUNTAR PALABRAS",join(palabras, " ")) 
+    print("SEPARAR PALABRAS POR ',': ",join(palabras, ", "))
+    print("SEPARAR PALABRAS POR '_': ",join(palabras, "_"))
+    // ═══════════════════════════ RESUMEN FINAL ═══════════════════════════
+    print("\n🔹 RESUMEN FINAL:\n")
+    print("Numeros finales: ", numeros)
+    print(" (longitud: ",len(numeros) , ")")
+    print("Palabras finales: ",palabras)
+    print(" (longitud: ",len(palabras) , ")")
 }

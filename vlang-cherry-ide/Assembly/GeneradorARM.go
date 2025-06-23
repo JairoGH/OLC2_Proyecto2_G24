@@ -91,7 +91,7 @@ func (g *ARMGenerator) LoadString(rd, stringLabel string) {
 }
 
 func (g *ARMGenerator) ConcatStrings(destReg, src1Reg, src2Reg string) {
-	g.UsarFuncion("concat_strings") // ✅ REGISTRAR USO
+	g.UsarFuncion("concat_strings") //  REGISTRAR USO
 	g.Instructions = append(g.Instructions,
 		fmt.Sprintf("// Concatenar strings: %s = %s + %s", destReg, src1Reg, src2Reg),
 		fmt.Sprintf("mov x0, %s", strings.ToLower(src1Reg)),
@@ -107,7 +107,7 @@ func (g *ARMGenerator) AddStringConstant(value string) string {
 }
 
 func (g *ARMGenerator) StrLen(destReg, srcReg string) {
-	g.UsarFuncion("strlen") // ✅ REGISTRAR USO
+	g.UsarFuncion("strlen") //  REGISTRAR USO
 	g.Instructions = append(g.Instructions,
 		fmt.Sprintf("mov x0, %s", strings.ToLower(srcReg)),
 		"bl strlen",
@@ -133,7 +133,7 @@ func (g *ARMGenerator) FCmp(rs1, rs2 string) {
 
 // Comparar strings (llamada a función auxiliar)
 func (g *ARMGenerator) StrCmp(rs1, rs2, resultReg string) {
-	g.UsarFuncion("strcmp") // ✅ REGISTRAR USO
+	g.UsarFuncion("strcmp") //  REGISTRAR USO
 	g.Instructions = append(g.Instructions,
 		fmt.Sprintf("mov x0, %s", strings.ToLower(rs1)),
 		fmt.Sprintf("mov x1, %s", strings.ToLower(rs2)),
@@ -141,7 +141,7 @@ func (g *ARMGenerator) StrCmp(rs1, rs2, resultReg string) {
 		fmt.Sprintf("mov %s, x0", strings.ToLower(resultReg)))
 }
 
-// ✅ NUEVO: Método para agregar llamada a función auxiliar manualmente
+//  NUEVO: Método para agregar llamada a función auxiliar manualmente
 func (g *ARMGenerator) LlamarFuncion(nombreFuncion string) {
 	g.UsarFuncion(nombreFuncion)
 	g.Instructions = append(g.Instructions, fmt.Sprintf("bl %s", nombreFuncion))
