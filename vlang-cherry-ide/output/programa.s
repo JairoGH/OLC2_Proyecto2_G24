@@ -97,6 +97,210 @@
     msg_95: .asciz "Matemáticas avanzadas 1"
     msg_96: .asciz "Matemáticas avanzadas 2"
     msg_97: .asciz "Cálculos incorrectos"
+    msg_98: .asciz "=========== SWITCH-CASE ============="
+    msg_99: .asciz "======================================="
+    msg_100: .asciz "=========== EJEMPLO 1: CALCULADORA BÁSICA ============="
+    msg_101: .asciz "*"
+    msg_102: .asciz "+"
+    msg_103: .asciz "-"
+    msg_104: .asciz "*"
+    msg_105: .asciz "/"
+    msg_106: .asciz "Suma:"
+    msg_107: .asciz "Resta:"
+    msg_108: .asciz "Multiplicación:"
+    msg_109: .asciz "División:"
+    msg_110: .asciz "Operación no válida"
+    msg_111: .asciz "=========== EJEMPLO 2: DÍAS DE LA SEMANA ============="
+    msg_112: .asciz "Lunes - Inicio de semana laboral"
+    msg_113: .asciz "Martes - Día productivo"
+    msg_114: .asciz "Miércoles - Mitad de semana"
+    msg_115: .asciz "Jueves - Casi fin de semana"
+    msg_116: .asciz "Viernes - ¡Por fin!"
+    msg_117: .asciz "Sábado - Día de descanso"
+    msg_118: .asciz "Domingo - Día familiar"
+    msg_119: .asciz "Día inválido"
+    msg_120: .asciz "=========== EJEMPLO 3: CALIFICACIONES ============="
+    msg_121: .asciz "B"
+    msg_122: .asciz "A"
+    msg_123: .asciz "B"
+    msg_124: .asciz "C"
+    msg_125: .asciz "D"
+    msg_126: .asciz "F"
+    msg_127: .asciz "Excelente - 90-100 puntos"
+    msg_128: .asciz "¡Felicitaciones!"
+    msg_129: .asciz "Muy bien - 80-89 puntos"
+    msg_130: .asciz "Buen trabajo"
+    msg_131: .asciz "Regular - 70-79 puntos"
+    msg_132: .asciz "Puedes mejorar"
+    msg_133: .asciz "Necesita mejora - 60-69 puntos"
+    msg_134: .asciz "Estudia más"
+    msg_135: .asciz "Reprobado - Menos de 60 puntos"
+    msg_136: .asciz "Necesitas estudiar mucho más"
+    msg_137: .asciz "Calificación no válida"
+    msg_138: .asciz "=========== EJEMPLO 4: ESTADO DE SISTEMA ============="
+    msg_139: .asciz "Sistema ACTIVO"
+    msg_140: .asciz "Modo DEBUG habilitado"
+    msg_141: .asciz "Modo PRODUCCIÓN"
+    msg_142: .asciz "Sistema INACTIVO"
+    msg_143: .asciz "Iniciando secuencia de arranque..."
+    msg_144: .asciz "=========== EJEMPLO 5: MENÚ DE OPCIONES ============="
+    msg_145: .asciz "configuracion"
+    msg_146: .asciz "inicio"
+    msg_147: .asciz "perfil"
+    msg_148: .asciz "configuracion"
+    msg_149: .asciz "ayuda"
+    msg_150: .asciz "salir"
+    msg_151: .asciz "=== PANTALLA PRINCIPAL ==="
+    msg_152: .asciz "Bienvenido al sistema"
+    msg_153: .asciz "=== PERFIL DE USUARIO ==="
+    msg_154: .asciz "Nombre: Juan Pérez"
+    msg_155: .asciz "Email: juan@email.com"
+    msg_156: .asciz "=== CONFIGURACIÓN ==="
+    msg_157: .asciz "1. Cambiar idioma"
+    msg_158: .asciz "2. Configurar notificaciones"
+    msg_159: .asciz "3. Privacidad"
+    msg_160: .asciz "=== CENTRO DE AYUDA ==="
+    msg_161: .asciz "¿En qué podemos ayudarte?"
+    msg_162: .asciz "=== CERRANDO SESIÓN ==="
+    msg_163: .asciz "¡Hasta luego!"
+    msg_164: .asciz "Opción no reconocida"
+    msg_165: .asciz "Usa: inicio, perfil, configuracion, ayuda, salir"
+    msg_166: .asciz "=========== EJEMPLO 6: TIPOS DE ARCHIVOS ============="
+    msg_167: .asciz "pdf"
+    msg_168: .asciz "txt"
+    msg_169: .asciz "doc"
+    msg_170: .asciz "pdf"
+    msg_171: .asciz "jpg"
+    msg_172: .asciz "png"
+    msg_173: .asciz "mp3"
+    msg_174: .asciz "mp4"
+    msg_175: .asciz "Archivo de texto plano"
+    msg_176: .asciz "Editor: Bloc de notas"
+    msg_177: .asciz "Documento de Word"
+    msg_178: .asciz "Editor: Microsoft Word"
+    msg_179: .asciz "Documento PDF"
+    msg_180: .asciz "Visor: Adobe Reader"
+    msg_181: .asciz "Imagen JPEG"
+    msg_182: .asciz "Visor: Galería de fotos"
+    msg_183: .asciz "Imagen PNG"
+    msg_184: .asciz "Visor: Galería de fotos"
+    msg_185: .asciz "Archivo de audio"
+    msg_186: .asciz "Reproductor: Reproductor de música"
+    msg_187: .asciz "Archivo de video"
+    msg_188: .asciz "Reproductor: Reproductor de video"
+    msg_189: .asciz "Tipo de archivo no reconocido"
+    msg_190: .asciz "Abrir con aplicación predeterminada"
+    msg_191: .asciz "=========== EJEMPLO 7: NIVELES DE JUEGO ============="
+    msg_192: .asciz "NIVEL 1: Tutorial"
+    msg_193: .asciz "Aprendiendo los controles básicos"
+    msg_194: .asciz "NIVEL 2: Principiante"
+    msg_195: .asciz "Primeros desafíos"
+    msg_196: .asciz "NIVEL 3: Intermedio"
+    msg_197: .asciz "La dificultad aumenta"
+    msg_198: .asciz "NIVEL 4: Avanzado"
+    msg_199: .asciz "Solo para expertos"
+    msg_200: .asciz "NIVEL 5: Maestro"
+    msg_201: .asciz "El desafío final"
+    msg_202: .asciz "Nivel no disponible"
+    msg_203: .asciz "Puntos obtenidos:"
+    msg_204: .asciz "=========== EJEMPLO 8: CÓDIGOS DE ERROR ============="
+    msg_205: .asciz "OK - Solicitud exitosa"
+    msg_206: .asciz "Bad Request - Solicitud incorrecta"
+    msg_207: .asciz "Unauthorized - No autorizado"
+    msg_208: .asciz "Forbidden - Acceso prohibido"
+    msg_209: .asciz "Not Found - Recurso no encontrado"
+    msg_210: .asciz "Verifica la URL"
+    msg_211: .asciz "Internal Server Error - Error del servidor"
+    msg_212: .asciz "Contacta al administrador"
+    msg_213: .asciz "Service Unavailable - Servicio no disponible"
+    msg_214: .asciz "Intenta más tarde"
+    msg_215: .asciz "Código de error desconocido"
+    msg_216: .asciz "=========== EJEMPLO 9: COMANDOS DE TERMINAL ============="
+    msg_217: .asciz "ls"
+    msg_218: .asciz "ls"
+    msg_219: .asciz "pwd"
+    msg_220: .asciz "cd"
+    msg_221: .asciz "mkdir"
+    msg_222: .asciz "rm"
+    msg_223: .asciz "help"
+    msg_224: .asciz "exit"
+    msg_225: .asciz "Listando archivos del directorio:"
+    msg_226: .asciz "archivo1.txt"
+    msg_227: .asciz "archivo2.pdf"
+    msg_228: .asciz "carpeta1/"
+    msg_229: .asciz "Directorio actual:"
+    msg_230: .asciz "/home/usuario/documentos"
+    msg_231: .asciz "Cambiar directorio"
+    msg_232: .asciz "Uso: cd <directorio>"
+    msg_233: .asciz "Crear directorio"
+    msg_234: .asciz "Uso: mkdir <nombre>"
+    msg_235: .asciz "Eliminar archivo"
+    msg_236: .asciz "¡CUIDADO! Esta acción es irreversible"
+    msg_237: .asciz "Comandos disponibles:"
+    msg_238: .asciz "ls, pwd, cd, mkdir, rm, help, exit"
+    msg_239: .asciz "Cerrando terminal..."
+    msg_240: .asciz "Comando no reconocido"
+    msg_241: .asciz "Escribe 'help' para ver comandos disponibles"
+    msg_242: .asciz "=========== EJEMPLO 10: SIN DEFAULT ============="
+    msg_243: .asciz "verde"
+    msg_244: .asciz "rojo"
+    msg_245: .asciz "azul"
+    msg_246: .asciz "amarillo"
+    msg_247: .asciz "verde"
+    msg_248: .asciz "negro"
+    msg_249: .asciz "blanco"
+    msg_250: .asciz "Color cálido y energético"
+    msg_251: .asciz "Color frío y tranquilo"
+    msg_252: .asciz "Color brillante y alegre"
+    msg_253: .asciz "Color de la naturaleza"
+    msg_254: .asciz "Ausencia de color"
+    msg_255: .asciz "Presencia de todos los colores"
+    msg_256: .asciz "Análisis de color completado"
+    msg_257: .asciz "=========== EJEMPLO 11: SWITCH CON VARIABLES ============="
+    msg_258: .asciz ""
+    msg_259: .asciz "Recién nacido"
+    msg_260: .asciz "Bebé"
+    msg_261: .asciz "Niño pequeño"
+    msg_262: .asciz "Adolescente"
+    msg_263: .asciz "Joven adulto"
+    msg_264: .asciz "Adulto"
+    msg_265: .asciz "En la flor de la vida"
+    msg_266: .asciz "Adulto mayor"
+    msg_267: .asciz "Edad no categorizada"
+    msg_268: .asciz "Categoría de Edad:"
+    msg_269: .asciz "=========== EJEMPLO 12: SWITCH ANIDADO COMPLEJO ============="
+    msg_270: .asciz "admin"
+    msg_271: .asciz "escribir"
+    msg_272: .asciz "admin"
+    msg_273: .asciz "editor"
+    msg_274: .asciz "usuario"
+    msg_275: .asciz "Usuario ADMINISTRADOR"
+    msg_276: .asciz "leer"
+    msg_277: .asciz "escribir"
+    msg_278: .asciz "eliminar"
+    msg_279: .asciz "✅ Permiso de lectura concedido"
+    msg_280: .asciz "✅ Permiso de escritura concedido"
+    msg_281: .asciz "✅ Permiso de eliminación concedido"
+    msg_282: .asciz "❌ Permiso no reconocido"
+    msg_283: .asciz "Usuario EDITOR"
+    msg_284: .asciz "leer"
+    msg_285: .asciz "escribir"
+    msg_286: .asciz "eliminar"
+    msg_287: .asciz "✅ Permiso de lectura concedido"
+    msg_288: .asciz "✅ Permiso de escritura concedido"
+    msg_289: .asciz "❌ Permiso de eliminación DENEGADO"
+    msg_290: .asciz "❌ Permiso no reconocido"
+    msg_291: .asciz "Usuario ESTÁNDAR"
+    msg_292: .asciz "leer"
+    msg_293: .asciz "escribir"
+    msg_294: .asciz "eliminar"
+    msg_295: .asciz "✅ Permiso de lectura concedido"
+    msg_296: .asciz "❌ Permiso de escritura DENEGADO"
+    msg_297: .asciz "❌ Permiso de eliminación DENEGADO"
+    msg_298: .asciz "❌ Permiso no reconocido"
+    msg_299: .asciz "❌ Tipo de usuario no válido"
+    msg_300: .asciz "=========== FIN DE EJEMPLOS ============="
+    msg_301: .asciz "¡Switch-case implementado exitosamente!"
 buffer_int: .skip 32
 buffer_float: .skip 64
 buffer_string: .skip 512
@@ -3085,6 +3289,2034 @@ join_end_palabras_42:
 .Lif_final_107:
 // === FIN ESTRUCTURA IF-ELSE IF-ELSE ===
 
+// === IMPRIMIR STRING  ===
+    adr x9, msg_98
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x9, msg_99
+    mov x0, x9
+    bl print_string
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x9, msg_100
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE: operacion ===
+// === DECLARAR VARIABLE: operacion string ===
+    sub sp, sp, #8  // Reservar espacio para operacion
+    adr x9, msg_101
+    str x9, [sp]
+// Variable operacion declarada en [sp] (offset actual: 0)
+// === DECLARAR VARIABLE: Var1 ===
+// === DECLARAR VARIABLE: Var1 int ===
+    sub sp, sp, #8  // Reservar espacio para Var1
+    mov x9, #3
+    str x9, [sp]
+// Variable Var1 declarada en [sp] (offset actual: 0)
+// === DECLARAR VARIABLE: Var2 ===
+// === DECLARAR VARIABLE: Var2 int ===
+    sub sp, sp, #8  // Reservar espacio para Var2
+    mov x9, #5
+    str x9, [sp]
+// Variable Var2 declarada en [sp] (offset actual: 0)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: operacion ===
+// === CARGAR VARIABLE: operacion (offset: 16) ===
+    ldr x9, [sp, #16]
+// Variable cargada exitosamente: operacion
+// Switch sobre expresión tipo: string
+    mov x10, x9
+// Comparación case 0
+    adr x11, msg_102
+    mov x0, x10
+    mov x1, x11
+    bl strcmp
+    mov x12, x0
+    cmp x12, #0
+    beq .Lcase_1_0
+// Comparación case 1
+    adr x13, msg_103
+    mov x0, x10
+    mov x1, x13
+    bl strcmp
+    mov x14, x0
+    cmp x14, #0
+    beq .Lcase_1_1
+// Comparación case 2
+    adr x15, msg_104
+    mov x0, x10
+    mov x1, x15
+    bl strcmp
+    mov x16, x0
+    cmp x16, #0
+    beq .Lcase_1_2
+// Comparación case 3
+    adr x17, msg_105
+    mov x0, x10
+    mov x1, x17
+    bl strcmp
+    mov x18, x0
+    cmp x18, #0
+    beq .Lcase_1_3
+    b .Lswitch_default_1
+.Lcase_1_0:
+// Ejecutando case 0
+// === DECLARAR VARIABLE: resultado ===
+// === DEBUG: EXPRESIÓN BINARIA + ===
+// === ACCESO A VARIABLE: Var1 ===
+// === CARGAR VARIABLE: Var1 (offset: 8) ===
+    ldr x19, [sp, #8]
+// Variable cargada exitosamente: Var1
+// === ACCESO A VARIABLE: Var2 ===
+// === CARGAR VARIABLE: Var2 (offset: 0) ===
+    ldr x20, [sp, #0]
+// Variable cargada exitosamente: Var2
+// Operador: +, Tipos: int + int
+    mov x21, x19
+    mov x22, x20
+    add x23, x21, x22
+// === FIN EXPRESIÓN BINARIA ===
+// === DECLARAR VARIABLE: resultado int ===
+// Error: variable 'resultado' ya declarada en ámbito 'global'
+// === IMPRIMIR STRING  ===
+    adr x24, msg_106
+    mov x0, x24
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === CARGAR VARIABLE: resultado (offset: 32) ===
+    ldr x25, [sp, #32]
+// === IMPRIMIR INT  ===
+    mov x0, x25
+    bl print_int
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_1
+.Lcase_1_1:
+// Ejecutando case 1
+// === DECLARAR VARIABLE: resultado ===
+// === DEBUG: EXPRESIÓN BINARIA - ===
+// === ACCESO A VARIABLE: Var1 ===
+// === CARGAR VARIABLE: Var1 (offset: 8) ===
+    ldr x26, [sp, #8]
+// Variable cargada exitosamente: Var1
+// === ACCESO A VARIABLE: Var2 ===
+// === CARGAR VARIABLE: Var2 (offset: 0) ===
+    ldr x27, [sp, #0]
+// Variable cargada exitosamente: Var2
+// Operador: -, Tipos: int - int
+    mov x28, x26
+    mov x29, x27
+    sub x30, x28, x29
+// === FIN EXPRESIÓN BINARIA ===
+// === DECLARAR VARIABLE: resultado int ===
+// Error: variable 'resultado' ya declarada en ámbito 'global'
+// === IMPRIMIR STRING  ===
+// ADVERTENCIA: Reciclando registros temporales
+    adr x9, msg_107
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === CARGAR VARIABLE: resultado (offset: 32) ===
+    ldr x10, [sp, #32]
+// === IMPRIMIR INT  ===
+    mov x0, x10
+    bl print_int
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_1
+.Lcase_1_2:
+// Ejecutando case 2
+// === DECLARAR VARIABLE: resultado ===
+// === DEBUG: EXPRESIÓN BINARIA * ===
+// === ACCESO A VARIABLE: Var1 ===
+// === CARGAR VARIABLE: Var1 (offset: 8) ===
+    ldr x11, [sp, #8]
+// Variable cargada exitosamente: Var1
+// === ACCESO A VARIABLE: Var2 ===
+// === CARGAR VARIABLE: Var2 (offset: 0) ===
+    ldr x12, [sp, #0]
+// Variable cargada exitosamente: Var2
+// Operador: *, Tipos: int * int
+    mov x13, x11
+    mov x14, x12
+    mul x15, x13, x14
+// === FIN EXPRESIÓN BINARIA ===
+// === DECLARAR VARIABLE: resultado int ===
+// Error: variable 'resultado' ya declarada en ámbito 'global'
+// === IMPRIMIR STRING  ===
+    adr x16, msg_108
+    mov x0, x16
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === CARGAR VARIABLE: resultado (offset: 32) ===
+    ldr x17, [sp, #32]
+// === IMPRIMIR INT  ===
+    mov x0, x17
+    bl print_int
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_1
+.Lcase_1_3:
+// Ejecutando case 3
+// === DECLARAR VARIABLE: resultado ===
+// === DEBUG: EXPRESIÓN BINARIA / ===
+// === ACCESO A VARIABLE: Var1 ===
+// === CARGAR VARIABLE: Var1 (offset: 8) ===
+    ldr x18, [sp, #8]
+// Variable cargada exitosamente: Var1
+// === ACCESO A VARIABLE: Var2 ===
+// === CARGAR VARIABLE: Var2 (offset: 0) ===
+    ldr x19, [sp, #0]
+// Variable cargada exitosamente: Var2
+// Operador: /, Tipos: int / int
+    mov x20, x18
+    mov x21, x19
+    udiv x22, x20, x21
+// === FIN EXPRESIÓN BINARIA ===
+// === DECLARAR VARIABLE: resultado int ===
+// Error: variable 'resultado' ya declarada en ámbito 'global'
+// === IMPRIMIR STRING  ===
+    adr x23, msg_109
+    mov x0, x23
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === CARGAR VARIABLE: resultado (offset: 32) ===
+    ldr x24, [sp, #32]
+// === IMPRIMIR INT  ===
+    mov x0, x24
+    bl print_int
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_1
+.Lswitch_default_1:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+    adr x25, msg_110
+    mov x0, x25
+    bl print_string
+    bl print_newline
+    bl print_newline
+.Lswitch_end_1:
+// === FIN SWITCH STATEMENT ===
+// === IMPRIMIR STRING  ===
+    adr x9, msg_111
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE: dia_numero ===
+// === DECLARAR VARIABLE: dia_numero int ===
+    sub sp, sp, #8  // Reservar espacio para dia_numero
+    mov x9, #3
+    str x9, [sp]
+// Variable dia_numero declarada en [sp] (offset actual: 0)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: dia_numero ===
+// === CARGAR VARIABLE: dia_numero (offset: 0) ===
+    ldr x9, [sp, #0]
+// Variable cargada exitosamente: dia_numero
+// Switch sobre expresión tipo: int
+    mov x10, x9
+// Comparación case 0
+    mov x11, #1
+    cmp x10, x11
+    beq .Lcase_2_0
+// Comparación case 1
+    mov x12, #2
+    cmp x10, x12
+    beq .Lcase_2_1
+// Comparación case 2
+    mov x13, #3
+    cmp x10, x13
+    beq .Lcase_2_2
+// Comparación case 3
+    mov x14, #4
+    cmp x10, x14
+    beq .Lcase_2_3
+// Comparación case 4
+    mov x15, #5
+    cmp x10, x15
+    beq .Lcase_2_4
+// Comparación case 5
+    mov x16, #6
+    cmp x10, x16
+    beq .Lcase_2_5
+// Comparación case 6
+    mov x17, #7
+    cmp x10, x17
+    beq .Lcase_2_6
+    b .Lswitch_default_2
+.Lcase_2_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x18, msg_112
+    mov x0, x18
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_2
+.Lcase_2_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x19, msg_113
+    mov x0, x19
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_2
+.Lcase_2_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x20, msg_114
+    mov x0, x20
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_2
+.Lcase_2_3:
+// Ejecutando case 3
+// === IMPRIMIR STRING  ===
+    adr x21, msg_115
+    mov x0, x21
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_2
+.Lcase_2_4:
+// Ejecutando case 4
+// === IMPRIMIR STRING  ===
+    adr x22, msg_116
+    mov x0, x22
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_2
+.Lcase_2_5:
+// Ejecutando case 5
+// === IMPRIMIR STRING  ===
+    adr x23, msg_117
+    mov x0, x23
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_2
+.Lcase_2_6:
+// Ejecutando case 6
+// === IMPRIMIR STRING  ===
+    adr x24, msg_118
+    mov x0, x24
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_2
+.Lswitch_default_2:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+    adr x25, msg_119
+    mov x0, x25
+    bl print_string
+    bl print_newline
+    bl print_newline
+.Lswitch_end_2:
+// === FIN SWITCH STATEMENT ===
+// === IMPRIMIR STRING  ===
+    adr x9, msg_120
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE: letra_calificacion ===
+// === DECLARAR VARIABLE: letra_calificacion string ===
+    sub sp, sp, #8  // Reservar espacio para letra_calificacion
+    adr x9, msg_121
+    str x9, [sp]
+// Variable letra_calificacion declarada en [sp] (offset actual: 0)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: letra_calificacion ===
+// === CARGAR VARIABLE: letra_calificacion (offset: 0) ===
+    ldr x9, [sp, #0]
+// Variable cargada exitosamente: letra_calificacion
+// Switch sobre expresión tipo: string
+    mov x10, x9
+// Comparación case 0
+    adr x11, msg_122
+    mov x0, x10
+    mov x1, x11
+    bl strcmp
+    mov x12, x0
+    cmp x12, #0
+    beq .Lcase_3_0
+// Comparación case 1
+    adr x13, msg_123
+    mov x0, x10
+    mov x1, x13
+    bl strcmp
+    mov x14, x0
+    cmp x14, #0
+    beq .Lcase_3_1
+// Comparación case 2
+    adr x15, msg_124
+    mov x0, x10
+    mov x1, x15
+    bl strcmp
+    mov x16, x0
+    cmp x16, #0
+    beq .Lcase_3_2
+// Comparación case 3
+    adr x17, msg_125
+    mov x0, x10
+    mov x1, x17
+    bl strcmp
+    mov x18, x0
+    cmp x18, #0
+    beq .Lcase_3_3
+// Comparación case 4
+    adr x19, msg_126
+    mov x0, x10
+    mov x1, x19
+    bl strcmp
+    mov x20, x0
+    cmp x20, #0
+    beq .Lcase_3_4
+    b .Lswitch_default_3
+.Lcase_3_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x21, msg_127
+    mov x0, x21
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x22, msg_128
+    mov x0, x22
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_3
+.Lcase_3_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x23, msg_129
+    mov x0, x23
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x24, msg_130
+    mov x0, x24
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_3
+.Lcase_3_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x25, msg_131
+    mov x0, x25
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x26, msg_132
+    mov x0, x26
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_3
+.Lcase_3_3:
+// Ejecutando case 3
+// === IMPRIMIR STRING  ===
+    adr x27, msg_133
+    mov x0, x27
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x28, msg_134
+    mov x0, x28
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_3
+.Lcase_3_4:
+// Ejecutando case 4
+// === IMPRIMIR STRING  ===
+    adr x29, msg_135
+    mov x0, x29
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x30, msg_136
+    mov x0, x30
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_3
+.Lswitch_default_3:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+// ADVERTENCIA: Reciclando registros temporales
+    adr x9, msg_137
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+.Lswitch_end_3:
+// === FIN SWITCH STATEMENT ===
+// === IMPRIMIR STRING  ===
+    adr x9, msg_138
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE: sistema_activo ===
+// === LITERAL BOOL: true ===
+// === DECLARAR VARIABLE: sistema_activo bool ===
+    sub sp, sp, #8  // Reservar espacio para sistema_activo
+    mov x9, #1
+    str x9, [sp]
+// Variable sistema_activo declarada en [sp] (offset actual: 0)
+// === DECLARAR VARIABLE: modo_debug ===
+// === LITERAL BOOL: false ===
+// === DECLARAR VARIABLE: modo_debug bool ===
+    sub sp, sp, #8  // Reservar espacio para modo_debug
+    mov x9, #0
+    str x9, [sp]
+// Variable modo_debug declarada en [sp] (offset actual: 0)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: sistema_activo ===
+// === CARGAR VARIABLE: sistema_activo (offset: 8) ===
+    ldr x9, [sp, #8]
+// Variable cargada exitosamente: sistema_activo
+// Switch sobre expresión tipo: bool
+    mov x10, x9
+// === LITERAL BOOL: true ===
+// Comparación case 0
+    mov x11, #1
+    cmp x10, x11
+    beq .Lcase_4_0
+// === LITERAL BOOL: false ===
+// Comparación case 1
+    mov x12, #0
+    cmp x10, x12
+    beq .Lcase_4_1
+    b .Lswitch_end_4
+.Lcase_4_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x13, msg_139
+    mov x0, x13
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: modo_debug ===
+// === CARGAR VARIABLE: modo_debug (offset: 0) ===
+    ldr x14, [sp, #0]
+// Variable cargada exitosamente: modo_debug
+// Switch sobre expresión tipo: bool
+    mov x15, x14
+// === LITERAL BOOL: true ===
+// Comparación case 0
+    mov x16, #1
+    cmp x15, x16
+    beq .Lcase_5_0
+// === LITERAL BOOL: false ===
+// Comparación case 1
+    mov x17, #0
+    cmp x15, x17
+    beq .Lcase_5_1
+    b .Lswitch_end_5
+.Lcase_5_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x18, msg_140
+    mov x0, x18
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_5
+.Lcase_5_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x19, msg_141
+    mov x0, x19
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_5
+.Lswitch_end_5:
+// === FIN SWITCH STATEMENT ===
+    b .Lswitch_end_4
+.Lcase_4_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x20, msg_142
+    mov x0, x20
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x21, msg_143
+    mov x0, x21
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_4
+.Lswitch_end_4:
+// === FIN SWITCH STATEMENT ===
+// === IMPRIMIR STRING  ===
+    adr x9, msg_144
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE: opcion ===
+// === DECLARAR VARIABLE: opcion string ===
+    sub sp, sp, #8  // Reservar espacio para opcion
+    adr x9, msg_145
+    str x9, [sp]
+// Variable opcion declarada en [sp] (offset actual: 0)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: opcion ===
+// === CARGAR VARIABLE: opcion (offset: 0) ===
+    ldr x9, [sp, #0]
+// Variable cargada exitosamente: opcion
+// Switch sobre expresión tipo: string
+    mov x10, x9
+// Comparación case 0
+    adr x11, msg_146
+    mov x0, x10
+    mov x1, x11
+    bl strcmp
+    mov x12, x0
+    cmp x12, #0
+    beq .Lcase_6_0
+// Comparación case 1
+    adr x13, msg_147
+    mov x0, x10
+    mov x1, x13
+    bl strcmp
+    mov x14, x0
+    cmp x14, #0
+    beq .Lcase_6_1
+// Comparación case 2
+    adr x15, msg_148
+    mov x0, x10
+    mov x1, x15
+    bl strcmp
+    mov x16, x0
+    cmp x16, #0
+    beq .Lcase_6_2
+// Comparación case 3
+    adr x17, msg_149
+    mov x0, x10
+    mov x1, x17
+    bl strcmp
+    mov x18, x0
+    cmp x18, #0
+    beq .Lcase_6_3
+// Comparación case 4
+    adr x19, msg_150
+    mov x0, x10
+    mov x1, x19
+    bl strcmp
+    mov x20, x0
+    cmp x20, #0
+    beq .Lcase_6_4
+    b .Lswitch_default_6
+.Lcase_6_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x21, msg_151
+    mov x0, x21
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x22, msg_152
+    mov x0, x22
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_6
+.Lcase_6_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x23, msg_153
+    mov x0, x23
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x24, msg_154
+    mov x0, x24
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x25, msg_155
+    mov x0, x25
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_6
+.Lcase_6_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x26, msg_156
+    mov x0, x26
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x27, msg_157
+    mov x0, x27
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x28, msg_158
+    mov x0, x28
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x29, msg_159
+    mov x0, x29
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_6
+.Lcase_6_3:
+// Ejecutando case 3
+// === IMPRIMIR STRING  ===
+    adr x30, msg_160
+    mov x0, x30
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+// ADVERTENCIA: Reciclando registros temporales
+    adr x9, msg_161
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_6
+.Lcase_6_4:
+// Ejecutando case 4
+// === IMPRIMIR STRING  ===
+    adr x10, msg_162
+    mov x0, x10
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x11, msg_163
+    mov x0, x11
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_6
+.Lswitch_default_6:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+    adr x12, msg_164
+    mov x0, x12
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x13, msg_165
+    mov x0, x13
+    bl print_string
+    bl print_newline
+    bl print_newline
+.Lswitch_end_6:
+// === FIN SWITCH STATEMENT ===
+// === IMPRIMIR STRING  ===
+    adr x9, msg_166
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE: extension ===
+// === DECLARAR VARIABLE: extension string ===
+    sub sp, sp, #8  // Reservar espacio para extension
+    adr x9, msg_167
+    str x9, [sp]
+// Variable extension declarada en [sp] (offset actual: 0)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: extension ===
+// === CARGAR VARIABLE: extension (offset: 0) ===
+    ldr x9, [sp, #0]
+// Variable cargada exitosamente: extension
+// Switch sobre expresión tipo: string
+    mov x10, x9
+// Comparación case 0
+    adr x11, msg_168
+    mov x0, x10
+    mov x1, x11
+    bl strcmp
+    mov x12, x0
+    cmp x12, #0
+    beq .Lcase_7_0
+// Comparación case 1
+    adr x13, msg_169
+    mov x0, x10
+    mov x1, x13
+    bl strcmp
+    mov x14, x0
+    cmp x14, #0
+    beq .Lcase_7_1
+// Comparación case 2
+    adr x15, msg_170
+    mov x0, x10
+    mov x1, x15
+    bl strcmp
+    mov x16, x0
+    cmp x16, #0
+    beq .Lcase_7_2
+// Comparación case 3
+    adr x17, msg_171
+    mov x0, x10
+    mov x1, x17
+    bl strcmp
+    mov x18, x0
+    cmp x18, #0
+    beq .Lcase_7_3
+// Comparación case 4
+    adr x19, msg_172
+    mov x0, x10
+    mov x1, x19
+    bl strcmp
+    mov x20, x0
+    cmp x20, #0
+    beq .Lcase_7_4
+// Comparación case 5
+    adr x21, msg_173
+    mov x0, x10
+    mov x1, x21
+    bl strcmp
+    mov x22, x0
+    cmp x22, #0
+    beq .Lcase_7_5
+// Comparación case 6
+    adr x23, msg_174
+    mov x0, x10
+    mov x1, x23
+    bl strcmp
+    mov x24, x0
+    cmp x24, #0
+    beq .Lcase_7_6
+    b .Lswitch_default_7
+.Lcase_7_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x25, msg_175
+    mov x0, x25
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x26, msg_176
+    mov x0, x26
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_7
+.Lcase_7_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x27, msg_177
+    mov x0, x27
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x28, msg_178
+    mov x0, x28
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_7
+.Lcase_7_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x29, msg_179
+    mov x0, x29
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x30, msg_180
+    mov x0, x30
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_7
+.Lcase_7_3:
+// Ejecutando case 3
+// === IMPRIMIR STRING  ===
+// ADVERTENCIA: Reciclando registros temporales
+    adr x9, msg_181
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x10, msg_182
+    mov x0, x10
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_7
+.Lcase_7_4:
+// Ejecutando case 4
+// === IMPRIMIR STRING  ===
+    adr x11, msg_183
+    mov x0, x11
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x12, msg_184
+    mov x0, x12
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_7
+.Lcase_7_5:
+// Ejecutando case 5
+// === IMPRIMIR STRING  ===
+    adr x13, msg_185
+    mov x0, x13
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x14, msg_186
+    mov x0, x14
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_7
+.Lcase_7_6:
+// Ejecutando case 6
+// === IMPRIMIR STRING  ===
+    adr x15, msg_187
+    mov x0, x15
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x16, msg_188
+    mov x0, x16
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_7
+.Lswitch_default_7:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+    adr x17, msg_189
+    mov x0, x17
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x18, msg_190
+    mov x0, x18
+    bl print_string
+    bl print_newline
+    bl print_newline
+.Lswitch_end_7:
+// === FIN SWITCH STATEMENT ===
+// === IMPRIMIR STRING  ===
+    adr x9, msg_191
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE: Nivel ===
+// === DECLARAR VARIABLE: Nivel int ===
+    sub sp, sp, #8  // Reservar espacio para Nivel
+    mov x9, #2
+    str x9, [sp]
+// Variable Nivel declarada en [sp] (offset actual: 0)
+// === DECLARAR VARIABLE: Puntos ===
+// === DECLARAR VARIABLE: Puntos int ===
+    sub sp, sp, #8  // Reservar espacio para Puntos
+    mov x9, #0
+    str x9, [sp]
+// Variable Puntos declarada en [sp] (offset actual: 0)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: nivel ===
+// === CARGAR VARIABLE: nivel (offset: 144) ===
+    ldr x9, [sp, #144]
+// Variable cargada exitosamente: nivel
+// Switch sobre expresión tipo: int
+    mov x10, x9
+// Comparación case 0
+    mov x11, #1
+    cmp x10, x11
+    beq .Lcase_8_0
+// Comparación case 1
+    mov x12, #2
+    cmp x10, x12
+    beq .Lcase_8_1
+// Comparación case 2
+    mov x13, #3
+    cmp x10, x13
+    beq .Lcase_8_2
+// Comparación case 3
+    mov x14, #4
+    cmp x10, x14
+    beq .Lcase_8_3
+// Comparación case 4
+    mov x15, #5
+    cmp x10, x15
+    beq .Lcase_8_4
+    b .Lswitch_default_8
+.Lcase_8_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x16, msg_192
+    mov x0, x16
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x17, msg_193
+    mov x0, x17
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === ASIGNAR VARIABLE: Puntos = int (offset: 0) ===
+    mov x18, #100
+    str x18, [sp, #0]
+    b .Lswitch_end_8
+.Lcase_8_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x19, msg_194
+    mov x0, x19
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x20, msg_195
+    mov x0, x20
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === ASIGNAR VARIABLE: Puntos = int (offset: 0) ===
+    mov x21, #250
+    str x21, [sp, #0]
+    b .Lswitch_end_8
+.Lcase_8_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x22, msg_196
+    mov x0, x22
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x23, msg_197
+    mov x0, x23
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === ASIGNAR VARIABLE: Puntos = int (offset: 0) ===
+    mov x24, #500
+    str x24, [sp, #0]
+    b .Lswitch_end_8
+.Lcase_8_3:
+// Ejecutando case 3
+// === IMPRIMIR STRING  ===
+    adr x25, msg_198
+    mov x0, x25
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x26, msg_199
+    mov x0, x26
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === ASIGNAR VARIABLE: puntos = int (offset: 136) ===
+    mov x27, #1000
+    str x27, [sp, #136]
+    b .Lswitch_end_8
+.Lcase_8_4:
+// Ejecutando case 4
+// === IMPRIMIR STRING  ===
+    adr x28, msg_200
+    mov x0, x28
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x29, msg_201
+    mov x0, x29
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === ASIGNAR VARIABLE: Puntos = int (offset: 0) ===
+    mov x30, #2000
+    str x30, [sp, #0]
+    b .Lswitch_end_8
+.Lswitch_default_8:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+// ADVERTENCIA: Reciclando registros temporales
+    adr x9, msg_202
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === ASIGNAR VARIABLE: Puntos = int (offset: 0) ===
+    mov x10, #0
+    str x10, [sp, #0]
+.Lswitch_end_8:
+// === FIN SWITCH STATEMENT ===
+// === IMPRIMIR STRING  ===
+    adr x9, msg_203
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === CARGAR VARIABLE: Puntos (offset: 0) ===
+    ldr x9, [sp, #0]
+// === IMPRIMIR INT  ===
+    mov x0, x9
+    bl print_int
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x9, msg_204
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE: codigo_error ===
+// === DECLARAR VARIABLE: codigo_error int ===
+    sub sp, sp, #8  // Reservar espacio para codigo_error
+    mov x9, #404
+    str x9, [sp]
+// Variable codigo_error declarada en [sp] (offset actual: 0)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: codigo_error ===
+// === CARGAR VARIABLE: codigo_error (offset: 0) ===
+    ldr x9, [sp, #0]
+// Variable cargada exitosamente: codigo_error
+// Switch sobre expresión tipo: int
+    mov x10, x9
+// Comparación case 0
+    mov x11, #200
+    cmp x10, x11
+    beq .Lcase_9_0
+// Comparación case 1
+    mov x12, #400
+    cmp x10, x12
+    beq .Lcase_9_1
+// Comparación case 2
+    mov x13, #401
+    cmp x10, x13
+    beq .Lcase_9_2
+// Comparación case 3
+    mov x14, #403
+    cmp x10, x14
+    beq .Lcase_9_3
+// Comparación case 4
+    mov x15, #404
+    cmp x10, x15
+    beq .Lcase_9_4
+// Comparación case 5
+    mov x16, #500
+    cmp x10, x16
+    beq .Lcase_9_5
+// Comparación case 6
+    mov x17, #503
+    cmp x10, x17
+    beq .Lcase_9_6
+    b .Lswitch_default_9
+.Lcase_9_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x18, msg_205
+    mov x0, x18
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_9
+.Lcase_9_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x19, msg_206
+    mov x0, x19
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_9
+.Lcase_9_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x20, msg_207
+    mov x0, x20
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_9
+.Lcase_9_3:
+// Ejecutando case 3
+// === IMPRIMIR STRING  ===
+    adr x21, msg_208
+    mov x0, x21
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_9
+.Lcase_9_4:
+// Ejecutando case 4
+// === IMPRIMIR STRING  ===
+    adr x22, msg_209
+    mov x0, x22
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x23, msg_210
+    mov x0, x23
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_9
+.Lcase_9_5:
+// Ejecutando case 5
+// === IMPRIMIR STRING  ===
+    adr x24, msg_211
+    mov x0, x24
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x25, msg_212
+    mov x0, x25
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_9
+.Lcase_9_6:
+// Ejecutando case 6
+// === IMPRIMIR STRING  ===
+    adr x26, msg_213
+    mov x0, x26
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x27, msg_214
+    mov x0, x27
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_9
+.Lswitch_default_9:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+    adr x28, msg_215
+    mov x0, x28
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === CARGAR VARIABLE: codigo_error (offset: 0) ===
+    ldr x29, [sp, #0]
+// === IMPRIMIR INT  ===
+    mov x0, x29
+    bl print_int
+    bl print_newline
+    bl print_newline
+.Lswitch_end_9:
+// === FIN SWITCH STATEMENT ===
+// === IMPRIMIR STRING  ===
+    adr x9, msg_216
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE: comando ===
+// === DECLARAR VARIABLE: comando string ===
+    sub sp, sp, #8  // Reservar espacio para comando
+    adr x9, msg_217
+    str x9, [sp]
+// Variable comando declarada en [sp] (offset actual: 0)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: comando ===
+// === CARGAR VARIABLE: comando (offset: 0) ===
+    ldr x9, [sp, #0]
+// Variable cargada exitosamente: comando
+// Switch sobre expresión tipo: string
+    mov x10, x9
+// Comparación case 0
+    adr x11, msg_218
+    mov x0, x10
+    mov x1, x11
+    bl strcmp
+    mov x12, x0
+    cmp x12, #0
+    beq .Lcase_10_0
+// Comparación case 1
+    adr x13, msg_219
+    mov x0, x10
+    mov x1, x13
+    bl strcmp
+    mov x14, x0
+    cmp x14, #0
+    beq .Lcase_10_1
+// Comparación case 2
+    adr x15, msg_220
+    mov x0, x10
+    mov x1, x15
+    bl strcmp
+    mov x16, x0
+    cmp x16, #0
+    beq .Lcase_10_2
+// Comparación case 3
+    adr x17, msg_221
+    mov x0, x10
+    mov x1, x17
+    bl strcmp
+    mov x18, x0
+    cmp x18, #0
+    beq .Lcase_10_3
+// Comparación case 4
+    adr x19, msg_222
+    mov x0, x10
+    mov x1, x19
+    bl strcmp
+    mov x20, x0
+    cmp x20, #0
+    beq .Lcase_10_4
+// Comparación case 5
+    adr x21, msg_223
+    mov x0, x10
+    mov x1, x21
+    bl strcmp
+    mov x22, x0
+    cmp x22, #0
+    beq .Lcase_10_5
+// Comparación case 6
+    adr x23, msg_224
+    mov x0, x10
+    mov x1, x23
+    bl strcmp
+    mov x24, x0
+    cmp x24, #0
+    beq .Lcase_10_6
+    b .Lswitch_default_10
+.Lcase_10_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x25, msg_225
+    mov x0, x25
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x26, msg_226
+    mov x0, x26
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x27, msg_227
+    mov x0, x27
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x28, msg_228
+    mov x0, x28
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lcase_10_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x29, msg_229
+    mov x0, x29
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x30, msg_230
+    mov x0, x30
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lcase_10_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+// ADVERTENCIA: Reciclando registros temporales
+    adr x9, msg_231
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x10, msg_232
+    mov x0, x10
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lcase_10_3:
+// Ejecutando case 3
+// === IMPRIMIR STRING  ===
+    adr x11, msg_233
+    mov x0, x11
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x12, msg_234
+    mov x0, x12
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lcase_10_4:
+// Ejecutando case 4
+// === IMPRIMIR STRING  ===
+    adr x13, msg_235
+    mov x0, x13
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x14, msg_236
+    mov x0, x14
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lcase_10_5:
+// Ejecutando case 5
+// === IMPRIMIR STRING  ===
+    adr x15, msg_237
+    mov x0, x15
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x16, msg_238
+    mov x0, x16
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lcase_10_6:
+// Ejecutando case 6
+// === IMPRIMIR STRING  ===
+    adr x17, msg_239
+    mov x0, x17
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lswitch_default_10:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+    adr x18, msg_240
+    mov x0, x18
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x19, msg_241
+    mov x0, x19
+    bl print_string
+    bl print_newline
+    bl print_newline
+.Lswitch_end_10:
+// === FIN SWITCH STATEMENT ===
+// === IMPRIMIR STRING  ===
+    adr x9, msg_242
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE: color ===
+// === DECLARAR VARIABLE: color string ===
+    sub sp, sp, #8  // Reservar espacio para color
+    adr x9, msg_243
+    str x9, [sp]
+// Variable color declarada en [sp] (offset actual: 0)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: color ===
+// === CARGAR VARIABLE: color (offset: 0) ===
+    ldr x9, [sp, #0]
+// Variable cargada exitosamente: color
+// Switch sobre expresión tipo: string
+    mov x10, x9
+// Comparación case 0
+    adr x11, msg_244
+    mov x0, x10
+    mov x1, x11
+    bl strcmp
+    mov x12, x0
+    cmp x12, #0
+    beq .Lcase_11_0
+// Comparación case 1
+    adr x13, msg_245
+    mov x0, x10
+    mov x1, x13
+    bl strcmp
+    mov x14, x0
+    cmp x14, #0
+    beq .Lcase_11_1
+// Comparación case 2
+    adr x15, msg_246
+    mov x0, x10
+    mov x1, x15
+    bl strcmp
+    mov x16, x0
+    cmp x16, #0
+    beq .Lcase_11_2
+// Comparación case 3
+    adr x17, msg_247
+    mov x0, x10
+    mov x1, x17
+    bl strcmp
+    mov x18, x0
+    cmp x18, #0
+    beq .Lcase_11_3
+// Comparación case 4
+    adr x19, msg_248
+    mov x0, x10
+    mov x1, x19
+    bl strcmp
+    mov x20, x0
+    cmp x20, #0
+    beq .Lcase_11_4
+// Comparación case 5
+    adr x21, msg_249
+    mov x0, x10
+    mov x1, x21
+    bl strcmp
+    mov x22, x0
+    cmp x22, #0
+    beq .Lcase_11_5
+    b .Lswitch_end_11
+.Lcase_11_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x23, msg_250
+    mov x0, x23
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_11
+.Lcase_11_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x24, msg_251
+    mov x0, x24
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_11
+.Lcase_11_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x25, msg_252
+    mov x0, x25
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_11
+.Lcase_11_3:
+// Ejecutando case 3
+// === IMPRIMIR STRING  ===
+    adr x26, msg_253
+    mov x0, x26
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_11
+.Lcase_11_4:
+// Ejecutando case 4
+// === IMPRIMIR STRING  ===
+    adr x27, msg_254
+    mov x0, x27
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_11
+.Lcase_11_5:
+// Ejecutando case 5
+// === IMPRIMIR STRING  ===
+    adr x28, msg_255
+    mov x0, x28
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_11
+.Lswitch_end_11:
+// === FIN SWITCH STATEMENT ===
+// === IMPRIMIR STRING  ===
+    adr x9, msg_256
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x9, msg_257
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE: Edad ===
+// === DECLARAR VARIABLE: Edad int ===
+    sub sp, sp, #8  // Reservar espacio para Edad
+    mov x9, #25
+    str x9, [sp]
+// Variable Edad declarada en [sp] (offset actual: 0)
+// === DECLARAR VARIABLE: categoria ===
+// === DECLARAR VARIABLE: categoria string ===
+    sub sp, sp, #8  // Reservar espacio para categoria
+    adr x9, msg_258
+    str x9, [sp]
+// Variable categoria declarada en [sp] (offset actual: 0)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: Edad ===
+// === CARGAR VARIABLE: Edad (offset: 8) ===
+    ldr x9, [sp, #8]
+// Variable cargada exitosamente: Edad
+// Switch sobre expresión tipo: int
+    mov x10, x9
+// Comparación case 0
+    mov x11, #0
+    cmp x10, x11
+    beq .Lcase_12_0
+// Comparación case 1
+    mov x12, #1
+    cmp x10, x12
+    beq .Lcase_12_1
+// Comparación case 2
+    mov x13, #2
+    cmp x10, x13
+    beq .Lcase_12_2
+// Comparación case 3
+    mov x14, #13
+    cmp x10, x14
+    beq .Lcase_12_3
+// Comparación case 4
+    mov x15, #18
+    cmp x10, x15
+    beq .Lcase_12_4
+// Comparación case 5
+    mov x16, #25
+    cmp x10, x16
+    beq .Lcase_12_5
+// Comparación case 6
+    mov x17, #65
+    cmp x10, x17
+    beq .Lcase_12_6
+    b .Lswitch_default_12
+.Lcase_12_0:
+// Ejecutando case 0
+// === ASIGNAR VARIABLE: categoria = string (offset: 0) ===
+    adr x18, msg_259
+    str x18, [sp, #0]
+    b .Lswitch_end_12
+.Lcase_12_1:
+// Ejecutando case 1
+// === ASIGNAR VARIABLE: categoria = string (offset: 0) ===
+    adr x19, msg_260
+    str x19, [sp, #0]
+    b .Lswitch_end_12
+.Lcase_12_2:
+// Ejecutando case 2
+// === ASIGNAR VARIABLE: categoria = string (offset: 0) ===
+    adr x20, msg_261
+    str x20, [sp, #0]
+    b .Lswitch_end_12
+.Lcase_12_3:
+// Ejecutando case 3
+// === ASIGNAR VARIABLE: categoria = string (offset: 0) ===
+    adr x21, msg_262
+    str x21, [sp, #0]
+    b .Lswitch_end_12
+.Lcase_12_4:
+// Ejecutando case 4
+// === ASIGNAR VARIABLE: categoria = string (offset: 0) ===
+    adr x22, msg_263
+    str x22, [sp, #0]
+    b .Lswitch_end_12
+.Lcase_12_5:
+// Ejecutando case 5
+// === ASIGNAR VARIABLE: categoria = string (offset: 0) ===
+    adr x23, msg_264
+    str x23, [sp, #0]
+// === IMPRIMIR STRING  ===
+    adr x24, msg_265
+    mov x0, x24
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_12
+.Lcase_12_6:
+// Ejecutando case 6
+// === ASIGNAR VARIABLE: categoria = string (offset: 0) ===
+    adr x25, msg_266
+    str x25, [sp, #0]
+    b .Lswitch_end_12
+.Lswitch_default_12:
+// Ejecutando case default
+// === ASIGNAR VARIABLE: categoria = string (offset: 0) ===
+    adr x26, msg_267
+    str x26, [sp, #0]
+.Lswitch_end_12:
+// === FIN SWITCH STATEMENT ===
+// === IMPRIMIR STRING  ===
+    adr x9, msg_268
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === CARGAR VARIABLE: categoria (offset: 0) ===
+    ldr x9, [sp, #0]
+// === IMPRIMIR STRING  ===
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x9, msg_269
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE: tipo_usuario ===
+// === DECLARAR VARIABLE: tipo_usuario string ===
+    sub sp, sp, #8  // Reservar espacio para tipo_usuario
+    adr x9, msg_270
+    str x9, [sp]
+// Variable tipo_usuario declarada en [sp] (offset actual: 0)
+// === DECLARAR VARIABLE: permiso ===
+// === DECLARAR VARIABLE: permiso string ===
+    sub sp, sp, #8  // Reservar espacio para permiso
+    adr x9, msg_271
+    str x9, [sp]
+// Variable permiso declarada en [sp] (offset actual: 0)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: tipo_usuario ===
+// === CARGAR VARIABLE: tipo_usuario (offset: 8) ===
+    ldr x9, [sp, #8]
+// Variable cargada exitosamente: tipo_usuario
+// Switch sobre expresión tipo: string
+    mov x10, x9
+// Comparación case 0
+    adr x11, msg_272
+    mov x0, x10
+    mov x1, x11
+    bl strcmp
+    mov x12, x0
+    cmp x12, #0
+    beq .Lcase_13_0
+// Comparación case 1
+    adr x13, msg_273
+    mov x0, x10
+    mov x1, x13
+    bl strcmp
+    mov x14, x0
+    cmp x14, #0
+    beq .Lcase_13_1
+// Comparación case 2
+    adr x15, msg_274
+    mov x0, x10
+    mov x1, x15
+    bl strcmp
+    mov x16, x0
+    cmp x16, #0
+    beq .Lcase_13_2
+    b .Lswitch_default_13
+.Lcase_13_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x17, msg_275
+    mov x0, x17
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: permiso ===
+// === CARGAR VARIABLE: permiso (offset: 0) ===
+    ldr x18, [sp, #0]
+// Variable cargada exitosamente: permiso
+// Switch sobre expresión tipo: string
+    mov x19, x18
+// Comparación case 0
+    adr x20, msg_276
+    mov x0, x19
+    mov x1, x20
+    bl strcmp
+    mov x21, x0
+    cmp x21, #0
+    beq .Lcase_14_0
+// Comparación case 1
+    adr x22, msg_277
+    mov x0, x19
+    mov x1, x22
+    bl strcmp
+    mov x23, x0
+    cmp x23, #0
+    beq .Lcase_14_1
+// Comparación case 2
+    adr x24, msg_278
+    mov x0, x19
+    mov x1, x24
+    bl strcmp
+    mov x25, x0
+    cmp x25, #0
+    beq .Lcase_14_2
+    b .Lswitch_default_14
+.Lcase_14_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x26, msg_279
+    mov x0, x26
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_14
+.Lcase_14_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x27, msg_280
+    mov x0, x27
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_14
+.Lcase_14_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x28, msg_281
+    mov x0, x28
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_14
+.Lswitch_default_14:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+    adr x29, msg_282
+    mov x0, x29
+    bl print_string
+    bl print_newline
+    bl print_newline
+.Lswitch_end_14:
+// === FIN SWITCH STATEMENT ===
+    b .Lswitch_end_13
+.Lcase_13_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x30, msg_283
+    mov x0, x30
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: permiso ===
+// === CARGAR VARIABLE: permiso (offset: 0) ===
+// ADVERTENCIA: Reciclando registros temporales
+    ldr x9, [sp, #0]
+// Variable cargada exitosamente: permiso
+// Switch sobre expresión tipo: string
+    mov x10, x9
+// Comparación case 0
+    adr x11, msg_284
+    mov x0, x10
+    mov x1, x11
+    bl strcmp
+    mov x12, x0
+    cmp x12, #0
+    beq .Lcase_15_0
+// Comparación case 1
+    adr x13, msg_285
+    mov x0, x10
+    mov x1, x13
+    bl strcmp
+    mov x14, x0
+    cmp x14, #0
+    beq .Lcase_15_1
+// Comparación case 2
+    adr x15, msg_286
+    mov x0, x10
+    mov x1, x15
+    bl strcmp
+    mov x16, x0
+    cmp x16, #0
+    beq .Lcase_15_2
+    b .Lswitch_default_15
+.Lcase_15_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x17, msg_287
+    mov x0, x17
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_15
+.Lcase_15_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x18, msg_288
+    mov x0, x18
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_15
+.Lcase_15_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x19, msg_289
+    mov x0, x19
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_15
+.Lswitch_default_15:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+    adr x20, msg_290
+    mov x0, x20
+    bl print_string
+    bl print_newline
+    bl print_newline
+.Lswitch_end_15:
+// === FIN SWITCH STATEMENT ===
+    b .Lswitch_end_13
+.Lcase_13_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x21, msg_291
+    mov x0, x21
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: permiso ===
+// === CARGAR VARIABLE: permiso (offset: 0) ===
+    ldr x22, [sp, #0]
+// Variable cargada exitosamente: permiso
+// Switch sobre expresión tipo: string
+    mov x23, x22
+// Comparación case 0
+    adr x24, msg_292
+    mov x0, x23
+    mov x1, x24
+    bl strcmp
+    mov x25, x0
+    cmp x25, #0
+    beq .Lcase_16_0
+// Comparación case 1
+    adr x26, msg_293
+    mov x0, x23
+    mov x1, x26
+    bl strcmp
+    mov x27, x0
+    cmp x27, #0
+    beq .Lcase_16_1
+// Comparación case 2
+    adr x28, msg_294
+    mov x0, x23
+    mov x1, x28
+    bl strcmp
+    mov x29, x0
+    cmp x29, #0
+    beq .Lcase_16_2
+    b .Lswitch_default_16
+.Lcase_16_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x30, msg_295
+    mov x0, x30
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_16
+.Lcase_16_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+// ADVERTENCIA: Reciclando registros temporales
+    adr x9, msg_296
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_16
+.Lcase_16_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x10, msg_297
+    mov x0, x10
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_16
+.Lswitch_default_16:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+    adr x11, msg_298
+    mov x0, x11
+    bl print_string
+    bl print_newline
+    bl print_newline
+.Lswitch_end_16:
+// === FIN SWITCH STATEMENT ===
+    b .Lswitch_end_13
+.Lswitch_default_13:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+    adr x12, msg_299
+    mov x0, x12
+    bl print_string
+    bl print_newline
+    bl print_newline
+.Lswitch_end_13:
+// === FIN SWITCH STATEMENT ===
+// === IMPRIMIR STRING  ===
+    adr x9, msg_300
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === IMPRIMIR STRING  ===
+    adr x9, msg_301
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
 
     // Limpiar stack de slices antes de salir
     add sp, sp, #256

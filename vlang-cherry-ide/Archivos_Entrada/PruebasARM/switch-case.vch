@@ -1,253 +1,25 @@
 fn main() {
-
-    println("HOLA" + "MUNDO")  
-    println("V" + "lang")  
-    println(1 + 20 * (4 - 2))
-    print(2*10-2.1)
-    print(20/2.5)
-    print(10-2)
-    print(11%2)
-    print(true)     
-    println(false)
-
-        // Comparación de enteros
-    println(5 == 5)        // 1 (true)
-    println(5 != 3)        // 1 (true)
-    println(10 == 3)       // 0 (false)
-    
-    // Comparación de floats
-    println(3.14 == 3.14)  // 1 (true)
-    println(2.5 != 3.7)    // 1 (true)
-    
-    // Comparación de strings
-    println("Hola" == "Hola")     // 1 (true)
-    println("ABC" != "XYZ")       // 1 (true)
-    println("Test" == "Prueba")   // 0 (false)
-    
-    // Comparación de booleanos
-    println(true == true)   // 1 (true)
-    println(false != true)  // 1 (true)
-
-    // === ENTEROS ===
-    println(50 < 10)       //0 (false)
-    println(15 > 10)      // 1 (true) 
-    println(10 <= 10)     // 1 (true)
-    println(10 >= 5)      // 1 (true)
-    
-    // === MIXTOS (int vs float) ===
-    println(5 < 5.5)      // 1 (true) 
-    println(6.7 > 6)      // 1 (true) 
-    println(10 >= 10.0)   // 1 (true) 
-    println(4.2 <= 5)     // 1 (true)
-
-     // === OPERADOR AND (&&) ===
-    println(true && true)    // 1 (true)
-    println(true && false)   // 0 (false)
-    println(false && true)   // 0 (false)
-    println(false && false)  // 0 (false)
-    
-    // === OPERADOR OR (||) ===
-    println(true || true)    // 1 (true)
-    println(true || false)   // 1 (true)
-    println(false || true)   // 1 (true)
-    println(false || false)  // 0 (false)
-    
-    // === OPERADOR NOT (!) ===
-    println(!true)           // 0 (false)
-    println(!false)          // 1 (true)
-    
-    // === COMBINACIONES COMPLEJAS ===
-    println((5 > 3) && (2 < 4))   // 1 (true && true = true)
-    println((5 < 3) || (2 < 4))   // 1 (false || true = true)
-    println(!(5 > 10))            // 1 (!false = true)
-    
-    // === CORTOCIRCUITO ===
-    println(false && true)        // 0 (no evalúa el segundo operando)
-    println(true || false)        // 1 (no evalúa el segundo operando) 
-
-    // === COMBINACIONES COMPLEJAS ===
-    println((5 > 3) && (2 < 4))   // 1 (true && true = true)
-    println((5 < 3) || (2 < 4))   // 1 (false || true = true)
-    println(!(5 > 10))            // 1 (!false = true)
-
-     // ═══════════════════════════ DECLARACIÓN DE SLICES ═══════════════════════════
-    print("🔹 DECLARACIÓN DE SLICES:\n")
-    numeros = []int{10, 20, 30}
-    palabras = []string{"hola", "mundo"}
-
-    print("Numeros originales: ", numeros)
-    print("Palabras originales: ",palabras)
-    // ═══════════════════════════ FUNCIÓN LEN ═══════════════════════════
-    print("🔹 FUNCIÓN LEN (longitud):\n")
-    print("No. Numeros:",len(numeros))
-    print("No. Palabras: ",len(palabras))
-    // ═══════════════════════════ ACCESO POR ÍNDICE ═══════════════════════════
-    print("🔹 ACCESO POR ÍNDICE:\n")
-    print("Elemento en Posicion: ",numeros[1])
-    // ═══════════════════════════ ASIGNACIÓN POR ÍNDICE ═══════════════════════════
-    print("🔹 ASIGNACIÓN POR ÍNDICE:\n")
-    numeros[1] = 99
-    print("Después de numeros[1] = 99: ", numeros[0])
-    // ═══════════════════════════ FUNCIÓN APPEND ═══════════════════════════
-    print("🔹 FUNCIÓN APPEND (agregar elementos):\n")
-    numeros = append(numeros, 77)
-    print("Después de append(numeros, 77): " , numeros)
-    print(" Cantidas de Elementos " ,len(numeros) )
-    // ═══════════════════════════ FUNCIÓN INDEXOF ═══════════════════════════
-    print("🔹 FUNCIÓN INDEXOF (buscar elementos):\n")
-    print("Posicion de No. 99 : ",indexOf(numeros, 99))
-    print("Posicion de No. 999 : ",indexOf(numeros, 999)) // No existe, debería retornar -1
-    // ═══════════════════════════ FUNCIÓN JOIN ═══════════════════════════
-    print("🔹 FUNCIÓN JOIN (concatenar con separador):\n")
-    print("JUNTAR PALABRAS",join(palabras, " ")) 
-    print("SEPARAR PALABRAS POR ',': ",join(palabras, ", "))
-    print("SEPARAR PALABRAS POR '_': ",join(palabras, "_"))
-    // ═══════════════════════════ RESUMEN FINAL ═══════════════════════════
-    print("\n🔹 RESUMEN FINAL:\n")
-    print("Numeros finales: ", numeros)
-    print(" (longitud: ",len(numeros) , ")")
-    print("Palabras finales: ",palabras)
-    print(" (longitud: ",len(palabras) , ")")
-
-
-    println("================== Sentencias de Control de Flujo  =========")
-    println("================== IF  ================== ")   // Condición compleja 1 verdadera
-    mut a := 10
-    mut b := 5
-    mut c := 15
-    mut d := 0
-    
-    if (a > 0 && b > 0) && (c > 10 || d == 0) {
-        println("Condición compleja 1 verdadera")
-    } else if (a < 0 || b < 0) && (c < 5 && d > 0) {
-        println("Condición compleja 2 verdadera")
-    } else if !(a == 0) && (b != 5 || c >= 15) {
-        println("Condición compleja 3 verdadera")
-    } else {
-        println("Ninguna condición se cumplió")
-    }
-
-    println("================== EJEMPLO 2  ================") // Operaciones aritméticas 1
-
-    mut x := 20
-    mut y := 15
-    mut z := 10
-    
-    if (x + y) > (z * 2) && (x - y) <= (z / 2) {
-        println("Operaciones aritméticas 1")
-    } else if (x % 3) == 0 || (y + z) >= (x * 2) {
-        println("Operaciones aritméticas 2")
-    } else if (x / 2) > y && (z * 3) < (x + y) {
-        println("Operaciones aritméticas 3")
-    } else {
-        println("Ninguna operación aritmética se cumplió")
-    }
-
-    println("================== EJEMPLO3  =========") // Usuario válido
-
-    mut nombre := "Juan"
-    mut edad := 25
-    mut activo := true
-    mut vacio := ""
-    
-    if nombre == "Juan" && edad >= 18 && activo {
-        println("Usuario válido")
-    } else if nombre != vacio && edad > 0 && !activo {
-        println("Usuario inactivo")
-    } else if nombre == vacio || edad <= 0 {
-        println("Datos incompletos")
-    } else {
-        println("Estado desconocido")
-    }
-
-    println("================== EJEMPLO4  =========") // Nivel válido, Puntos suficientes, Jugador activo, ¡Jugador experto!
-    mut nivel := 5
-    mut puntos := 100
-    mut vidas := 3
-    
-    if nivel > 0 {
-        println("Nivel válido")
-        if puntos >= 100 {
-            println("Puntos suficientes")
-            if vidas > 0 {
-                println("Jugador activo")
-                if nivel >= 5 && puntos >= 100 && vidas >= 3 {
-                    println("¡Jugador experto!")
-                } else {
-                    println("Jugador intermedio")
-                }
-            } else {
-                println("Sin vidas")
-            }
-        } else {
-            println("Puntos insuficientes")
-        }
-    } else {
-        println("Nivel inválido")
-    }
-
-    println("================== EJEMPLO5  =========") // Bueno - B+
-
-    mut nota := 85
-    
-    if nota >= 95 {
-        println("Excelente - A+")
-    } else if nota >= 90 {
-        println("Muy bueno - A")
-    } else if nota >= 85 {
-        println("Bueno - B+")
-    } else if nota >= 80 {
-        println("Satisfactorio - B")
-    } else if nota >= 75 {
-        println("Regular - C+")
-    } else if nota >= 70 {
-        println("Suficiente - C")
-    } else if nota >= 65 {
-        println("Insuficiente - D+")
-    } else if nota >= 60 {
-        println("Deficiente - D")
-    } else {
-        println("Reprobado - F")
-    }
-
-    println("================== EJEMPLO6  =========") // Matemáticas avanzadas 1
-
-    mut base := 4
-    mut exponente := 2
-    mut resultado := base * base  // Simulando potencia
-    mut factorial := 6  // 3!
-    
-    if (resultado > 10) && (factorial >= 6) && ((base + exponente) * 2 == 12) {
-        println("Matemáticas avanzadas 1")
-    } else if (resultado / base == exponente) || (factorial % 3 == 0) {
-        println("Matemáticas avanzadas 2")
-    } else {
-        println("Cálculos incorrectos")
-    }
-
-
-    println("=========== SWITCH-CASE =============")
-    print("=======================================")
+    println("=========== Sentencia Switch - Case =============")
     println("=========== EJEMPLO 1: CALCULADORA BÁSICA =============")
-    operacion := "*"
-    Var1 := 3
-    Var2 := 5
+    operacion := "+"
+    a := 10
+    b := 5
     
     switch operacion {
     case "+":
-        resultado := (Var1+Var2)
+        resultado := a + b
         println("Suma:")
-        println(resultado)       
+        println(resultado)        // ESPERADO: 15
     case "-":
-        resultado := (Var1-Var2)
+        resultado := a - b
         println("Resta:")
         println(resultado)
     case "*":
-        resultado := (Var1*Var2)
+        resultado := a * b
         println("Multiplicación:")
         println(resultado)
     case "/":
-        resultado := (Var1/Var2)
+        resultado := a / b
         println("División:")
         println(resultado)
     default:
@@ -255,11 +27,11 @@ fn main() {
     }
     // SALIDA ESPERADA:
     // =========== EJEMPLO 1: CALCULADORA BÁSICA =============
-    // Multiplicación:
-    // 50
+    // Suma:
+    // 15
 
     println("=========== EJEMPLO 2: DÍAS DE LA SEMANA =============")
-    dia_numero := 3
+    dia_numero := 6
     
     switch dia_numero {
     case 1:
@@ -284,7 +56,7 @@ fn main() {
     // Miércoles - Mitad de semana
 
     println("=========== EJEMPLO 3: CALIFICACIONES =============")
-    letra_calificacion := "B"
+    letra_calificacion := "D"
     
     switch letra_calificacion {
     case "A":
@@ -307,7 +79,7 @@ fn main() {
     }
     // SALIDA ESPERADA:
     // =========== EJEMPLO 3: CALIFICACIONES =============
-    // Muy bien  - 80-89 puntos
+    // Excelente - 90-100 puntos
     // ¡Felicitaciones!
 
     println("=========== EJEMPLO 4: ESTADO DE SISTEMA =============")
@@ -400,22 +172,22 @@ fn main() {
     // Visor: Adobe Reader
 
     println("=========== EJEMPLO 7: NIVELES DE JUEGO =============")
-    Nivel := 2
-    Puntos := 0
+    nivel := 1
+    puntos := 0
     
     switch nivel {
     case 1:
         println("NIVEL 1: Tutorial")                    
-        println("Aprendiendo los controles básicos")    
-        Puntos = 100                                   
+        println("Aprendiendo los controles básicos")   
+        puntos = 100                                    // ESPERADO: puntos = 100
     case 2:
         println("NIVEL 2: Principiante")
         println("Primeros desafíos")
-        Puntos = 250
+        puntos = 250
     case 3:
         println("NIVEL 3: Intermedio")
         println("La dificultad aumenta")
-        Puntos = 500
+        puntos = 500
     case 4:
         println("NIVEL 4: Avanzado")
         println("Solo para expertos")
@@ -423,19 +195,19 @@ fn main() {
     case 5:
         println("NIVEL 5: Maestro")
         println("El desafío final")
-        Puntos = 2000
+        puntos = 2000
     default:
         println("Nivel no disponible")
-        Puntos = 0
+        puntos = 0
     }
     println("Puntos obtenidos:")                        
-    println(Puntos)                                    
+    println(puntos)                                     // ESPERADO: 100
     // SALIDA ESPERADA:
     // =========== EJEMPLO 7: NIVELES DE JUEGO =============
     // NIVEL 1: Tutorial
     // Aprendiendo los controles básicos
     // Puntos obtenidos:
-    // 250
+    // 100
 
     println("=========== EJEMPLO 8: CÓDIGOS DE ERROR =============")
     codigo_error := 404
@@ -528,10 +300,10 @@ fn main() {
     // Análisis de color completado
 
     println("=========== EJEMPLO 11: SWITCH CON VARIABLES =============")
-    Edad := 25
+    edad := 25
     categoria := ""
     
-    switch Edad {
+    switch edad {
     case 0:
         categoria = "Recién nacido"
     case 1:
@@ -543,7 +315,7 @@ fn main() {
     case 18:
         categoria = "Joven adulto"
     case 25:
-        categoria = "Adulto"                            
+        categoria = "Adulto"                            // ESPERADO: categoria = "Adulto"
         println("En la flor de la vida")               
     case 65:
         categoria = "Adulto mayor"
@@ -551,8 +323,8 @@ fn main() {
         categoria = "Edad no categorizada"
     }
     
-    println("Categoría de Edad:")                       
-    println(categoria)                                  
+    println("Categoría de edad:")                       
+    println(categoria)                                  // ESPERADO: "Adulto"
     // SALIDA ESPERADA:
     // =========== EJEMPLO 11: SWITCH CON VARIABLES =============
     // En la flor de la vida
@@ -611,5 +383,3 @@ fn main() {
     println("=========== FIN DE EJEMPLOS =============")
     println("¡Switch-case implementado exitosamente!")
 }
-}
-

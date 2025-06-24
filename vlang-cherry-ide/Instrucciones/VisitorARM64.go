@@ -326,6 +326,7 @@ func (v *VisitorARM64) VisitStmt(ctx *parser.StmtContext) interface{} {
 	// 3) Resto de sentencias
 	switch {
 	case ctx.Switch_stmt() != nil:
+		fmt.Println("✅ DEBUG: Procesando switch - IMPLEMENTADO")
 		return v.Visit(ctx.Switch_stmt())
 	case ctx.While_stmt() != nil:
 		return v.Visit(ctx.While_stmt())
@@ -1604,3 +1605,306 @@ func (v *VisitorARM64) obtenerValorBoolSeguro(expr *assembly.ResultadoExpresion)
 	fmt.Printf("❌ DEBUG: No se pudo convertir a bool, retornando false\n")
 	return false
 }
+
+// Implementación de Switch-Case con DEBUGGING EXTENSIVO
+// Agregar estas funciones a tu archivo VisitorARM64.go
+
+// ============= IMPLEMENTACIÓN SWITCH-CASE CON DEBUG =============
+
+func (v *VisitorARM64) VisitSwitchStmt(ctx *parser.SwitchStmtContext) interface{} {
+	fmt.Println("🔍 DEBUG: Entrando a VisitSwitchStmt")
+	v.armGen.Comment("=== INICIO SWITCH STATEMENT ===")
+
+	// 1. Evaluar la expresión principal del switch
+	fmt.Println("🔍 DEBUG: Obteniendo expresión del switch...")
+	if ctx.Expr() == nil {
+		fmt.Println("❌ DEBUG: ctx.Expr() es nil")
+		v.armGen.Comment("Error: No hay expresión en el switch")
+		return nil
+	}
+
+	exprResult := v.Visit(ctx.Expr())
+	if exprResult == nil {
+		fmt.Println("❌ DEBUG: exprResult es nil")
+		v.armGen.Comment("Error: expresión del switch inválida")
+		return nil
+	}
+
+	switchExpr, ok := exprResult.(*assembly.ResultadoExpresion)
+	if !ok {
+		fmt.Printf("❌ DEBUG: exprResult no es *assembly.ResultadoExpresion, es: %T\n", exprResult)
+		v.armGen.Comment("Error: tipo de expresión inválido")
+		return nil
+	}
+	fmt.Printf("✅ DEBUG: switchExpr válido, tipo: %s, esLiteral: %v\n", switchExpr.Tipo, switchExpr.EsLiteral)
+	v.armGen.Comment(fmt.Sprintf("Switch sobre expresión tipo: %s", switchExpr.Tipo))
+
+	// 2. Generar etiquetas únicas para el switch
+	contadorSwitch := v.getContadorSwitchSeguro()
+	etiquetaFinSwitch := fmt.Sprintf(".Lswitch_end_%d", contadorSwitch)
+	etiquetaDefault := fmt.Sprintf(".Lswitch_default_%d", contadorSwitch)
+	fmt.Printf("✅ DEBUG: Etiquetas generadas - fin: %s, default: %s\n", etiquetaFinSwitch, etiquetaDefault)
+
+	// 3. Cargar valor del switch en registro temporal
+	registroSwitch := v.getNuevoRegistroSeguro()
+	fmt.Printf("✅ DEBUG: Registro switch: %s\n", registroSwitch)
+
+	if switchExpr.EsLiteral {
+		switch switchExpr.Tipo {
+		case "int":
+			if valor, ok := switchExpr.Valor.(int); ok {
+				fmt.Printf("✅ DEBUG: Valor int del switch: %d\n", valor)
+				v.armGen.Mov(registroSwitch, valor)
+			} else {
+				fmt.Printf("❌ DEBUG: Valor no es int, es: %T\n", switchExpr.Valor)
+				v.armGen.Mov(registroSwitch, 0)
+			}
+		case "bool":
+			if valor, ok := switchExpr.Valor.(bool); ok {
+				valorInt := 0
+				if valor {
+					valorInt = 1
+				}
+				fmt.Printf("✅ DEBUG: Valor bool del switch: %v -> %d\n", valor, valorInt)
+				v.armGen.Mov(registroSwitch, valorInt)
+			} else {
+				fmt.Printf("❌ DEBUG: Valor no es bool, es: %T\n", switchExpr.Valor)
+				v.armGen.Mov(registroSwitch, 0)
+			}
+		case "string":
+			if valor, ok := switchExpr.Valor.(string); ok {
+				fmt.Printf("✅ DEBUG: Valor string del switch: %s\n", valor)
+				etiqueta := v.agregarMensajeStringSeguro(valor)
+				v.armGen.Instructions = append(v.armGen.Instructions,
+					fmt.Sprintf("adr %s, %s", registroSwitch, etiqueta))
+			} else {
+				fmt.Printf("❌ DEBUG: Valor no es string, es: %T\n", switchExpr.Valor)
+				v.armGen.Mov(registroSwitch, 0)
+			}
+		default:
+			fmt.Printf("❌ DEBUG: Tipo no soportado: %s\n", switchExpr.Tipo)
+			v.armGen.Mov(registroSwitch, 0)
+		}
+	} else {
+		fmt.Printf("✅ DEBUG: Usando registro: %s\n", switchExpr.Registro)
+		v.armGen.MovReg(registroSwitch, switchExpr.Registro)
+	}
+
+	// 4. Procesar todos los cases
+	cases := ctx.AllSwitch_case()
+	if cases == nil {
+		fmt.Println("❌ DEBUG: AllSwitch_case() devolvió nil")
+		cases = []parser.ISwitch_caseContext{}
+	}
+	fmt.Printf("✅ DEBUG: Encontrados %d cases\n", len(cases))
+
+	etiquetasCases := make([]string, len(cases))
+	for i := range cases {
+		etiquetasCases[i] = fmt.Sprintf(".Lcase_%d_%d", contadorSwitch, i)
+	}
+
+	// 5. Generar comparaciones para cada case
+	for i, caseCtx := range cases {
+		fmt.Printf("🔍 DEBUG: Procesando case %d...\n", i)
+
+		caseResult := v.GetCaseValue(caseCtx)
+		if caseResult == nil {
+			fmt.Printf("❌ DEBUG: GetCaseValue devolvió nil para case %d\n", i)
+			continue
+		}
+
+		caseExpr, ok := caseResult.(*assembly.ResultadoExpresion)
+		if !ok {
+			fmt.Printf("❌ DEBUG: caseResult no es *assembly.ResultadoExpresion en case %d\n", i)
+			continue
+		}
+
+		fmt.Printf("✅ DEBUG: Case %d - tipo: %s, esLiteral: %v\n", i, caseExpr.Tipo, caseExpr.EsLiteral)
+
+		if !v.sonTiposCompatibles(switchExpr.Tipo, caseExpr.Tipo) {
+			fmt.Printf("❌ DEBUG: Tipos incompatibles en case %d\n", i)
+			continue
+		}
+
+		v.armGen.Comment(fmt.Sprintf("Comparación case %d", i))
+
+		// Generar comparación según el tipo
+		switch switchExpr.Tipo {
+		case "int", "bool":
+			fmt.Printf("🔍 DEBUG: Generando comparación int/bool para case %d\n", i)
+			registroCase := v.getNuevoRegistroSeguro()
+			if caseExpr.EsLiteral {
+				valor := 0
+				if switchExpr.Tipo == "bool" && caseExpr.Valor.(bool) {
+					valor = 1
+				} else if switchExpr.Tipo == "int" {
+					valor = caseExpr.Valor.(int)
+				}
+				v.armGen.Mov(registroCase, valor)
+			} else {
+				v.armGen.MovReg(registroCase, caseExpr.Registro)
+			}
+
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("cmp %s, %s", registroSwitch, registroCase),
+				fmt.Sprintf("beq %s", etiquetasCases[i]))
+
+		case "string":
+			fmt.Printf("🔍 DEBUG: Generando comparación string para case %d\n", i)
+
+			// ✅ FIX: Usar el método StrCmp existente del ARMGenerator
+			registroCase := v.getNuevoRegistroSeguro()
+			registroResultado := v.getNuevoRegistroSeguro()
+
+			if caseExpr.EsLiteral {
+				etiquetaStr := v.agregarMensajeStringSeguro(caseExpr.Valor.(string))
+				v.armGen.Instructions = append(v.armGen.Instructions,
+					fmt.Sprintf("adr %s, %s", registroCase, etiquetaStr))
+			} else {
+				v.armGen.MovReg(registroCase, caseExpr.Registro)
+			}
+
+			// ✅ FIX: Usar StrCmp que ya maneja strcmp correctamente
+			fmt.Printf("✅ DEBUG: Usando StrCmp para comparar strings\n")
+			v.armGen.StrCmp(registroSwitch, registroCase, registroResultado)
+
+			// ✅ FIX: strcmp retorna 0 cuando son iguales, así que comparamos con 0
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("cmp %s, #0", registroResultado),
+				fmt.Sprintf("beq %s", etiquetasCases[i]))
+
+			fmt.Printf("✅ DEBUG: Comparación string configurada correctamente para case %d\n", i)
+		}
+	}
+
+	// 6. Si no hay coincidencias, saltar al default o al final
+	if ctx.Default_case() != nil {
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("b %s", etiquetaDefault))
+	} else {
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("b %s", etiquetaFinSwitch))
+	}
+
+	// 7. Generar código para cada case
+	for i, caseCtx := range cases {
+		fmt.Printf("🔍 DEBUG: Generando código para case %d\n", i)
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("%s:", etiquetasCases[i]))
+
+		v.armGen.Comment(fmt.Sprintf("Ejecutando case %d", i))
+
+		if caseCtx != nil {
+			v.Visit(caseCtx)
+		}
+
+		// Break implícito: saltar al final
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("b %s", etiquetaFinSwitch))
+	}
+
+	// 8. Generar código para default si existe
+	if ctx.Default_case() != nil {
+		fmt.Println("🔍 DEBUG: Generando código para default...")
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("%s:", etiquetaDefault))
+
+		v.armGen.Comment("Ejecutando case default")
+		v.Visit(ctx.Default_case())
+	}
+
+	// 9. Etiqueta final del switch
+	v.armGen.Instructions = append(v.armGen.Instructions,
+		fmt.Sprintf("%s:", etiquetaFinSwitch))
+
+	v.armGen.Comment("=== FIN SWITCH STATEMENT ===")
+	fmt.Println("✅ DEBUG: VisitSwitchStmt completado exitosamente")
+	return nil
+}
+
+// ============= FUNCIONES AUXILIARES CON DEBUG =============
+
+func (v *VisitorARM64) GetCaseValue(tree antlr.ParseTree) interface{} {
+	switch val := tree.(type) {
+	case *parser.SwitchCaseContext:
+		if val.Expr() == nil {
+			return nil
+		}
+		return v.Visit(val.Expr())
+	default:
+		v.armGen.Comment("Error interno: tipo de case no reconocido")
+		return nil
+	}
+}
+
+func (v *VisitorARM64) VisitSwitchCase(ctx *parser.SwitchCaseContext) interface{} {
+	if ctx == nil {
+		return nil
+	}
+
+	statements := ctx.AllStmt()
+	for _, stmt := range statements {
+		if stmt != nil {
+			v.Visit(stmt)
+		}
+	}
+	return nil
+}
+
+func (v *VisitorARM64) VisitDefaultCase(ctx *parser.DefaultCaseContext) interface{} {
+	if ctx == nil {
+		return nil
+	}
+
+	statements := ctx.AllStmt()
+	for _, stmt := range statements {
+		if stmt != nil {
+			v.Visit(stmt)
+		}
+	}
+	return nil
+}
+
+func (v *VisitorARM64) sonTiposCompatibles(tipo1, tipo2 string) bool {
+	if tipo1 == tipo2 {
+		return true
+	}
+	if (tipo1 == "int" && tipo2 == "bool") || (tipo1 == "bool" && tipo2 == "int") {
+		return true
+	}
+	return false
+}
+
+// ============= FUNCIONES AUXILIARES SEGURAS =============
+
+func (v *VisitorARM64) getContadorSwitchSeguro() int {
+	contadorSwitch++
+	return contadorSwitch
+}
+
+var contadorSwitch int = 0
+
+func (v *VisitorARM64) getNuevoRegistroSeguro() string {
+	if v.expresionesProcessor != nil {
+		return v.expresionesProcessor.NuevoRegistroTmp()
+	}
+
+	contadorRegistro++
+	return fmt.Sprintf("x%d", 19+contadorRegistro%10)
+}
+
+var contadorRegistro int = 0
+
+func (v *VisitorARM64) agregarMensajeStringSeguro(mensaje string) string {
+	if v.expresionesProcessor != nil {
+		return v.expresionesProcessor.AgregarMensajeString(mensaje)
+	}
+
+	contadorString++
+	etiqueta := fmt.Sprintf("str_%d", contadorString)
+	v.armGen.Instructions = append(v.armGen.Instructions,
+		fmt.Sprintf("%s: .asciz \"%s\"", etiqueta, mensaje))
+	return etiqueta
+}
+
+var contadorString int = 0

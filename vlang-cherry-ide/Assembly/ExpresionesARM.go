@@ -879,3 +879,7 @@ func (ep *ExpresionesProcessor) GenerarEtiquetaUnica(prefijo string) string {
 	ep.contadorEtiqueta++
 	return etiqueta
 }
+
+func (ep *ExpresionesProcessor) IncrementarContadorEtiqueta() {
+	ep.contadorEtiqueta++
+}

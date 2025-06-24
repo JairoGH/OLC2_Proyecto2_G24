@@ -1,0 +1,116 @@
+    fn main() {
+    println("================== Sentencias de Control de Flujo  =========")
+    println("================== IF  ================== ")   // Condición compleja 1 verdadera
+    mut a := 10
+    mut b := 5
+    mut c := 15
+    mut d := 0
+    
+    if (a > 0 && b > 0) && (c > 10 || d == 0) {
+        println("Condición compleja 1 verdadera")
+    } else if (a < 0 || b < 0) && (c < 5 && d > 0) {
+        println("Condición compleja 2 verdadera")
+    } else if !(a == 0) && (b != 5 || c >= 15) {
+        println("Condición compleja 3 verdadera")
+    } else {
+        println("Ninguna condición se cumplió")
+    }
+
+    println("================== EJEMPLO 2  ================") // Operaciones aritméticas 1
+
+    mut x := 20
+    mut y := 15
+    mut z := 10
+    
+    if (x + y) > (z * 2) && (x - y) <= (z / 2) {
+        println("Operaciones aritméticas 1")
+    } else if (x % 3) == 0 || (y + z) >= (x * 2) {
+        println("Operaciones aritméticas 2")
+    } else if (x / 2) > y && (z * 3) < (x + y) {
+        println("Operaciones aritméticas 3")
+    } else {
+        println("Ninguna operación aritmética se cumplió")
+    }
+
+    println("================== EJEMPLO3  =========") // Usuario válido
+
+    mut nombre := "Juan"
+    mut edad := 25
+    mut activo := true
+    mut vacio := ""
+    
+    if nombre == "Juan" && edad >= 18 && activo {
+        println("Usuario válido")
+    } else if nombre != vacio && edad > 0 && !activo {
+        println("Usuario inactivo")
+    } else if nombre == vacio || edad <= 0 {
+        println("Datos incompletos")
+    } else {
+        println("Estado desconocido")
+    }
+
+    println("================== EJEMPLO4  =========") // Nivel válido, Puntos suficientes, Jugador activo, ¡Jugador experto!
+    mut nivel := 5
+    mut puntos := 100
+    mut vidas := 3
+    
+    if nivel > 0 {
+        println("Nivel válido")
+        if puntos >= 100 {
+            println("Puntos suficientes")
+            if vidas > 0 {
+                println("Jugador activo")
+                if nivel >= 5 && puntos >= 100 && vidas >= 3 {
+                    println("¡Jugador experto!")
+                } else {
+                    println("Jugador intermedio")
+                }
+            } else {
+                println("Sin vidas")
+            }
+        } else {
+            println("Puntos insuficientes")
+        }
+    } else {
+        println("Nivel inválido")
+    }
+
+    println("================== EJEMPLO5  =========") // Bueno - B+
+
+    mut nota := 85
+    
+    if nota >= 95 {
+        println("Excelente - A+")
+    } else if nota >= 90 {
+        println("Muy bueno - A")
+    } else if nota >= 85 {
+        println("Bueno - B+")
+    } else if nota >= 80 {
+        println("Satisfactorio - B")
+    } else if nota >= 75 {
+        println("Regular - C+")
+    } else if nota >= 70 {
+        println("Suficiente - C")
+    } else if nota >= 65 {
+        println("Insuficiente - D+")
+    } else if nota >= 60 {
+        println("Deficiente - D")
+    } else {
+        println("Reprobado - F")
+    }
+
+    println("================== EJEMPLO6  =========") // Matemáticas avanzadas 1
+
+    mut base := 4
+    mut exponente := 2
+    mut resultado := base * base  // Simulando potencia
+    mut factorial := 6  // 3!
+    
+    if (resultado > 10) && (factorial >= 6) && ((base + exponente) * 2 == 12) {
+        println("Matemáticas avanzadas 1")
+    } else if (resultado / base == exponente) || (factorial % 3 == 0) {
+        println("Matemáticas avanzadas 2")
+    } else {
+        println("Cálculos incorrectos")
+    }
+}
