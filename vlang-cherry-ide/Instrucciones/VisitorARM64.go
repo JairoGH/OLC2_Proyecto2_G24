@@ -26,6 +26,7 @@ func NewVisitorARM64() *VisitorARM64 {
 		expresionesProcessor: expresionesProcessor,
 		variablesProcessor:   assembly.NewVariablesProcessor(armGen, expresionesProcessor),
 		sliceProcessor:       assembly.NewSliceProcessor(armGen, expresionesProcessor),
+		TablaError:           NewTablaError(),
 	}
 }
 func (v *VisitorARM64) GetARMGenerator() *assembly.ARMGenerator {
@@ -226,8 +227,19 @@ func (v *VisitorARM64) VisitDeclararTipo(ctx *parser.DeclararTipoContext) interf
 func (v *VisitorARM64) VisitDeclaraTipoValor(ctx *parser.DeclaraTipoValorContext) interface{} {
 	nombre := ctx.ID().GetText()
 	tipo := v.obtenerTipoString(ctx.Tipo())
+
 	exprResult := v.Visit(ctx.Expr())
-	valor := exprResult.(*assembly.ResultadoExpresion)
+	if exprResult == nil {
+		v.armGen.Comment(fmt.Sprintf("Error: expresión inválida para %s", nombre))
+		return nil
+	}
+
+	// ✅ CONVERSIÓN SEGURA
+	valor, ok := exprResult.(*assembly.ResultadoExpresion)
+	if !ok {
+		v.armGen.Comment(fmt.Sprintf("Error: tipo de expresión inválido para %s", nombre))
+		return nil
+	}
 
 	err := v.variablesProcessor.DeclararVariable(nombre, tipo, valor)
 	if err != nil {
@@ -238,25 +250,15 @@ func (v *VisitorARM64) VisitDeclaraTipoValor(ctx *parser.DeclaraTipoValorContext
 
 func (v *VisitorARM64) VisitDeclararInferencia(ctx *parser.DeclararInferenciaContext) interface{} {
 	nombre := ctx.ID().GetText()
-	exprResult := v.Visit(ctx.Expr())
-	valor := exprResult.(*assembly.ResultadoExpresion)
-	tipo := valor.Tipo
+	v.armGen.Comment(fmt.Sprintf("=== DECLARAR VARIABLE: %s ===", nombre))
 
-	err := v.variablesProcessor.DeclararVariable(nombre, tipo, valor)
-	if err != nil {
-		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
-	}
-	return nil
-}
-
-func (v *VisitorARM64) VisitDeclararInferenciaMut(ctx *parser.DeclararInferenciaMutContext) interface{} {
-	nombre := ctx.ID().GetText()
 	exprResult := v.Visit(ctx.Expr())
 	if exprResult == nil {
 		v.armGen.Comment(fmt.Sprintf("Error: expresión inválida para %s", nombre))
 		return nil
 	}
 
+	// ✅ CONVERSIÓN SEGURA
 	valor, ok := exprResult.(*assembly.ResultadoExpresion)
 	if !ok {
 		v.armGen.Comment(fmt.Sprintf("Error: tipo de expresión inválido para %s", nombre))
@@ -267,47 +269,82 @@ func (v *VisitorARM64) VisitDeclararInferenciaMut(ctx *parser.DeclararInferencia
 	err := v.variablesProcessor.DeclararVariable(nombre, tipo, valor)
 	if err != nil {
 		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
+	}
+	return nil
+}
+
+func (v *VisitorARM64) VisitDeclararInferenciaMut(ctx *parser.DeclararInferenciaMutContext) interface{} {
+	nombre := ctx.ID().GetText()
+	v.armGen.Comment(fmt.Sprintf("=== DECLARAR VARIABLE MUT: %s ===", nombre))
+
+	exprResult := v.Visit(ctx.Expr())
+	if exprResult == nil {
+		v.armGen.Comment(fmt.Sprintf("Error: expresión inválida para %s", nombre))
+		return nil
+	}
+
+	// ✅ CONVERSIÓN SEGURA
+	valor, ok := exprResult.(*assembly.ResultadoExpresion)
+	if !ok {
+		v.armGen.Comment(fmt.Sprintf("Error: tipo de expresión inválido para %s", nombre))
+		return nil
+	}
+
+	// ✅ VALIDAR QUE valor NO SEA NIL
+	if valor == nil {
+		v.armGen.Comment(fmt.Sprintf("Error: valor es nil para %s", nombre))
+		return nil
+	}
+
+	tipo := valor.Tipo
+	err := v.variablesProcessor.DeclararVariable(nombre, tipo, valor)
+	if err != nil {
+		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
 	} else {
-		v.armGen.Comment(fmt.Sprintf("Declaración mut inferida: mut %s := ?", nombre))
+		v.armGen.Comment(fmt.Sprintf("Declaración mut inferida: mut %s := ? (%s)", nombre, tipo))
 	}
 
 	return nil
 }
 
 func (v *VisitorARM64) VisitStmt(ctx *parser.StmtContext) interface{} {
-	// 1) Declaraciones  - USAR LA SINTAXIS CORRECTA
+	// 1) Declaraciones
 	if ds := ctx.Stmt_declaracion(); ds != nil {
 		return v.Visit(ds)
 	}
 
-	// 2) Asignaciones  - USAR LA SINTAXIS CORRECTA
+	// 2) Asignaciones
 	if ctx.Stmt_asignar() != nil {
 		return v.Visit(ctx.Stmt_asignar())
 	}
 
-	// 3) Resto de sentencias (igual que antes)
+	// ✅ AGREGAR CASE FALTANTE PARA IF
+	if ctx.If_stmt() != nil {
+		return v.Visit(ctx.If_stmt())
+	}
+
+	// 3) Resto de sentencias
 	switch {
-	case ctx.If_stmt() != nil:
-		return nil
 	case ctx.Switch_stmt() != nil:
-		return nil
+		return v.Visit(ctx.Switch_stmt())
 	case ctx.While_stmt() != nil:
-		return nil
+		return v.Visit(ctx.While_stmt())
 	case ctx.For_clasico_stmt() != nil:
-		return nil
+		return v.Visit(ctx.For_clasico_stmt())
 	case ctx.For_stmt() != nil:
-		return nil
+		return v.Visit(ctx.For_stmt())
 	case ctx.Stmt_transferencia() != nil:
-		return nil
+		return v.Visit(ctx.Stmt_transferencia())
 	case ctx.Llamar_funcion() != nil:
 		return v.Visit(ctx.Llamar_funcion())
 	case ctx.Declarar_funcion() != nil:
-		return nil
+		return v.Visit(ctx.Declarar_funcion())
 	case ctx.Declarar_struct() != nil:
-		return nil
+		return v.Visit(ctx.Declarar_struct())
 	case ctx.Fun_slice() != nil:
-		return nil
+		return v.Visit(ctx.Fun_slice())
 	default:
+		v.armGen.Comment("Sentencia no reconocida o no implementada")
 		return nil
 	}
 }
@@ -723,10 +760,22 @@ func (v *VisitorARM64) VisitFuncionArg(ctx *parser.FuncionArgContext) interface{
 // ============= EXPRESIONES - DELEGANDO A ExpresionesProcessor =============
 
 func (v *VisitorARM64) VisitBinarioExp(ctx *parser.BinarioExpContext) interface{} {
-	leftResult := v.Visit(ctx.Expr(0))
-	rightResult := v.Visit(ctx.Expr(1))
+	operador := ctx.GetOp().GetText()
+	fmt.Printf("🔍 DEBUG: VisitBinarioExp INICIO - Operador: %s\n", operador)
+	v.armGen.Comment(fmt.Sprintf("=== DEBUG: EXPRESIÓN BINARIA %s ===", operador))
 
-	if leftResult == nil || rightResult == nil {
+	// ✅ RESETEO OPCIONAL PARA OPERADORES LÓGICOS COMPLEJOS
+	if operador == "&&" || operador == "||" {
+		v.expresionesProcessor.ResetearRegistrosSiNecesario()
+	}
+
+	fmt.Printf("🔍 DEBUG: Evaluando operando izquierdo...\n")
+	leftResult := v.Visit(ctx.Expr(0))
+	fmt.Printf("🔍 DEBUG: Operando izquierdo completado. Resultado: %T\n", leftResult)
+
+	if leftResult == nil {
+		fmt.Printf("❌ ERROR: Operando izquierdo es nil\n")
+		v.armGen.Comment("ERROR: operando izquierdo es nil")
 		return &assembly.ResultadoExpresion{
 			Registro:  "",
 			Tipo:      "int",
@@ -735,17 +784,92 @@ func (v *VisitorARM64) VisitBinarioExp(ctx *parser.BinarioExpContext) interface{
 		}
 	}
 
-	left := leftResult.(*assembly.ResultadoExpresion)
-	right := rightResult.(*assembly.ResultadoExpresion)
-	operador := ctx.GetOp().GetText()
+	fmt.Printf("🔍 DEBUG: Evaluando operando derecho...\n")
+	rightResult := v.Visit(ctx.Expr(1))
+	fmt.Printf("🔍 DEBUG: Operando derecho completado. Resultado: %T\n", rightResult)
 
-	// DELEGAR a ExpresionesProcessor
-	return v.expresionesProcessor.ProcesarOperacionBinaria(left, right, operador)
+	if rightResult == nil {
+		fmt.Printf("❌ ERROR: Operando derecho es nil\n")
+		v.armGen.Comment("ERROR: operando derecho es nil")
+		return &assembly.ResultadoExpresion{
+			Registro:  "",
+			Tipo:      "int",
+			EsLiteral: true,
+			Valor:     0,
+		}
+	}
+
+	fmt.Printf("🔍 DEBUG: Verificando tipos de operandos...\n")
+	left, okLeft := leftResult.(*assembly.ResultadoExpresion)
+	right, okRight := rightResult.(*assembly.ResultadoExpresion)
+
+	if !okLeft {
+		fmt.Printf("❌ ERROR: Operando izquierdo no es ResultadoExpresion, es: %T\n", leftResult)
+		v.armGen.Comment("ERROR: operando izquierdo no es ResultadoExpresion")
+		return &assembly.ResultadoExpresion{
+			Registro:  "",
+			Tipo:      "int",
+			EsLiteral: true,
+			Valor:     0,
+		}
+	}
+
+	if !okRight {
+		fmt.Printf("❌ ERROR: Operando derecho no es ResultadoExpresion, es: %T\n", rightResult)
+		v.armGen.Comment("ERROR: operando derecho no es ResultadoExpresion")
+		return &assembly.ResultadoExpresion{
+			Registro:  "",
+			Tipo:      "int",
+			EsLiteral: true,
+			Valor:     0,
+		}
+	}
+
+	fmt.Printf("✅ DEBUG: Tipos válidos. Left: %s, Right: %s\n", left.Tipo, right.Tipo)
+	v.armGen.Comment(fmt.Sprintf("Operador: %s, Tipos: %s %s %s", operador, left.Tipo, operador, right.Tipo))
+
+	fmt.Printf("🔍 DEBUG: Llamando ProcesarOperacionBinaria...\n")
+	// DELEGAR a ExpresionesProcessor CON PROTECCIÓN
+	var resultado *assembly.ResultadoExpresion
+
+	// ✅ PROTECCIÓN CONTRA PANIC EN PROCESAMIENTO
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("❌ PANIC en ProcesarOperacionBinaria: %v\n", r)
+				resultado = &assembly.ResultadoExpresion{
+					Registro:  "",
+					Tipo:      "int",
+					EsLiteral: true,
+					Valor:     0,
+				}
+			}
+		}()
+		resultado = v.expresionesProcessor.ProcesarOperacionBinaria(left, right, operador)
+	}()
+
+	if resultado == nil {
+		fmt.Printf("❌ ERROR: ProcesarOperacionBinaria retornó nil\n")
+		resultado = &assembly.ResultadoExpresion{
+			Registro:  "",
+			Tipo:      "int",
+			EsLiteral: true,
+			Valor:     0,
+		}
+	}
+
+	fmt.Printf("✅ DEBUG: VisitBinarioExp COMPLETADO. Resultado tipo: %s\n", resultado.Tipo)
+	v.armGen.Comment("=== FIN EXPRESIÓN BINARIA ===")
+
+	return resultado
 }
 
 func (v *VisitorARM64) VisitUnarioExp(ctx *parser.UnarioExpContext) interface{} {
+	v.armGen.Comment("=== INICIO EXPRESIÓN UNARIA ===")
+
 	exprResult := v.Visit(ctx.Expr())
 	if exprResult == nil {
+		v.armGen.Comment("Error: expresión unaria es nil")
 		return &assembly.ResultadoExpresion{
 			Registro:  "",
 			Tipo:      "int",
@@ -754,30 +878,51 @@ func (v *VisitorARM64) VisitUnarioExp(ctx *parser.UnarioExpContext) interface{} 
 		}
 	}
 
-	expr := exprResult.(*assembly.ResultadoExpresion)
-	operador := ctx.GetOp().GetText()
-
-	// DELEGAR a ExpresionesProcessor
-	return v.expresionesProcessor.ProcesarOperacionUnaria(expr, operador)
-}
-
-// PROBLEMA 1: VisitIdExp no maneja slices correctamente
-func (v *VisitorARM64) VisitIdExp(ctx *parser.IdExpContext) interface{} {
-	nombreVariable := ctx.PatronId().GetText()
-
-	//  PRIMER PRIORITY: Verificar si es un slice
-	if v.sliceProcessor.ExisteSlice(nombreVariable) {
+	// ✅ CONVERSIÓN SEGURA
+	expr, ok := exprResult.(*assembly.ResultadoExpresion)
+	if !ok {
+		v.armGen.Comment("Error: expresión unaria no es ResultadoExpresion")
 		return &assembly.ResultadoExpresion{
 			Registro:  "",
-			Tipo:      "slice_name",
+			Tipo:      "int",
 			EsLiteral: true,
-			Valor:     nombreVariable,
+			Valor:     0,
 		}
 	}
 
-	//  SEGUNDO: Intentar cargar variable normal
-	resultado, err := v.variablesProcessor.CargarVariable(nombreVariable, "")
+	operador := ctx.GetOp().GetText()
+	v.armGen.Comment(fmt.Sprintf("Operador unario: %s", operador))
+
+	// DELEGAR a ExpresionesProcessor
+	resultado := v.expresionesProcessor.ProcesarOperacionUnaria(expr, operador)
+	v.armGen.Comment("=== FIN EXPRESIÓN UNARIA ===")
+
+	return resultado
+}
+
+// PROBLEMA 1: VisitIdExp no maneja slices correctamente
+// ✅ FUNCIÓN DE DEBUG: VisitIdExp CON LOGGING
+func (v *VisitorARM64) VisitIdExp(ctx *parser.IdExpContext) interface{} {
+	nombreVariable := ctx.PatronId().GetText()
+	fmt.Printf("🔍 DEBUG: VisitIdExp - Variable: %s\n", nombreVariable)
+	v.armGen.Comment(fmt.Sprintf("=== ACCESO A VARIABLE: %s ===", nombreVariable))
+
+	// Protección contra panic
+	var resultado *assembly.ResultadoExpresion
+	var err error
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("❌ PANIC en CargarVariable(%s): %v\n", nombreVariable, r)
+				err = fmt.Errorf("panic al cargar variable: %v", r)
+			}
+		}()
+		resultado, err = v.variablesProcessor.CargarVariable(nombreVariable, "")
+	}()
+
 	if err != nil {
+		fmt.Printf("❌ ERROR: %s\n", err.Error())
 		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
 		return &assembly.ResultadoExpresion{
 			Registro:  "",
@@ -787,6 +932,19 @@ func (v *VisitorARM64) VisitIdExp(ctx *parser.IdExpContext) interface{} {
 		}
 	}
 
+	if resultado == nil {
+		fmt.Printf("❌ ERROR: CargarVariable retornó nil para %s\n", nombreVariable)
+		v.armGen.Comment(fmt.Sprintf("Error: CargarVariable retornó nil para %s", nombreVariable))
+		return &assembly.ResultadoExpresion{
+			Registro:  "",
+			Tipo:      "int",
+			EsLiteral: true,
+			Valor:     0,
+		}
+	}
+
+	fmt.Printf("✅ DEBUG: Variable %s cargada exitosamente. Tipo: %s\n", nombreVariable, resultado.Tipo)
+	v.armGen.Comment(fmt.Sprintf("Variable cargada exitosamente: %s", nombreVariable))
 	return resultado
 }
 
@@ -1179,4 +1337,270 @@ func (v *VisitorARM64) generarFloatInmediato(registro string, valor float64) {
 	v.armGen.Instructions = append(v.armGen.Instructions,
 		fmt.Sprintf("adr %s, %s", regTmp, etiqueta),
 		fmt.Sprintf("ldr %s, [%s]", registro, regTmp))
+}
+
+// ============= ESTRUCTURAS DE CONTROL IF-ELSE =============
+
+func (v *VisitorARM64) VisitIFstmt(ctx *parser.IFstmtContext) interface{} {
+	fmt.Printf("🔍 DEBUG: VisitIFstmt INICIO\n")
+	v.armGen.Comment("=== INICIO ESTRUCTURA IF-ELSE IF-ELSE ===")
+
+	etiquetaFinal := v.expresionesProcessor.GenerarEtiquetaUnica("if_final")
+	fmt.Printf("🔍 DEBUG: Etiqueta final generada: %s\n", etiquetaFinal)
+
+	// Protección contra panic en el procesamiento de branches
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("❌ PANIC en procesamiento de IF branches: %v\n", r)
+				v.armGen.Comment(fmt.Sprintf("ERROR: Panic en procesamiento IF: %v", r))
+			}
+		}()
+
+		// Procesar todas las cadenas if/else-if
+		for i, ifChain := range ctx.AllIf_chain() {
+			fmt.Printf("🔍 DEBUG: Procesando branch #%d\n", i+1)
+			v.armGen.Comment(fmt.Sprintf("--- Evaluando Branch #%d ---", i+1))
+			v.procesarBranchIF(ifChain, etiquetaFinal)
+			fmt.Printf("✅ DEBUG: Branch #%d completado\n", i+1)
+		}
+
+		// Procesar else si existe
+		if ctx.Else_stmt() != nil {
+			fmt.Printf("🔍 DEBUG: Procesando ELSE\n")
+			v.armGen.Comment("--- Ejecutando ELSE ---")
+			v.Visit(ctx.Else_stmt())
+			fmt.Printf("✅ DEBUG: ELSE completado\n")
+		}
+	}()
+
+	// Etiqueta final
+	v.armGen.Instructions = append(v.armGen.Instructions,
+		fmt.Sprintf("%s:", etiquetaFinal))
+	v.armGen.Comment("=== FIN ESTRUCTURA IF-ELSE IF-ELSE ===")
+	v.armGen.Instructions = append(v.armGen.Instructions, "")
+
+	fmt.Printf("✅ DEBUG: VisitIFstmt COMPLETADO\n")
+	return nil
+}
+
+func (v *VisitorARM64) procesarBranchIF(ifChain interface{}, etiquetaFinal string) {
+	fmt.Printf("🔍 DEBUG: procesarBranchIF INICIO\n")
+
+	// ✅ RESETEAR REGISTROS AL INICIO DE CADA BRANCH
+	v.expresionesProcessor.ResetearRegistrosSiNecesario()
+
+	ctx, ok := ifChain.(*parser.IFcadenaContext)
+	if !ok {
+		fmt.Printf("❌ ERROR: no se pudo convertir ifChain a IFcadenaContext\n")
+		v.armGen.Comment("Error: no se pudo convertir ifChain a IFcadenaContext")
+		return
+	}
+
+	v.armGen.Comment(">>> PROCESANDO BRANCH IF/ELSE-IF <<<")
+
+	fmt.Printf("🔍 DEBUG: Evaluando expresión de condición...\n")
+
+	// Protección contra panic en evaluación de expresión
+	var resultado interface{}
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("❌ PANIC en evaluación de expresión IF: %v\n", r)
+				resultado = &assembly.ResultadoExpresion{
+					Registro:  "",
+					Tipo:      "bool",
+					EsLiteral: true,
+					Valor:     false,
+				}
+			}
+		}()
+		resultado = v.Visit(ctx.Expr())
+	}()
+
+	fmt.Printf("🔍 DEBUG: Expresión evaluada. Resultado: %T\n", resultado)
+
+	// ✅ VALIDACIÓN SEGURA DEL RESULTADO
+	cond := v.validarResultadoExpresionSeguro(resultado, "condición IF")
+	if cond == nil {
+		fmt.Printf("❌ ERROR: validarResultadoExpresionSeguro retornó nil\n")
+		return
+	}
+
+	if cond.Tipo != "bool" {
+		fmt.Printf("❌ ERROR: condición no es booleana, es: %s\n", cond.Tipo)
+		v.armGen.Comment(fmt.Sprintf("Error: condición no booleana: %s", cond.Tipo))
+		return
+	}
+
+	fmt.Printf("✅ DEBUG: Condición válida. Tipo: %s, EsLiteral: %t\n", cond.Tipo, cond.EsLiteral)
+
+	// Etiqueta para saltar si la condición es falsa
+	etiquetaSaltarBranch := v.expresionesProcessor.GenerarEtiquetaUnica("skip_branch")
+
+	if cond.EsLiteral {
+		fmt.Printf("🔍 DEBUG: Procesando condición literal...\n")
+		valor := v.obtenerValorBoolSeguro(cond)
+		v.armGen.Comment(fmt.Sprintf("Condición literal: %t", valor))
+		fmt.Printf("🔍 DEBUG: Valor literal: %t\n", valor)
+
+		if valor {
+			fmt.Printf("🔍 DEBUG: Ejecutando bloque literal true...\n")
+			v.armGen.Comment("=== EJECUTANDO BLOQUE (literal true) ===")
+			v.pushScope("if")
+			for i, stmt := range ctx.AllStmt() {
+				fmt.Printf("🔍 DEBUG: Ejecutando sentencia %d del bloque IF\n", i+1)
+				v.Visit(stmt)
+			}
+			v.popScope()
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("b %s", etiquetaFinal))
+			fmt.Printf("✅ DEBUG: Bloque literal true completado\n")
+		} else {
+			fmt.Printf("🔍 DEBUG: Condición literal false - saltando\n")
+		}
+	} else {
+		fmt.Printf("🔍 DEBUG: Procesando condición runtime...\n")
+		// Caso runtime: generar código condicional
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("cmp %s, #0", cond.Registro),
+			fmt.Sprintf("beq %s", etiquetaSaltarBranch))
+
+		fmt.Printf("🔍 DEBUG: Ejecutando bloque runtime...\n")
+		v.armGen.Comment("=== EJECUTANDO BLOQUE (runtime true) ===")
+		v.pushScope("if")
+		for i, stmt := range ctx.AllStmt() {
+			fmt.Printf("🔍 DEBUG: Ejecutando sentencia %d del bloque IF\n", i+1)
+			v.Visit(stmt)
+		}
+		v.popScope()
+
+		// Saltar al final de la estructura completa
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("b %s", etiquetaFinal))
+
+		// Etiqueta para cuando la condición es falsa
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("%s:", etiquetaSaltarBranch))
+		v.armGen.Comment("Condición falsa - continuar al siguiente branch")
+		fmt.Printf("✅ DEBUG: Bloque runtime completado\n")
+	}
+
+	v.armGen.Comment(">>> FIN PROCESAMIENTO BRANCH <<<")
+	fmt.Printf("✅ DEBUG: procesarBranchIF COMPLETADO\n")
+}
+
+func (v *VisitorARM64) VisitIFcadena(ctx *parser.IFcadenaContext) interface{} {
+	// Esta función es llamada por procesarBranchIF, solo devolvemos el contexto
+	return ctx
+}
+
+func (v *VisitorARM64) VisitElseStmt(ctx *parser.ElseStmtContext) interface{} {
+	v.armGen.Comment("=== INICIO BLOQUE ELSE ===")
+
+	v.pushScope("else")
+
+	// Ejecutar todas las sentencias del bloque else
+	for i, stmt := range ctx.AllStmt() {
+		v.armGen.Comment(fmt.Sprintf("Ejecutando sentencia %d del bloque else", i+1))
+		v.Visit(stmt)
+	}
+
+	v.popScope()
+
+	v.armGen.Comment("=== FIN BLOQUE ELSE ===")
+
+	return nil
+}
+
+func (v *VisitorARM64) pushScope(nombre string) {
+	v.armGen.Comment(fmt.Sprintf("Push scope: %s", nombre))
+	// Si tienes acceso a RegistroAmbito más adelante, descomenta:
+	// v.RegistroAmbito.PushAmbito(nombre)
+}
+
+func (v *VisitorARM64) popScope() {
+	v.armGen.Comment("Pop scope")
+	// Si tienes acceso a RegistroAmbito más adelante, descomenta:
+	// v.RegistroAmbito.PopAmbito()
+}
+
+func (v *VisitorARM64) verificarResultadoExpresion(resultado interface{}, contexto string) (*assembly.ResultadoExpresion, bool) {
+	if resultado == nil {
+		v.armGen.Comment(fmt.Sprintf("Error en %s: resultado nil", contexto))
+		return nil, false
+	}
+
+	expr, ok := resultado.(*assembly.ResultadoExpresion)
+	if !ok {
+		v.armGen.Comment(fmt.Sprintf("Error en %s: no es ResultadoExpresion", contexto))
+		return nil, false
+	}
+
+	return expr, true
+}
+
+// ✅ FUNCIÓN MEJORADA: Validación segura de ResultadoExpresion
+func (v *VisitorARM64) validarResultadoExpresionSeguro(resultado interface{}, contexto string) *assembly.ResultadoExpresion {
+	fmt.Printf("🔍 DEBUG: validarResultadoExpresionSeguro - Contexto: %s, Tipo: %T\n", contexto, resultado)
+
+	if resultado == nil {
+		fmt.Printf("❌ DEBUG: Resultado nil en %s\n", contexto)
+		v.armGen.Comment(fmt.Sprintf("Error en %s: resultado nil", contexto))
+		return &assembly.ResultadoExpresion{
+			Registro:  "",
+			Tipo:      "bool",
+			EsLiteral: true,
+			Valor:     false,
+		}
+	}
+
+	expr, ok := resultado.(*assembly.ResultadoExpresion)
+	if !ok {
+		fmt.Printf("❌ DEBUG: No es ResultadoExpresion en %s, es: %T\n", contexto, resultado)
+		v.armGen.Comment(fmt.Sprintf("Error en %s: no es ResultadoExpresion", contexto))
+		return &assembly.ResultadoExpresion{
+			Registro:  "",
+			Tipo:      "bool",
+			EsLiteral: true,
+			Valor:     false,
+		}
+	}
+
+	fmt.Printf("✅ DEBUG: Validación exitosa en %s. Tipo: %s\n", contexto, expr.Tipo)
+	return expr
+}
+
+func (v *VisitorARM64) obtenerValorBoolSeguro(expr *assembly.ResultadoExpresion) bool {
+	fmt.Printf("🔍 DEBUG: obtenerValorBoolSeguro - Valor: %v, Tipo: %T\n", expr.Valor, expr.Valor)
+
+	if expr == nil || expr.Valor == nil {
+		fmt.Printf("❌ DEBUG: expr o expr.Valor es nil\n")
+		return false
+	}
+
+	if boolVal, ok := expr.Valor.(bool); ok {
+		fmt.Printf("✅ DEBUG: Valor bool válido: %t\n", boolVal)
+		return boolVal
+	}
+
+	fmt.Printf("❌ DEBUG: Valor no es bool, intentando conversión...\n")
+	// Si no es bool, intentar convertir de otros tipos
+	if intVal, ok := expr.Valor.(int); ok {
+		fmt.Printf("✅ DEBUG: Conversión de int %d a bool: %t\n", intVal, intVal != 0)
+		return intVal != 0
+	}
+
+	if floatVal, ok := expr.Valor.(float64); ok {
+		fmt.Printf("✅ DEBUG: Conversión de float %f a bool: %t\n", floatVal, floatVal != 0.0)
+		return floatVal != 0.0
+	}
+
+	if strVal, ok := expr.Valor.(string); ok {
+		fmt.Printf("✅ DEBUG: Conversión de string '%s' a bool: %t\n", strVal, strVal != "")
+		return strVal != ""
+	}
+
+	fmt.Printf("❌ DEBUG: No se pudo convertir a bool, retornando false\n")
+	return false
 }

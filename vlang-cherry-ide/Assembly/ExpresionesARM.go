@@ -11,12 +11,12 @@ type ResultadoExpresion struct {
 	Tipo      string
 	EsLiteral bool
 	Valor     interface{}
-	 SliceInfo   *SliceAccessInfo `json:"-"` 
+	SliceInfo *SliceAccessInfo `json:"-"`
 }
 
 type SliceAccessInfo struct {
-    NombreSlice string
-    IndiceExpr  *ResultadoExpresion
+	NombreSlice string
+	IndiceExpr  *ResultadoExpresion
 }
 
 // ExpresionesProcessor maneja todas las operaciones de expresiones
@@ -41,27 +41,40 @@ func NewExpresionesProcessor(armGen *ARMGenerator) *ExpresionesProcessor {
 // ============= GESTIÓN DE REGISTROS =============
 
 func (ep *ExpresionesProcessor) NuevoRegistroTmp() string {
-    if 9+ep.tmpCounter > 30 {  
-        panic("Se agotaron los registros temporales disponibles (x9-x30)")
-    }
-    reg := fmt.Sprintf("x%d", 9+ep.tmpCounter)
-    ep.tmpCounter++
-    return reg
+	// ✅ PERMITIR RECICLAJE DE REGISTROS
+	if 9+ep.tmpCounter > 30 {
+		ep.armGen.Comment("ADVERTENCIA: Reciclando registros temporales")
+		ep.tmpCounter = 0 //
+	}
+	reg := fmt.Sprintf("x%d", 9+ep.tmpCounter)
+	ep.tmpCounter++
+	return reg
 }
 
 func (ep *ExpresionesProcessor) NuevoRegistroFloatTmp() string {
-    // AGREGAR campo faltante si no existe
-    if ep.tmpFloatCounter > 31 {
-        ep.tmpFloatCounter = 0 // Reciclar registros
-    }
-    reg := fmt.Sprintf("d%d", ep.tmpFloatCounter)
-    ep.tmpFloatCounter++
-    return reg
+	if ep.tmpFloatCounter > 31 {
+		ep.armGen.Comment("ADVERTENCIA: Reciclando registros float")
+		ep.tmpFloatCounter = 0
+	}
+	reg := fmt.Sprintf("d%d", ep.tmpFloatCounter)
+	ep.tmpFloatCounter++
+	return reg
 }
 
 func (ep *ExpresionesProcessor) ResetearContadores() {
 	ep.tmpCounter = 0
 	ep.tmpFloatCounter = 0
+}
+
+func (ep *ExpresionesProcessor) ResetearRegistrosSiNecesario() {
+	// Resetear si estamos cerca del límite
+	if ep.tmpCounter > 15 {
+		ep.armGen.Comment("Reseteando contadores de registros por límite")
+		ep.tmpCounter = 0
+	}
+	if ep.tmpFloatCounter > 20 {
+		ep.tmpFloatCounter = 0
+	}
 }
 
 // ============= DETERMINACIÓN DE TIPOS =============
@@ -168,14 +181,28 @@ func (ep *ExpresionesProcessor) ProcesarOperacionLogica(left, right *ResultadoEx
 }
 
 func (ep *ExpresionesProcessor) ProcesarOperacionAND(left, right *ResultadoExpresion, registroResultado string) *ResultadoExpresion {
+	// ✅ VALIDACIÓN PREVIA DE TIPOS
+	if left == nil || right == nil {
+		ep.armGen.Comment("Error: operando nil en operación AND")
+		ep.armGen.Mov(registroResultado, 0)
+		return &ResultadoExpresion{
+			Registro:  registroResultado,
+			Tipo:      "bool",
+			EsLiteral: false,
+		}
+	}
+
 	registroIzq := ep.NuevoRegistroTmp()
 	registroDer := ep.NuevoRegistroTmp()
 
-	// Cargar operando izquierdo
+	// Cargar operando izquierdo con validación
 	if left.EsLiteral {
 		valor := 0
-		if left.Valor.(bool) {
-			valor = 1
+		// ✅ VALIDACIÓN SEGURA DE TIPO
+		if left.Valor != nil {
+			if boolVal, ok := left.Valor.(bool); ok && boolVal {
+				valor = 1
+			}
 		}
 		ep.armGen.Mov(registroIzq, valor)
 	} else {
@@ -194,8 +221,11 @@ func (ep *ExpresionesProcessor) ProcesarOperacionAND(left, right *ResultadoExpre
 	// Cargar operando derecho solo si el izquierdo es true
 	if right.EsLiteral {
 		valor := 0
-		if right.Valor.(bool) {
-			valor = 1
+		// ✅ VALIDACIÓN SEGURA DE TIPO
+		if right.Valor != nil {
+			if boolVal, ok := right.Valor.(bool); ok && boolVal {
+				valor = 1
+			}
 		}
 		ep.armGen.Mov(registroDer, valor)
 	} else {
@@ -224,14 +254,28 @@ func (ep *ExpresionesProcessor) ProcesarOperacionAND(left, right *ResultadoExpre
 }
 
 func (ep *ExpresionesProcessor) ProcesarOperacionOR(left, right *ResultadoExpresion, registroResultado string) *ResultadoExpresion {
+	// ✅ VALIDACIÓN PREVIA DE TIPOS
+	if left == nil || right == nil {
+		ep.armGen.Comment("Error: operando nil en operación OR")
+		ep.armGen.Mov(registroResultado, 0)
+		return &ResultadoExpresion{
+			Registro:  registroResultado,
+			Tipo:      "bool",
+			EsLiteral: false,
+		}
+	}
+
 	registroIzq := ep.NuevoRegistroTmp()
 	registroDer := ep.NuevoRegistroTmp()
 
 	// Cargar operando izquierdo
 	if left.EsLiteral {
 		valor := 0
-		if left.Valor.(bool) {
-			valor = 1
+		// ✅ VALIDACIÓN SEGURA DE TIPO
+		if left.Valor != nil {
+			if boolVal, ok := left.Valor.(bool); ok && boolVal {
+				valor = 1
+			}
 		}
 		ep.armGen.Mov(registroIzq, valor)
 	} else {
@@ -250,8 +294,11 @@ func (ep *ExpresionesProcessor) ProcesarOperacionOR(left, right *ResultadoExpres
 	// Cargar operando derecho solo si el izquierdo es false
 	if right.EsLiteral {
 		valor := 0
-		if right.Valor.(bool) {
-			valor = 1
+		// ✅ VALIDACIÓN SEGURA DE TIPO
+		if right.Valor != nil {
+			if boolVal, ok := right.Valor.(bool); ok && boolVal {
+				valor = 1
+			}
 		}
 		ep.armGen.Mov(registroDer, valor)
 	} else {
@@ -470,22 +517,28 @@ func (ep *ExpresionesProcessor) ProcesarComparacionBooleana(left, right *Resulta
 	registroIzq := ep.NuevoRegistroTmp()
 	registroDer := ep.NuevoRegistroTmp()
 
-	// Cargar operando izquierdo
+	// Cargar operando izquierdo con validación
 	if left.EsLiteral {
 		valor := 0
-		if left.Valor.(bool) {
-			valor = 1
+		// ✅ VALIDACIÓN SEGURA DE TIPO
+		if left.Valor != nil {
+			if boolVal, ok := left.Valor.(bool); ok && boolVal {
+				valor = 1
+			}
 		}
 		ep.armGen.Mov(registroIzq, valor)
 	} else {
 		ep.armGen.MovReg(registroIzq, left.Registro)
 	}
 
-	// Cargar operando derecho
+	// Cargar operando derecho con validación
 	if right.EsLiteral {
 		valor := 0
-		if right.Valor.(bool) {
-			valor = 1
+		// ✅ VALIDACIÓN SEGURA DE TIPO
+		if right.Valor != nil {
+			if boolVal, ok := right.Valor.(bool); ok && boolVal {
+				valor = 1
+			}
 		}
 		ep.armGen.Mov(registroDer, valor)
 	} else {
@@ -504,6 +557,42 @@ func (ep *ExpresionesProcessor) ProcesarComparacionBooleana(left, right *Resulta
 	return &ResultadoExpresion{Registro: registroResultado, Tipo: "bool", EsLiteral: false}
 }
 
+// ============= FUNCIONES AUXILIARES ADICIONALES =============
+
+// Función auxiliar para validar y obtener valor entero de forma segura
+func (ep *ExpresionesProcessor) obtenerValorEnteroSeguro(expr *ResultadoExpresion, valorDefecto int) int {
+	if expr == nil || expr.Valor == nil {
+		return valorDefecto
+	}
+
+	if intVal, ok := expr.Valor.(int); ok {
+		return intVal
+	}
+
+	if floatVal, ok := expr.Valor.(float64); ok {
+		return int(floatVal)
+	}
+
+	return valorDefecto
+}
+
+// Función auxiliar para validar y obtener valor float de forma segura
+func (ep *ExpresionesProcessor) obtenerValorFloatSeguro(expr *ResultadoExpresion, valorDefecto float64) float64 {
+	if expr == nil || expr.Valor == nil {
+		return valorDefecto
+	}
+
+	if floatVal, ok := expr.Valor.(float64); ok {
+		return floatVal
+	}
+
+	if intVal, ok := expr.Valor.(int); ok {
+		return float64(intVal)
+	}
+
+	return valorDefecto
+}
+
 // ============= OPERACIONES NUMÉRICAS =============
 
 func (ep *ExpresionesProcessor) ProcesarOperacionInt(left, right *ResultadoExpresion, operador string) *ResultadoExpresion {
@@ -511,20 +600,18 @@ func (ep *ExpresionesProcessor) ProcesarOperacionInt(left, right *ResultadoExpre
 	registroDer := ep.NuevoRegistroTmp()
 	registroResultado := ep.NuevoRegistroTmp()
 
-	// Cargar operando izquierdo
-	if left.EsLiteral && left.Tipo == "int" {
-		ep.armGen.Mov(registroIzq, left.Valor.(int))
-	} else if left.EsLiteral && left.Tipo == "float" {
-		ep.armGen.Mov(registroIzq, int(left.Valor.(float64)))
+	// Cargar operando izquierdo con validación segura
+	if left.EsLiteral {
+		valor := ep.obtenerValorEnteroSeguro(left, 0)
+		ep.armGen.Mov(registroIzq, valor)
 	} else {
 		ep.armGen.MovReg(registroIzq, left.Registro)
 	}
 
-	// Cargar operando derecho
-	if right.EsLiteral && right.Tipo == "int" {
-		ep.armGen.Mov(registroDer, right.Valor.(int))
-	} else if right.EsLiteral && right.Tipo == "float" {
-		ep.armGen.Mov(registroDer, int(right.Valor.(float64)))
+	// Cargar operando derecho con validación segura
+	if right.EsLiteral {
+		valor := ep.obtenerValorEnteroSeguro(right, 0)
+		ep.armGen.Mov(registroDer, valor)
 	} else {
 		ep.armGen.MovReg(registroDer, right.Registro)
 	}
@@ -636,11 +723,14 @@ func (ep *ExpresionesProcessor) ProcesarNegacionLogica(expr *ResultadoExpresion)
 	registroOrigen := ep.NuevoRegistroTmp()
 	registroResultado := ep.NuevoRegistroTmp()
 
-	// Cargar valor booleano
+	// Cargar valor booleano con validación
 	if expr.EsLiteral {
 		valor := 0
-		if expr.Valor.(bool) {
-			valor = 1
+		// ✅ VALIDACIÓN SEGURA DE TIPO
+		if expr.Valor != nil {
+			if boolVal, ok := expr.Valor.(bool); ok && boolVal {
+				valor = 1
+			}
 		}
 		ep.armGen.Mov(registroOrigen, valor)
 	} else {
@@ -711,17 +801,17 @@ func (ep *ExpresionesProcessor) AgregarConstanteFloat(valor float64) string {
 }
 
 func (ep *ExpresionesProcessor) CargarConstanteFloat(registro string, valor float64) {
-    if valor == 0.0 {
-        ep.armGen.Instructions = append(ep.armGen.Instructions,
-            fmt.Sprintf("fmov %s, wzr", registro))
-        return
-    }
+	if valor == 0.0 {
+		ep.armGen.Instructions = append(ep.armGen.Instructions,
+			fmt.Sprintf("fmov %s, wzr", registro))
+		return
+	}
 
-    etiqueta := ep.AgregarConstanteFloat(valor)
-    regTmp := ep.NuevoRegistroTmp()
-    ep.armGen.Instructions = append(ep.armGen.Instructions,
-        fmt.Sprintf("adr %s, %s", regTmp, etiqueta),
-        fmt.Sprintf("ldr %s, [%s]", registro, regTmp))
+	etiqueta := ep.AgregarConstanteFloat(valor)
+	regTmp := ep.NuevoRegistroTmp()
+	ep.armGen.Instructions = append(ep.armGen.Instructions,
+		fmt.Sprintf("adr %s, %s", regTmp, etiqueta),
+		fmt.Sprintf("ldr %s, [%s]", registro, regTmp))
 }
 
 func (ep *ExpresionesProcessor) CrearLiteralInt(valor string) *ResultadoExpresion {
@@ -756,12 +846,23 @@ func (ep *ExpresionesProcessor) CrearLiteralString(valor string) *ResultadoExpre
 }
 
 func (ep *ExpresionesProcessor) CrearLiteralBool(valor string) *ResultadoExpresion {
-	val, _ := strconv.ParseBool(valor)
+	ep.armGen.Comment(fmt.Sprintf("=== LITERAL BOOL: %s ===", valor))
+
+	// ✅ VALIDACIÓN SEGURA
+	boolVal := false
+	if valor == "true" {
+		boolVal = true
+	} else if valor == "false" {
+		boolVal = false
+	} else {
+		ep.armGen.Comment(fmt.Sprintf("Advertencia: valor booleano no reconocido '%s', usando false", valor))
+	}
+
 	return &ResultadoExpresion{
 		Registro:  "",
 		Tipo:      "bool",
 		EsLiteral: true,
-		Valor:     val,
+		Valor:     boolVal, // ✅ SIEMPRE UN BOOL VÁLIDO
 	}
 }
 
@@ -769,6 +870,12 @@ func (ep *ExpresionesProcessor) GetMensajesDatos() []string {
 	return ep.MensajesDatos
 }
 func (ep *ExpresionesProcessor) GetContadorEtiqueta() int {
-    ep.contadorEtiqueta++
-    return ep.contadorEtiqueta
+	ep.contadorEtiqueta++
+	return ep.contadorEtiqueta
+}
+
+func (ep *ExpresionesProcessor) GenerarEtiquetaUnica(prefijo string) string {
+	etiqueta := fmt.Sprintf(".L%s_%d", prefijo, ep.contadorEtiqueta)
+	ep.contadorEtiqueta++
+	return etiqueta
 }
