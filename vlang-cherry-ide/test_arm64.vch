@@ -611,5 +611,95 @@ fn main() {
     println("=========== FIN DE EJEMPLOS =============")
     println("¡Switch-case implementado exitosamente!")
 }
+
+    //========= EXAMPLES FOR TYPE WHILE =========
+
+    mut contador_desc := 10
+    for contador_desc > 0 {
+        println("Countdown:", contador_desc)
+        contador_desc -= 1
+    }
+    println("¡Despegue!")
+
+    mut indice := 0
+    mut suma_total := 0
+    for indice < 5 {
+        println("i =", indice)
+        suma_total += indice
+        indice += 1
+    }
+    print(suma_total)  // SALIDA = 10
+
+    mut numero_par := 2
+    mut acumulado_pares := 0
+    for numero_par <= 20 {
+        acumulado_pares += numero_par
+        println("Sumando:", numero_par, "Total:", acumulado_pares)
+        numero_par += 2
+    }
+    println("Suma final de pares:", acumulado_pares)   // SUMA FINAL = 110
+
+    mut candidato := 1
+    mut meta := 17
+    mut hallado := false
+
+    for candidato <= 20 && !hallado {
+        if candidato == meta {
+            hallado = true
+            println("¡Encontrado!", candidato)
+        } else {
+            println("Probando:", candidato)
+        }
+        candidato += 1
+    }
+
+    if !hallado {
+        println("No encontrado")    //SALIDA : 17
+    }
+
+    mut acumulador := 0
+    mut valor := 1
+
+    for acumulador < 50 {
+        acumulador += valor
+        println("Número:", valor, "Suma acumulada:", acumulador)
+        valor += 1
+    }
+    println("Primera suma que supera 50:", acumulador)    // SALIDA = 55 
+
+    mut tabla_mult := 7
+    mut factor := 1
+    mut producto := 0
+
+    for factor <= 10 {
+        producto = tabla_mult * factor
+        println(tabla_mult, "x", factor, "=", producto)    // TABLA DE MULTIPLICAR DEL 7
+        factor += 1
+    }
+
+    mut tiros := 0
+    mut puntos := 0
+    mut dado_valor := 0
+
+    for tiros < 6 {
+        dado_valor = 3  // Simular dado (valor fijo para testing)
+        puntos += dado_valor
+        tiros += 1
+        println("Lanzamiento", tiros, ": dado =", dado_valor, ", suma =", puntos)
+    }
+    println("Suma total después de", tiros, "lanzamientos:", puntos)       // SALIDA = 18
+
+    mut numero_impar := 1
+    mut total_impares := 0
+    mut iteraciones := 0
+
+    for iteraciones < 5 {
+        total_impares += numero_impar
+        println("Impar:", numero_impar, "Suma:", total_impares)
+        numero_impar += 2
+        iteraciones += 1
+    }                                           // SALIDA  Sumar numeros
+
+
 }
 

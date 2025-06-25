@@ -34,6 +34,15 @@ func NewSliceProcessor(armGen *ARMGenerator, expresionesProcessor *ExpresionesPr
 	}
 }
 
+// ============= MÉTODO PARA OBTENER TIPO DE ELEMENTO =============
+func (sp *SliceProcessor) ObtenerTipoElemento(nombre string) (string, error) {
+    sliceInfo, err := sp.CargarSlice(nombre)
+    if err != nil {
+        return "", err
+    }
+    return sliceInfo.TipoElemento, nil
+}
+
 // ============= DECLARACIÓN DE SLICES =============
 func (sp *SliceProcessor) DeclararSlice(nombre, tipoElemento string, elementos []*ResultadoExpresion) error {
 	sp.armGen.Comment(fmt.Sprintf("=== DECLARACIÓN SLICE %s: []%s ===", nombre, tipoElemento))
