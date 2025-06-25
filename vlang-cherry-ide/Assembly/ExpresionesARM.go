@@ -41,7 +41,7 @@ func NewExpresionesProcessor(armGen *ARMGenerator) *ExpresionesProcessor {
 // ============= GESTIÓN DE REGISTROS =============
 
 func (ep *ExpresionesProcessor) NuevoRegistroTmp() string {
-	// ✅ PERMITIR RECICLAJE DE REGISTROS
+	// PERMITIR RECICLAJE DE REGISTROS
 	if 9+ep.tmpCounter > 30 {
 		ep.armGen.Comment("ADVERTENCIA: Reciclando registros temporales")
 		ep.tmpCounter = 0 //
@@ -181,7 +181,7 @@ func (ep *ExpresionesProcessor) ProcesarOperacionLogica(left, right *ResultadoEx
 }
 
 func (ep *ExpresionesProcessor) ProcesarOperacionAND(left, right *ResultadoExpresion, registroResultado string) *ResultadoExpresion {
-	// ✅ VALIDACIÓN PREVIA DE TIPOS
+	// VALIDACIÓN PREVIA DE TIPOS
 	if left == nil || right == nil {
 		ep.armGen.Comment("Error: operando nil en operación AND")
 		ep.armGen.Mov(registroResultado, 0)
@@ -198,7 +198,7 @@ func (ep *ExpresionesProcessor) ProcesarOperacionAND(left, right *ResultadoExpre
 	// Cargar operando izquierdo con validación
 	if left.EsLiteral {
 		valor := 0
-		// ✅ VALIDACIÓN SEGURA DE TIPO
+		// VALIDACIÓN SEGURA DE TIPO
 		if left.Valor != nil {
 			if boolVal, ok := left.Valor.(bool); ok && boolVal {
 				valor = 1
@@ -221,7 +221,7 @@ func (ep *ExpresionesProcessor) ProcesarOperacionAND(left, right *ResultadoExpre
 	// Cargar operando derecho solo si el izquierdo es true
 	if right.EsLiteral {
 		valor := 0
-		// ✅ VALIDACIÓN SEGURA DE TIPO
+		// VALIDACIÓN SEGURA DE TIPO
 		if right.Valor != nil {
 			if boolVal, ok := right.Valor.(bool); ok && boolVal {
 				valor = 1
@@ -254,7 +254,7 @@ func (ep *ExpresionesProcessor) ProcesarOperacionAND(left, right *ResultadoExpre
 }
 
 func (ep *ExpresionesProcessor) ProcesarOperacionOR(left, right *ResultadoExpresion, registroResultado string) *ResultadoExpresion {
-	// ✅ VALIDACIÓN PREVIA DE TIPOS
+	// VALIDACIÓN PREVIA DE TIPOS
 	if left == nil || right == nil {
 		ep.armGen.Comment("Error: operando nil en operación OR")
 		ep.armGen.Mov(registroResultado, 0)
@@ -271,7 +271,7 @@ func (ep *ExpresionesProcessor) ProcesarOperacionOR(left, right *ResultadoExpres
 	// Cargar operando izquierdo
 	if left.EsLiteral {
 		valor := 0
-		// ✅ VALIDACIÓN SEGURA DE TIPO
+		// VALIDACIÓN SEGURA DE TIPO
 		if left.Valor != nil {
 			if boolVal, ok := left.Valor.(bool); ok && boolVal {
 				valor = 1
@@ -294,7 +294,7 @@ func (ep *ExpresionesProcessor) ProcesarOperacionOR(left, right *ResultadoExpres
 	// Cargar operando derecho solo si el izquierdo es false
 	if right.EsLiteral {
 		valor := 0
-		// ✅ VALIDACIÓN SEGURA DE TIPO
+		// VALIDACIÓN SEGURA DE TIPO
 		if right.Valor != nil {
 			if boolVal, ok := right.Valor.(bool); ok && boolVal {
 				valor = 1
@@ -520,7 +520,7 @@ func (ep *ExpresionesProcessor) ProcesarComparacionBooleana(left, right *Resulta
 	// Cargar operando izquierdo con validación
 	if left.EsLiteral {
 		valor := 0
-		// ✅ VALIDACIÓN SEGURA DE TIPO
+		// VALIDACIÓN SEGURA DE TIPO
 		if left.Valor != nil {
 			if boolVal, ok := left.Valor.(bool); ok && boolVal {
 				valor = 1
@@ -534,7 +534,7 @@ func (ep *ExpresionesProcessor) ProcesarComparacionBooleana(left, right *Resulta
 	// Cargar operando derecho con validación
 	if right.EsLiteral {
 		valor := 0
-		// ✅ VALIDACIÓN SEGURA DE TIPO
+		// VALIDACIÓN SEGURA DE TIPO
 		if right.Valor != nil {
 			if boolVal, ok := right.Valor.(bool); ok && boolVal {
 				valor = 1
@@ -571,23 +571,6 @@ func (ep *ExpresionesProcessor) obtenerValorEnteroSeguro(expr *ResultadoExpresio
 
 	if floatVal, ok := expr.Valor.(float64); ok {
 		return int(floatVal)
-	}
-
-	return valorDefecto
-}
-
-// Función auxiliar para validar y obtener valor float de forma segura
-func (ep *ExpresionesProcessor) obtenerValorFloatSeguro(expr *ResultadoExpresion, valorDefecto float64) float64 {
-	if expr == nil || expr.Valor == nil {
-		return valorDefecto
-	}
-
-	if floatVal, ok := expr.Valor.(float64); ok {
-		return floatVal
-	}
-
-	if intVal, ok := expr.Valor.(int); ok {
-		return float64(intVal)
 	}
 
 	return valorDefecto
@@ -726,7 +709,7 @@ func (ep *ExpresionesProcessor) ProcesarNegacionLogica(expr *ResultadoExpresion)
 	// Cargar valor booleano con validación
 	if expr.EsLiteral {
 		valor := 0
-		// ✅ VALIDACIÓN SEGURA DE TIPO
+		// VALIDACIÓN SEGURA DE TIPO
 		if expr.Valor != nil {
 			if boolVal, ok := expr.Valor.(bool); ok && boolVal {
 				valor = 1
@@ -848,7 +831,7 @@ func (ep *ExpresionesProcessor) CrearLiteralString(valor string) *ResultadoExpre
 func (ep *ExpresionesProcessor) CrearLiteralBool(valor string) *ResultadoExpresion {
 	ep.armGen.Comment(fmt.Sprintf("=== LITERAL BOOL: %s ===", valor))
 
-	// ✅ VALIDACIÓN SEGURA
+	// VALIDACIÓN SEGURA
 	boolVal := false
 	if valor == "true" {
 		boolVal = true
@@ -862,7 +845,7 @@ func (ep *ExpresionesProcessor) CrearLiteralBool(valor string) *ResultadoExpresi
 		Registro:  "",
 		Tipo:      "bool",
 		EsLiteral: true,
-		Valor:     boolVal, // ✅ SIEMPRE UN BOOL VÁLIDO
+		Valor:     boolVal, // SIEMPRE UN BOOL VÁLIDO
 	}
 }
 

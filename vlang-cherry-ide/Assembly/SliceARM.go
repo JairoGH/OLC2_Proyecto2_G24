@@ -766,66 +766,6 @@ func (sp *SliceProcessor) agregarNuevoElemento(elemento *ResultadoExpresion, off
     }
 }
 
-// AppendMultiple para agregar varios elementos a la vez
-func (sp *SliceProcessor) AppendMultiple(nombreSlice string, elementos []*ResultadoExpresion) (*ResultadoExpresion, error) {
-    sp.armGen.Comment(fmt.Sprintf("=== FUNCIÓN append múltiple(%s, %d elementos) ===", nombreSlice, len(elementos)))
-
-    if len(elementos) == 0 {
-        // Si no hay elementos, retornar el slice original
-        return &ResultadoExpresion{
-            Registro:  "",
-            Tipo:      "slice_name",
-            EsLiteral: true,
-            Valor:     nombreSlice,
-        }, nil
-    }
-
-    sliceInfo, err := sp.CargarSlice(nombreSlice)
-    if err != nil {
-        return nil, err
-    }
-
-    // Verificar que todos los elementos sean del mismo tipo
-    for i, elem := range elementos {
-        if elem.Tipo != sliceInfo.TipoElemento {
-            return nil, fmt.Errorf("elemento %d: no se puede agregar tipo %s al slice de tipo []%s",
-                i, elem.Tipo, sliceInfo.TipoElemento)
-        }
-    }
-
-    nuevoTamaño := sliceInfo.Tamaño + len(elementos)
-    nuevoOffset := sp.calcularNuevoOffset(nuevoTamaño)
-
-    sp.armGen.Comment(fmt.Sprintf("Expandiendo slice %s de %d a %d elementos", 
-        nombreSlice, sliceInfo.Tamaño, nuevoTamaño))
-
-    // Copiar elementos existentes
-    sp.copiarElementosExistentes(sliceInfo, nuevoOffset)
-
-    // Agregar nuevos elementos
-    for i, elem := range elementos {
-        offsetNuevoElemento := nuevoOffset + ((sliceInfo.Tamaño + i) * 8)
-        sp.agregarNuevoElemento(elem, offsetNuevoElemento)
-    }
-
-    // Actualizar información del slice
-    sliceInfo.Tamaño = nuevoTamaño
-    sliceInfo.OffsetStack = nuevoOffset
-    sp.slicesDeclarados[nombreSlice] = sliceInfo
-
-    // Actualizar offset global
-    sp.offsetStack = nuevoOffset + (nuevoTamaño * 8)
-
-    sp.armGen.Comment(fmt.Sprintf("append múltiple completado: %s ahora tiene %d elementos", nombreSlice, nuevoTamaño))
-
-    return &ResultadoExpresion{
-        Registro:  "",
-        Tipo:      "slice_name",
-        EsLiteral: true,
-        Valor:     nombreSlice,
-    }, nil
-}
-
 //  Función para acceso por índice
 func (sp *SliceProcessor) AccederElementoPorIndice(nombreSlice string, indiceExpr *ResultadoExpresion) (*ResultadoExpresion, error) {
     sp.armGen.Comment(fmt.Sprintf("=== ACCESO POR ÍNDICE %s[%v] ===", nombreSlice, indiceExpr.Valor))

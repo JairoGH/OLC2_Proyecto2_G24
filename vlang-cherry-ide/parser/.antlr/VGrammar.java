@@ -1,4 +1,4 @@
-// Generated from /home/daaniieel/Escritorio/PROYECTO2/vlang-cherry-ide/parser/VGrammar.g4 by ANTLR 4.13.1
+// Generated from /home/daaniieel/Escritorio/PRUEBA/vlang-cherry-ide/parser/VGrammar.g4 by ANTLR 4.13.1
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;

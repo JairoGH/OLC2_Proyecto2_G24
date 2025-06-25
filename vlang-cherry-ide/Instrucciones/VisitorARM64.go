@@ -133,9 +133,8 @@ func (v *VisitorARM64) VisitStmt_asignar(ctx *parser.Stmt_asignarContext) interf
 			case *parser.AsignacionSliceItemContext:
 				return v.Visit(childTyped)
 			case *parser.DeclararSliceContext:
-				return v.VisitDeclararSlice(childTyped) // Mantener compatibilidad
+				return v.VisitDeclararSlice(childTyped) 
 			default:
-				v.armGen.Comment("Tipo de asignación no reconocido")
 				return v.Visit(child) // Fallback
 			}
 		}
@@ -189,6 +188,7 @@ func (v *VisitorARM64) VisitAsignacionDirecta(ctx *parser.AsignacionDirectaConte
 func (v *VisitorARM64) VisitAsignacionAritmetica(ctx *parser.AsignacionAritmeticaContext) interface{} {
 	// CORRECCIÓN: Obtener el nombre directamente del contexto
 	nombreVariable := ctx.PatronId().GetText()
+
 	v.armGen.Comment(fmt.Sprintf("=== ASIGNACIÓN ARITMÉTICA: %s %s ===", nombreVariable, ctx.GetOp().GetText()))
 
 	// Buscar la variable
@@ -213,10 +213,8 @@ func (v *VisitorARM64) VisitAsignacionAritmetica(ctx *parser.AsignacionAritmetic
 	}
 
 	// Obtener el operador base (quitar el "=")
-	operadorCompleto := ctx.GetOp().GetText()   // "+=", "-=", "*=", "/="
-	operadorBase := string(operadorCompleto[0]) // "+", "-", "*", "/"
-
-	v.armGen.Comment(fmt.Sprintf("Operador: %s -> %s", operadorCompleto, operadorBase))
+	operadorCompleto := ctx.GetOp().GetText()   // "+=", "-="
+	operadorBase := string(operadorCompleto[0]) // "+", "-"
 
 	// Realizar la operación aritmética usando ExpresionesProcessor
 	resultado := v.expresionesProcessor.ProcesarOperacionBinaria(valorIzq, valorDerecho, operadorBase)
@@ -232,7 +230,7 @@ func (v *VisitorARM64) VisitAsignacionAritmetica(ctx *parser.AsignacionAritmetic
 		return nil
 	}
 
-	v.armGen.Comment(fmt.Sprintf("Asignación aritmética completada: %s %s", nombreVariable, operadorCompleto))
+	v.armGen.Comment(fmt.Sprintf("=== FIN ASIGNACIÓN ARITMÉTICA: %s %s === \n", nombreVariable, operadorCompleto))
 	return nil
 }
 
@@ -266,6 +264,8 @@ func (v *VisitorARM64) VisitDeclararSinMutValor(ctx *parser.DeclararSinMutValorC
 	exprResult := v.Visit(ctx.Expr())
 	valor := exprResult.(*assembly.ResultadoExpresion)
 
+	v.armGen.Comment(fmt.Sprintf("=== DECLARAR VARIABLE : %s ===", nombre))
+
 	err := v.variablesProcessor.DeclararVariable(nombre, tipo, valor)
 	if err != nil {
 		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
@@ -277,6 +277,8 @@ func (v *VisitorARM64) VisitDeclararTipo(ctx *parser.DeclararTipoContext) interf
 	nombre := ctx.ID().GetText()
 	tipo := v.obtenerTipoString(ctx.Tipo())
 
+    v.armGen.Comment(fmt.Sprintf("=== DECLARAR VARIABLE MUT: %s ===", nombre))
+
 	err := v.variablesProcessor.DeclararVariable(nombre, tipo, nil)
 	if err != nil {
 		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
@@ -287,6 +289,8 @@ func (v *VisitorARM64) VisitDeclararTipo(ctx *parser.DeclararTipoContext) interf
 func (v *VisitorARM64) VisitDeclaraTipoValor(ctx *parser.DeclaraTipoValorContext) interface{} {
 	nombre := ctx.ID().GetText()
 	tipo := v.obtenerTipoString(ctx.Tipo())
+
+	v.armGen.Comment(fmt.Sprintf("=== DECLARAR VARIABLE MUT: %s ===", nombre))
 
 	exprResult := v.Visit(ctx.Expr())
 	if exprResult == nil {
@@ -360,10 +364,7 @@ func (v *VisitorARM64) VisitDeclararInferenciaMut(ctx *parser.DeclararInferencia
 	err := v.variablesProcessor.DeclararVariable(nombre, tipo, valor)
 	if err != nil {
 		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
-	} else {
-		v.armGen.Comment(fmt.Sprintf("Declaración mut inferida: mut %s := ? (%s)", nombre, tipo))
-	}
-
+	} 
 	return nil
 }
 
@@ -404,7 +405,6 @@ func (v *VisitorARM64) VisitStmt(ctx *parser.StmtContext) interface{} {
 	case ctx.Fun_slice() != nil:
 		return v.Visit(ctx.Fun_slice())
 	default:
-		v.armGen.Comment("Sentencia no reconocida o no implementada")
 		return nil
 	}
 }
@@ -507,43 +507,7 @@ func (v *VisitorARM64) VisitLlamarFuncion(ctx *parser.LlamarFuncionContext) inte
 			}
 
 			return resultado
-		} else {
-			// Múltiples elementos para agregar
-			var elementos []*assembly.ResultadoExpresion
-			for i := 1; i < len(argumentos); i++ {
-				elem, ok := argumentos[i].(*assembly.ResultadoExpresion)
-				if !ok {
-					v.armGen.Comment(fmt.Sprintf("Error: argumento %d de append no es válido", i+1))
-					regError := v.expresionesProcessor.NuevoRegistroTmp()
-					v.armGen.Instructions = append(v.armGen.Instructions,
-						fmt.Sprintf("mov %s, #0", regError))
-					return &assembly.ResultadoExpresion{
-						Registro:  regError,
-						Tipo:      "slice_name",
-						EsLiteral: true,
-						Valor:     "error",
-					}
-				}
-				elementos = append(elementos, elem)
-			}
-
-			// Llamar a la función append múltiple
-			resultado, err := v.sliceProcessor.AppendMultiple(nombreSlice, elementos)
-			if err != nil {
-				v.armGen.Comment(fmt.Sprintf("Error en append múltiple: %s", err.Error()))
-				regError := v.expresionesProcessor.NuevoRegistroTmp()
-				v.armGen.Instructions = append(v.armGen.Instructions,
-					fmt.Sprintf("mov %s, #0", regError))
-				return &assembly.ResultadoExpresion{
-					Registro:  regError,
-					Tipo:      "slice_name",
-					EsLiteral: true,
-					Valor:     "error",
-				}
-			}
-
-			return resultado
-		}
+		} 
 	}
 	// Manejar función len
 	if nombreFuncion == "len" && ctx.Lista_argumentos() != nil {
@@ -904,8 +868,6 @@ func (v *VisitorARM64) VisitBinarioExp(ctx *parser.BinarioExpContext) interface{
 		}
 	}
 
-	v.armGen.Comment(fmt.Sprintf("Operador: %s, Tipos: %s %s %s", operador, left.Tipo, operador, right.Tipo))
-
 	// DELEGAR a ExpresionesProcessor CON PROTECCIÓN
 	var resultado *assembly.ResultadoExpresion
 
@@ -935,14 +897,12 @@ func (v *VisitorARM64) VisitBinarioExp(ctx *parser.BinarioExpContext) interface{
 		}
 	}
 
-	v.armGen.Comment("=== FIN EXPRESIÓN BINARIA ===")
+	v.armGen.Comment("=== FIN EXPRESIÓN BINARIA === \n")
 
 	return resultado
 }
 
 func (v *VisitorARM64) VisitUnarioExp(ctx *parser.UnarioExpContext) interface{} {
-	v.armGen.Comment("=== INICIO EXPRESIÓN UNARIA ===")
-
 	exprResult := v.Visit(ctx.Expr())
 	if exprResult == nil {
 		v.armGen.Comment("Error: expresión unaria es nil")
@@ -967,19 +927,15 @@ func (v *VisitorARM64) VisitUnarioExp(ctx *parser.UnarioExpContext) interface{} 
 	}
 
 	operador := ctx.GetOp().GetText()
-	v.armGen.Comment(fmt.Sprintf("Operador unario: %s", operador))
 
 	// DELEGAR a ExpresionesProcessor
 	resultado := v.expresionesProcessor.ProcesarOperacionUnaria(expr, operador)
-	v.armGen.Comment("=== FIN EXPRESIÓN UNARIA ===")
-
 	return resultado
 }
 
 // VisitIdExp  correctamente
 func (v *VisitorARM64) VisitIdExp(ctx *parser.IdExpContext) interface{} {
 	nombreVariable := ctx.PatronId().GetText()
-	v.armGen.Comment(fmt.Sprintf("=== ACCESO A VARIABLE: %s ===", nombreVariable))
 
 	// Protección contra panic
 	var resultado *assembly.ResultadoExpresion
@@ -1017,7 +973,6 @@ func (v *VisitorARM64) VisitIdExp(ctx *parser.IdExpContext) interface{} {
 		}
 	}
 
-	v.armGen.Comment(fmt.Sprintf("Variable cargada exitosamente: %s", nombreVariable))
 	return resultado
 }
 
@@ -1418,7 +1373,7 @@ func (v *VisitorARM64) generarFloatInmediato(registro string, valor float64) {
 // ============= ESTRUCTURAS DE CONTROL IF-ELSE =============
 
 func (v *VisitorARM64) VisitIFstmt(ctx *parser.IFstmtContext) interface{} {
-	v.armGen.Comment("=== INICIO ESTRUCTURA IF-ELSE IF-ELSE ===")
+	v.armGen.Comment("=== INICIO ESTRUCTURA IF-ELSE ===")
 
 	etiquetaFinal := v.expresionesProcessor.GenerarEtiquetaUnica("if_final")
 
@@ -1432,8 +1387,7 @@ func (v *VisitorARM64) VisitIFstmt(ctx *parser.IFstmtContext) interface{} {
 		}()
 
 		// Procesar todas las cadenas if/else-if
-		for i, ifChain := range ctx.AllIf_chain() {
-			v.armGen.Comment(fmt.Sprintf("--- Evaluando Branch #%d ---", i+1))
+		for _, ifChain := range ctx.AllIf_chain() {
 			v.procesarBranchIF(ifChain, etiquetaFinal)
 		}
 
@@ -1447,7 +1401,7 @@ func (v *VisitorARM64) VisitIFstmt(ctx *parser.IFstmtContext) interface{} {
 	// Etiqueta final
 	v.armGen.Instructions = append(v.armGen.Instructions,
 		fmt.Sprintf("%s:", etiquetaFinal))
-	v.armGen.Comment("=== FIN ESTRUCTURA IF-ELSE IF-ELSE ===")
+	v.armGen.Comment("=== FIN ESTRUCTURA IF-ELSE ===")
 	v.armGen.Instructions = append(v.armGen.Instructions, "")
 
 	return nil
@@ -1464,8 +1418,6 @@ func (v *VisitorARM64) procesarBranchIF(ifChain interface{}, etiquetaFinal strin
 		v.armGen.Comment("Error: no se pudo convertir ifChain a IFcadenaContext")
 		return
 	}
-
-	v.armGen.Comment(">>> PROCESANDO BRANCH IF/ELSE-IF <<<")
 
 	// Protección contra panic en evaluación de expresión
 	var resultado interface{}
@@ -1536,10 +1488,9 @@ func (v *VisitorARM64) procesarBranchIF(ifChain interface{}, etiquetaFinal strin
 		// Etiqueta para cuando la condición es falsa
 		v.armGen.Instructions = append(v.armGen.Instructions,
 			fmt.Sprintf("%s:", etiquetaSaltarBranch))
-		v.armGen.Comment("Condición falsa - continuar al siguiente branch")
 	}
 
-	v.armGen.Comment(">>> FIN PROCESAMIENTO BRANCH <<<")
+	v.armGen.Comment("=== FIN PROCESAMIENTO BRANCH ===")
 }
 
 func (v *VisitorARM64) VisitIFcadena(ctx *parser.IFcadenaContext) interface{} {
@@ -1567,29 +1518,10 @@ func (v *VisitorARM64) VisitElseStmt(ctx *parser.ElseStmtContext) interface{} {
 
 func (v *VisitorARM64) pushScope(nombre string) {
 	v.armGen.Comment(fmt.Sprintf("Push scope: %s", nombre))
-	// Si tienes acceso a RegistroAmbito más adelante, descomenta:
-	// v.RegistroAmbito.PushAmbito(nombre)
 }
 
 func (v *VisitorARM64) popScope() {
 	v.armGen.Comment("Pop scope")
-	// Si tienes acceso a RegistroAmbito más adelante, descomenta:
-	// v.RegistroAmbito.PopAmbito()
-}
-
-func (v *VisitorARM64) verificarResultadoExpresion(resultado interface{}, contexto string) (*assembly.ResultadoExpresion, bool) {
-	if resultado == nil {
-		v.armGen.Comment(fmt.Sprintf("Error en %s: resultado nil", contexto))
-		return nil, false
-	}
-
-	expr, ok := resultado.(*assembly.ResultadoExpresion)
-	if !ok {
-		v.armGen.Comment(fmt.Sprintf("Error en %s: no es ResultadoExpresion", contexto))
-		return nil, false
-	}
-
-	return expr, true
 }
 
 // FUNCIÓN MEJORADA: Validación segura de ResultadoExpresion
@@ -1676,7 +1608,7 @@ func (v *VisitorARM64) VisitSwitchStmt(ctx *parser.SwitchStmtContext) interface{
 	etiquetaFinSwitch := fmt.Sprintf(".Lswitch_end_%d", contadorSwitch)
 	etiquetaDefault := fmt.Sprintf(".Lswitch_default_%d", contadorSwitch)
 
-	// ✅ 2.1 AGREGAR CONTROL DE FLUJO (solo break, no continue en switch)
+	// 2.1 AGREGAR CONTROL DE FLUJO (solo break, no continue en switch)
 	switchItem := v.pushLoopControl("switch", []string{"break"}, etiquetaFinSwitch, "")
 	defer func() {
 		v.popLoopControl()
@@ -1813,7 +1745,7 @@ func (v *VisitorARM64) VisitSwitchStmt(ctx *parser.SwitchStmtContext) interface{
 		}
 
 		// Break implícito: saltar al final
-		// ✅ NOTA: El break explícito del usuario también saltará aquí
+		// NOTA: El break explícito del usuario también saltará aquí
 		v.armGen.Instructions = append(v.armGen.Instructions,
 			fmt.Sprintf("b %s", etiquetaFinSwitch))
 	}
@@ -2404,11 +2336,10 @@ func (v *VisitorARM64) generateInnerForClasicoARM64(
 	ctx *parser.ForClasicoStmtContext,
 	etiquetaStart, etiquetaContinue, etiquetaEnd string,
 ) {
-	// 1️⃣ INICIALIZACIÓN (opcional)
-	// ✅ CORRECCIÓN: Usar los métodos correctos
+	// INICIALIZACIÓN (opcional)
+	// CORRECCIÓN: Usar los métodos correctos
 	stmtAsignarList := ctx.AllStmt_asignar()
 	if len(stmtAsignarList) > 0 && stmtAsignarList[0] != nil {
-		v.armGen.Comment("Inicialización del for clásico")
 		v.Visit(stmtAsignarList[0])
 	}
 
@@ -2417,8 +2348,8 @@ func (v *VisitorARM64) generateInnerForClasicoARM64(
 		fmt.Sprintf("%s:", etiquetaStart))
 	v.armGen.Comment("Evaluar condición del for clásico")
 
-	// 2️⃣ CONDICIÓN (opcional)
-	// ✅ CORRECCIÓN: Usar el método correcto
+	// CONDICIÓN (opcional)
+	// CORRECCIÓN: Usar el método correcto
 	if ctx.Expr() != nil {
 		condResult := v.Visit(ctx.Expr())
 		cond := v.validarResultadoExpresionSeguro(condResult, "condición for clásico")
@@ -2441,8 +2372,7 @@ func (v *VisitorARM64) generateInnerForClasicoARM64(
 	}
 
 	// 3️⃣ CUERPO
-	// ✅ CORRECCIÓN: Usar el método correcto
-	v.armGen.Comment("Cuerpo del for clásico")
+	// CORRECCIÓN: Usar el método correcto
 	stmtList := ctx.AllStmt()
 	for i, stmt := range stmtList {
 		v.armGen.Comment(fmt.Sprintf("Sentencia %d del for clásico", i+1))
@@ -2453,9 +2383,8 @@ func (v *VisitorARM64) generateInnerForClasicoARM64(
 	// Etiqueta de continue → aquí hacemos el incremento
 	v.armGen.Instructions = append(v.armGen.Instructions,
 		fmt.Sprintf("%s:", etiquetaContinue))
-	v.armGen.Comment("Post-iteración del for clásico")
 
-	// ✅ CORRECCIÓN: Usar los métodos correctos para el incremento
+	// CORRECCIÓN: Usar los métodos correctos para el incremento
 	if len(stmtAsignarList) > 1 && stmtAsignarList[1] != nil {
 		v.Visit(stmtAsignarList[1])
 	}
@@ -2467,7 +2396,6 @@ func (v *VisitorARM64) generateInnerForClasicoARM64(
 	// Etiqueta de fin
 	v.armGen.Instructions = append(v.armGen.Instructions,
 		fmt.Sprintf("%s:", etiquetaEnd))
-	v.armGen.Comment("=== FIN FOR CLÁSICO ARM64 INTERNO ===")
 }
 
 // ============= FUNCIONES AUXILIARES SEGURAS =============
