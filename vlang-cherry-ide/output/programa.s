@@ -1,10 +1,25 @@
 .section .data
     .align 3    // alinea dobles a 8 bytes
-    msg_1: .asciz "\nFor como while anidado (patrón X)"
-    msg_2: .asciz ""
-    msg_3: .asciz ""
-    msg_4: .asciz "100"
-    msg_5: .asciz " "
+    msg_1: .asciz "============ Switch/Case ============"
+    msg_2: .asciz "Switch simple"
+    msg_3: .asciz "Lunes"
+    msg_4: .asciz "Martes"
+    msg_5: .asciz "Miércoles"
+    msg_6: .asciz "Jueves"
+    msg_7: .asciz "Viernes"
+    msg_8: .asciz "Sábado"
+    msg_9: .asciz "Domingo"
+    msg_10: .asciz "Día inválido"
+    msg_11: .asciz "\nSwitch con default"
+    msg_12: .asciz "No se debería imprimir"
+    msg_13: .asciz "No se debería imprimir"
+    msg_14: .asciz "Número no reconocido, se ejecuta default"
+    msg_15: .asciz "\nSwitch con break explícito"
+    msg_16: .asciz "No se debería imprimir"
+    msg_17: .asciz "Caso 2 - Se ejecuta este y debe detenerse"
+    msg_18: .asciz "No debería ejecutarse si el break funciona"
+    msg_19: .asciz "No se debería imprimir"
+    msg_20: .asciz "TotalPuntos: "
 buffer_int: .skip 32
 buffer_float: .skip 64
 buffer_string: .skip 512
@@ -25,286 +40,322 @@ _start:
     bl print_string
     bl print_newline
     bl print_newline
-// === DECLARAR VARIABLE MUT: n ===
-// === DECLARAR VARIABLE: n int ===
-    sub sp, sp, #8  // Reservar espacio para n
-    mov x9, #5
-    str x9, [sp]
-// Variable n declarada en [sp] (offset actual: 0)
-// Declaración mut inferida: mut n := ? (int)
-// === DECLARAR VARIABLE MUT: x ===
-// === DECLARAR VARIABLE: x int ===
-    sub sp, sp, #8  // Reservar espacio para x
+// === DECLARAR VARIABLE MUT: puntosSwitch ===
+// === DECLARAR VARIABLE: puntosSwitch int ===
+    sub sp, sp, #8  // Reservar espacio para puntosSwitch
     mov x9, #0
     str x9, [sp]
-// Variable x declarada en [sp] (offset actual: 0)
-// Declaración mut inferida: mut x := ? (int)
-// === DECLARAR VARIABLE MUT: j ===
-// === DECLARAR VARIABLE: j int ===
-    sub sp, sp, #8  // Reservar espacio para j
-    mov x9, #0
-    str x9, [sp]
-// Variable j declarada en [sp] (offset actual: 0)
-// Declaración mut inferida: mut j := ? (int)
-// === DECLARAR VARIABLE MUT: fila ===
-// === DECLARAR VARIABLE: fila string ===
-    sub sp, sp, #8  // Reservar espacio para fila
-    adr x9, msg_2
-    str x9, [sp]
-// Variable fila declarada en [sp] (offset actual: 0)
-// Declaración mut inferida: mut fila := ? (string)
-// === INICIO FOR TIPO WHILE (WhileStmt) ===
-// Push scope: while
-// ===  EXPRESIÓN BINARIA < ===
-// === ACCESO A VARIABLE: x ===
-// === CARGAR VARIABLE: x (offset: 16) ===
-    ldr x9, [sp, #16]
-// Variable cargada exitosamente: x
-// === ACCESO A VARIABLE: n ===
-// === CARGAR VARIABLE: n (offset: 24) ===
-    ldr x10, [sp, #24]
-// Variable cargada exitosamente: n
-// Operador: <, Tipos: int < int
-// === OPERACIÓN RELACIONAL < ===
-    mov x12, x9
-    mov x13, x10
-    cmp x12, x13
-    cset x11, lt
-// === FIN EXPRESIÓN BINARIA ===
-// === GENERANDO BUCLE WHILE ARM64 ===
-.Lwhile_start_1:
-// >>> INICIO DEL BUCLE WHILE <<<
-// Evaluando condición del while...
-// ===  EXPRESIÓN BINARIA < ===
-// === ACCESO A VARIABLE: x ===
-// === CARGAR VARIABLE: x (offset: 16) ===
-    ldr x14, [sp, #16]
-// Variable cargada exitosamente: x
-// === ACCESO A VARIABLE: n ===
-// === CARGAR VARIABLE: n (offset: 24) ===
-    ldr x15, [sp, #24]
-// Variable cargada exitosamente: n
-// Operador: <, Tipos: int < int
-// === OPERACIÓN RELACIONAL < ===
-    mov x17, x14
-    mov x18, x15
-    cmp x17, x18
-    cset x16, lt
-// === FIN EXPRESIÓN BINARIA ===
-    cmp x16, #0
-    beq .Lwhile_end_1
-// Ejecutando sentencia 1 del while
-// === ASIGNAR VARIABLE: j = int (offset: 8) ===
-    mov x19, #0
-    str x19, [sp, #8]
-// Ejecutando sentencia 2 del while
-// === ASIGNAR VARIABLE: fila = string (offset: 0) ===
-    adr x20, msg_3
-    str x20, [sp, #0]
-// Ejecutando sentencia 3 del while
-// === INICIO FOR TIPO WHILE (WhileStmt) ===
-// Push scope: while
-// ===  EXPRESIÓN BINARIA < ===
-// === ACCESO A VARIABLE: j ===
-// === CARGAR VARIABLE: j (offset: 8) ===
-    ldr x21, [sp, #8]
-// Variable cargada exitosamente: j
-// === ACCESO A VARIABLE: n ===
-// === CARGAR VARIABLE: n (offset: 24) ===
-    ldr x22, [sp, #24]
-// Variable cargada exitosamente: n
-// Operador: <, Tipos: int < int
-// === OPERACIÓN RELACIONAL < ===
-    mov x24, x21
-    mov x25, x22
-    cmp x24, x25
-    cset x23, lt
-// === FIN EXPRESIÓN BINARIA ===
-// === GENERANDO BUCLE WHILE ARM64 ===
-.Lwhile_start_2:
-// >>> INICIO DEL BUCLE WHILE <<<
-// Evaluando condición del while...
-// ===  EXPRESIÓN BINARIA < ===
-// === ACCESO A VARIABLE: j ===
-// === CARGAR VARIABLE: j (offset: 8) ===
-    ldr x26, [sp, #8]
-// Variable cargada exitosamente: j
-// === ACCESO A VARIABLE: n ===
-// === CARGAR VARIABLE: n (offset: 24) ===
-    ldr x27, [sp, #24]
-// Variable cargada exitosamente: n
-// Operador: <, Tipos: int < int
-// === OPERACIÓN RELACIONAL < ===
-    mov x29, x26
-    mov x30, x27
-    cmp x29, x30
-    cset x28, lt
-// === FIN EXPRESIÓN BINARIA ===
-    cmp x28, #0
-    beq .Lwhile_end_2
-// Ejecutando sentencia 1 del while
-// Reseteando contadores de registros por límite
-// === INICIO ESTRUCTURA IF-ELSE IF-ELSE ===
-// --- Evaluando Branch #1 ---
-// >>> PROCESANDO BRANCH IF/ELSE-IF <<<
-// ===  EXPRESIÓN BINARIA || ===
-// ===  EXPRESIÓN BINARIA == ===
-// === ACCESO A VARIABLE: x ===
-// === CARGAR VARIABLE: x (offset: 16) ===
-    ldr x9, [sp, #16]
-// Variable cargada exitosamente: x
-// === ACCESO A VARIABLE: j ===
-// === CARGAR VARIABLE: j (offset: 8) ===
-    ldr x10, [sp, #8]
-// Variable cargada exitosamente: j
-// Operador: ==, Tipos: int == int
-// === OPERACIÓN RELACIONAL == ===
-    mov x12, x9
-    mov x13, x10
-    cmp x12, x13
-    cset x11, eq
-// === FIN EXPRESIÓN BINARIA ===
-// ===  EXPRESIÓN BINARIA == ===
-// ===  EXPRESIÓN BINARIA + ===
-// === ACCESO A VARIABLE: x ===
-// === CARGAR VARIABLE: x (offset: 16) ===
-    ldr x14, [sp, #16]
-// Variable cargada exitosamente: x
-// === ACCESO A VARIABLE: j ===
-// === CARGAR VARIABLE: j (offset: 8) ===
-    ldr x15, [sp, #8]
-// Variable cargada exitosamente: j
-// Operador: +, Tipos: int + int
-    mov x16, x14
-    mov x17, x15
-    add x18, x16, x17
-// === FIN EXPRESIÓN BINARIA ===
-// ===  EXPRESIÓN BINARIA - ===
-// === ACCESO A VARIABLE: n ===
-// === CARGAR VARIABLE: n (offset: 24) ===
-    ldr x19, [sp, #24]
-// Variable cargada exitosamente: n
-// Operador: -, Tipos: int - int
-    mov x20, x19
-    mov x21, #1
-    sub x22, x20, x21
-// === FIN EXPRESIÓN BINARIA ===
-// Operador: ==, Tipos: int == int
-// === OPERACIÓN RELACIONAL == ===
-    mov x24, x18
-    mov x25, x22
-    cmp x24, x25
-    cset x23, eq
-// === FIN EXPRESIÓN BINARIA ===
-// Operador: ||, Tipos: bool || bool
-// === OPERACIÓN LÓGICA || ===
-    mov x27, x11
-    cmp x27, #1
-    beq .Lor_true_3
-    mov x28, x23
-    orr x26, x27, x28
-    b .Lor_end_4
-.Lor_true_3:
-    mov x26, #1
-.Lor_end_4:
-// === FIN EXPRESIÓN BINARIA ===
-    cmp x26, #0
-    beq .Lskip_branch_5
-// === EJECUTANDO BLOQUE (runtime true) ===
-// Push scope: if
-// === ASIGNACIÓN ARITMÉTICA: fila += ===
-// === CARGAR VARIABLE: fila (offset: 0) ===
-    ldr x29, [sp, #0]
-// Operador: += -> +
-// === CONCATENACIÓN DE STRINGS ===
-// ADVERTENCIA: Reciclando registros temporales
-    mov x30, x29
-    adr x9, msg_4
-    adr x10, buffer_string
-// Concatenar strings: x10 = x30 + x9
-    mov x0, x30
-    mov x1, x9
-    mov x2, x10
-    bl concat_strings
-// === ASIGNAR VARIABLE: fila = string (offset: 0) ===
-    str x10, [sp, #0]
-// Asignación aritmética completada: fila +=
-// Pop scope
-    b .Lif_final_2
-.Lskip_branch_5:
-// Condición falsa - continuar al siguiente branch
-// >>> FIN PROCESAMIENTO BRANCH <<<
-// --- Ejecutando ELSE ---
-// === INICIO BLOQUE ELSE ===
-// Push scope: else
-// Ejecutando sentencia 1 del bloque else
-// === ASIGNACIÓN ARITMÉTICA: fila += ===
-// === CARGAR VARIABLE: fila (offset: 0) ===
-    ldr x11, [sp, #0]
-// Operador: += -> +
-// === CONCATENACIÓN DE STRINGS ===
-    mov x12, x11
-    adr x13, msg_5
-    adr x14, buffer_string
-// Concatenar strings: x14 = x12 + x13
-    mov x0, x12
-    mov x1, x13
-    mov x2, x14
-    bl concat_strings
-// === ASIGNAR VARIABLE: fila = string (offset: 0) ===
-    str x14, [sp, #0]
-// Asignación aritmética completada: fila +=
-// Pop scope
-// === FIN BLOQUE ELSE ===
-.Lif_final_2:
-// === FIN ESTRUCTURA IF-ELSE IF-ELSE ===
-
-// Ejecutando sentencia 2 del while
-// === ASIGNACIÓN ARITMÉTICA: j += ===
-// === CARGAR VARIABLE: j (offset: 8) ===
-    ldr x15, [sp, #8]
-// Operador: += -> +
-    mov x16, x15
-    mov x17, #1
-    add x18, x16, x17
-// === ASIGNAR VARIABLE: j = int (offset: 8) ===
-    str x18, [sp, #8]
-// Asignación aritmética completada: j +=
-.Lwhile_continue_2:
-// >>> PUNTO DE CONTINUE <<<
-    b .Lwhile_start_2
-.Lwhile_end_2:
-// >>> FIN DEL BUCLE WHILE <<<
-// === FIN GENERACIÓN WHILE ARM64 ===
-// === FIN FOR TIPO WHILE (WhileStmt) ===
-// Pop scope
-// Ejecutando sentencia 4 del while
-// === CARGAR VARIABLE: fila (offset: 0) ===
-    ldr x19, [sp, #0]
+// Variable puntosSwitch declarada en [sp] (offset actual: 0)
+// Declaración mut inferida: mut puntosSwitch := ? (int)
 // === IMPRIMIR STRING  ===
-    mov x0, x19
+    adr x9, msg_2
+    mov x0, x9
     bl print_string
     bl print_newline
     bl print_newline
-// Ejecutando sentencia 5 del while
-// === ASIGNACIÓN ARITMÉTICA: x += ===
-// === CARGAR VARIABLE: x (offset: 16) ===
-    ldr x20, [sp, #16]
+// === DECLARAR VARIABLE MUT: dia ===
+// === DECLARAR VARIABLE: dia int ===
+    sub sp, sp, #8  // Reservar espacio para dia
+    mov x9, #1
+    str x9, [sp]
+// Variable dia declarada en [sp] (offset actual: 0)
+// Declaración mut inferida: mut dia := ? (int)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: dia ===
+// === CARGAR VARIABLE: dia (offset: 0) ===
+    ldr x9, [sp, #0]
+// Variable cargada exitosamente: dia
+// Switch sobre expresión tipo: int
+// Push control: switch
+    mov x10, x9
+// Comparación case 0
+    mov x11, #1
+    cmp x10, x11
+    beq .Lcase_10_0
+// Comparación case 1
+    mov x12, #2
+    cmp x10, x12
+    beq .Lcase_10_1
+// Comparación case 2
+    mov x13, #3
+    cmp x10, x13
+    beq .Lcase_10_2
+// Comparación case 3
+    mov x14, #4
+    cmp x10, x14
+    beq .Lcase_10_3
+// Comparación case 4
+    mov x15, #5
+    cmp x10, x15
+    beq .Lcase_10_4
+// Comparación case 5
+    mov x16, #6
+    cmp x10, x16
+    beq .Lcase_10_5
+// Comparación case 6
+    mov x17, #7
+    cmp x10, x17
+    beq .Lcase_10_6
+    b .Lswitch_default_10
+.Lcase_10_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x18, msg_3
+    mov x0, x18
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === ASIGNACIÓN ARITMÉTICA: puntosSwitch += ===
+// === CARGAR VARIABLE: puntosSwitch (offset: 8) ===
+    ldr x19, [sp, #8]
 // Operador: += -> +
-    mov x21, x20
-    mov x22, #1
-    add x23, x21, x22
-// === ASIGNAR VARIABLE: x = int (offset: 16) ===
-    str x23, [sp, #16]
-// Asignación aritmética completada: x +=
-.Lwhile_continue_1:
-// >>> PUNTO DE CONTINUE <<<
-    b .Lwhile_start_1
-.Lwhile_end_1:
-// >>> FIN DEL BUCLE WHILE <<<
-// === FIN GENERACIÓN WHILE ARM64 ===
-// === FIN FOR TIPO WHILE (WhileStmt) ===
-// Pop scope
+    mov x20, x19
+    mov x21, #1
+    add x22, x20, x21
+// === ASIGNAR VARIABLE: puntosSwitch = int (offset: 8) ===
+    str x22, [sp, #8]
+// Asignación aritmética completada: puntosSwitch +=
+    b .Lswitch_end_10
+.Lcase_10_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x23, msg_4
+    mov x0, x23
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lcase_10_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x24, msg_5
+    mov x0, x24
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lcase_10_3:
+// Ejecutando case 3
+// === IMPRIMIR STRING  ===
+    adr x25, msg_6
+    mov x0, x25
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lcase_10_4:
+// Ejecutando case 4
+// === IMPRIMIR STRING  ===
+    adr x26, msg_7
+    mov x0, x26
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lcase_10_5:
+// Ejecutando case 5
+// === IMPRIMIR STRING  ===
+    adr x27, msg_8
+    mov x0, x27
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lcase_10_6:
+// Ejecutando case 6
+// === IMPRIMIR STRING  ===
+    adr x28, msg_9
+    mov x0, x28
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_10
+.Lswitch_default_10:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+    adr x29, msg_10
+    mov x0, x29
+    bl print_string
+    bl print_newline
+    bl print_newline
+.Lswitch_end_10:
+// === FIN SWITCH STATEMENT ===
+// Pop control: switch
+// === IMPRIMIR STRING  ===
+    adr x9, msg_11
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE MUT: numero ===
+// === DECLARAR VARIABLE: numero int ===
+    sub sp, sp, #8  // Reservar espacio para numero
+    mov x9, #100
+    str x9, [sp]
+// Variable numero declarada en [sp] (offset actual: 0)
+// Declaración mut inferida: mut numero := ? (int)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: numero ===
+// === CARGAR VARIABLE: numero (offset: 0) ===
+    ldr x9, [sp, #0]
+// Variable cargada exitosamente: numero
+// Switch sobre expresión tipo: int
+// Push control: switch
+    mov x10, x9
+// Comparación case 0
+    mov x11, #1
+    cmp x10, x11
+    beq .Lcase_11_0
+// Comparación case 1
+    mov x12, #2
+    cmp x10, x12
+    beq .Lcase_11_1
+    b .Lswitch_default_11
+.Lcase_11_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x13, msg_12
+    mov x0, x13
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_11
+.Lcase_11_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x14, msg_13
+    mov x0, x14
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_11
+.Lswitch_default_11:
+// Ejecutando case default
+// === IMPRIMIR STRING  ===
+    adr x15, msg_14
+    mov x0, x15
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === ASIGNACIÓN ARITMÉTICA: puntosSwitch += ===
+// === CARGAR VARIABLE: puntosSwitch (offset: 16) ===
+    ldr x16, [sp, #16]
+// Operador: += -> +
+    mov x17, x16
+    mov x18, #1
+    add x19, x17, x18
+// === ASIGNAR VARIABLE: puntosSwitch = int (offset: 16) ===
+    str x19, [sp, #16]
+// Asignación aritmética completada: puntosSwitch +=
+.Lswitch_end_11:
+// === FIN SWITCH STATEMENT ===
+// Pop control: switch
+// === IMPRIMIR STRING  ===
+    adr x9, msg_15
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE MUT: numeroBreak ===
+// === DECLARAR VARIABLE: numeroBreak int ===
+    sub sp, sp, #8  // Reservar espacio para numeroBreak
+    mov x9, #2
+    str x9, [sp]
+// Variable numeroBreak declarada en [sp] (offset actual: 0)
+// Declaración mut inferida: mut numeroBreak := ? (int)
+// === INICIO SWITCH STATEMENT ===
+// === ACCESO A VARIABLE: numeroBreak ===
+// === CARGAR VARIABLE: numeroBreak (offset: 0) ===
+    ldr x9, [sp, #0]
+// Variable cargada exitosamente: numeroBreak
+// Switch sobre expresión tipo: int
+// Push control: switch
+    mov x10, x9
+// Comparación case 0
+    mov x11, #1
+    cmp x10, x11
+    beq .Lcase_12_0
+// Comparación case 1
+    mov x12, #2
+    cmp x10, x12
+    beq .Lcase_12_1
+// Comparación case 2
+    mov x13, #3
+    cmp x10, x13
+    beq .Lcase_12_2
+    b .Lswitch_end_12
+.Lcase_12_0:
+// Ejecutando case 0
+// === IMPRIMIR STRING  ===
+    adr x14, msg_16
+    mov x0, x14
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_12
+.Lcase_12_1:
+// Ejecutando case 1
+// === IMPRIMIR STRING  ===
+    adr x15, msg_17
+    mov x0, x15
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === ASIGNACIÓN ARITMÉTICA: puntosSwitch += ===
+// === CARGAR VARIABLE: puntosSwitch (offset: 24) ===
+    ldr x16, [sp, #24]
+// Operador: += -> +
+    mov x17, x16
+    mov x18, #1
+    add x19, x17, x18
+// === ASIGNAR VARIABLE: puntosSwitch = int (offset: 24) ===
+    str x19, [sp, #24]
+// Asignación aritmética completada: puntosSwitch +=
+// === BREAK STATEMENT ===
+// Break desde switch
+    b .Lswitch_end_12
+// === IMPRIMIR STRING  ===
+    adr x20, msg_18
+    mov x0, x20
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === ASIGNACIÓN ARITMÉTICA: puntosSwitch -= ===
+// === CARGAR VARIABLE: puntosSwitch (offset: 24) ===
+    ldr x21, [sp, #24]
+// Operador: -= -> -
+    mov x22, x21
+    mov x23, #1
+    sub x24, x22, x23
+// === ASIGNAR VARIABLE: puntosSwitch = int (offset: 24) ===
+    str x24, [sp, #24]
+// Asignación aritmética completada: puntosSwitch -=
+    b .Lswitch_end_12
+.Lcase_12_2:
+// Ejecutando case 2
+// === IMPRIMIR STRING  ===
+    adr x25, msg_19
+    mov x0, x25
+    bl print_string
+    bl print_newline
+    bl print_newline
+    b .Lswitch_end_12
+.Lswitch_end_12:
+// === FIN SWITCH STATEMENT ===
+// Pop control: switch
+// === CARGAR VARIABLE: puntosSwitch (offset: 24) ===
+    ldr x9, [sp, #24]
+// === IMPRIMIR STRING  ===
+    adr x10, msg_20
+    mov x0, x10
+    bl print_string
+    mov x0, #32          // ' ' (espacio)
+    bl print_char
+// === IMPRIMIR INT  ===
+    mov x0, x9
+    bl print_int
+    bl print_newline
+    bl print_newline
 
     // Limpiar stack de slices antes de salir
     add sp, sp, #256
@@ -317,6 +368,62 @@ _start:
 //            FUNCIONES AUXILIARES ARM64
 // --------------------------------------------------------
 
+print_int:
+    stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register
+    mov   x29, sp
+    stp   x1, x2, [sp, #-16]!     // Guardar registros que vamos a usar
+    stp   x3, x4, [sp, #-16]!
+    stp   x5, x6, [sp, #-16]!
+
+    //  Usar comparación con registro zero, no inmediato
+    cmp   x0, xzr                 // ¿Es negativo? (usar xzr en lugar de #0)
+    bge   .Lpi_pos
+    
+    //  Manejar números negativos - GUARDAR x0 original
+    stp   x7, x8, [sp, #-16]!     // Guardar más registros
+    mov   x7, x0                  // GUARDAR valor original en x7
+    
+    // Imprimir signo menos
+    mov   x8, #64                 // Syscall write
+    ldr   x1, =msg_menos          // Imprimir "-"
+    mov   x2, #1
+    mov   x0, #1
+    svc   0
+    
+    //  RESTAURAR y negar el valor original
+    mov   x0, x7                  // Restaurar valor original
+    neg   x0, x0                  // Hacer positivo
+    ldp   x7, x8, [sp], #16       // Restaurar registros
+
+.Lpi_pos:
+    ldr   x2, =buffer_int         // Buffer para dígitos
+    add   x2, x2, #32             // Empezar desde el final
+    mov   x3, #0                  // Contador de dígitos
+    mov   x6, #10                 // Divisor
+
+.Lpi_loop:
+    udiv  x4, x0, x6              // x4 = x0 / 10
+    msub  x5, x4, x6, x0          // x5 = x0 % 10 (resto)
+    add   x5, x5, #48             // Convertir a ASCII
+    sub   x2, x2, #1              // Retroceder en buffer
+    strb  w5, [x2]                // Guardar dígito
+    mov   x0, x4                  // Siguiente iteración
+    add   x3, x3, #1              // Incrementar contador
+    cmp   x0, #0
+    bne   .Lpi_loop
+
+    mov   x0, #1                  // stdout
+    mov   x1, x2                  // Buffer con dígitos
+    mov   x2, x3                  // Cantidad de dígitos
+    mov   x8, #64                 // Syscall write
+    svc   0
+
+    ldp   x5, x6, [sp], #16       // Restaurar registros
+    ldp   x3, x4, [sp], #16
+    ldp   x1, x2, [sp], #16
+    ldp   x29, x30, [sp], #16
+    ret
+
 print_string:
     stp   x29, x30, [sp, #-16]!   // Guardar frame
     mov   x29, sp
@@ -328,6 +435,21 @@ print_string:
     mov   x0, #1                  // stdout
     mov   x8, #64                 // Syscall write
     svc   0
+
+    ldp   x29, x30, [sp], #16
+    ret
+
+print_char:
+    stp   x29, x30, [sp, #-16]!   // Guardar frame
+    mov   x29, sp
+
+    strb  w0, [sp, #-1]!          // Poner carácter en stack
+    mov   x0, #1                  // stdout
+    mov   x1, sp                  // Dirección del carácter
+    mov   x2, #1                  // 1 byte
+    mov   x8, #64                 // Syscall write
+    svc   0
+    add   sp, sp, #1              // Limpiar stack
 
     ldp   x29, x30, [sp], #16
     ret
@@ -350,40 +472,5 @@ strlen:
     b     .Lstrlen_loop
 .Lstrlen_end:
     mov   x0, x1                 // Retornar longitud
-    ret
-
-concat_strings:
-    stp   x29, x30, [sp, #-16]!   // Guardar frame
-    mov   x29, sp
-    stp   x19, x20, [sp, #-16]!   // Guardar registros
-    stp   x21, x22, [sp, #-16]!
-
-    mov   x19, x0                 // string1
-    mov   x20, x1                 // string2
-    mov   x21, x2                 // buffer destino
-    mov   x22, #0                 // índice destino
-
-.Lconcat_copy1:                   // Copiar string1
-    ldrb  w3, [x19], #1           // Cargar byte y avanzar
-    cmp   w3, #0                  // ¿Es '\0'?
-    beq   .Lconcat_copy2
-    strb  w3, [x21, x22]          // Guardar en destino
-    add   x22, x22, #1            // Avanzar índice
-    b     .Lconcat_copy1
-
-.Lconcat_copy2:                   // Copiar string2
-    ldrb  w3, [x20], #1           // Cargar byte y avanzar
-    strb  w3, [x21, x22]          // Guardar (incluye '\0')
-    cmp   w3, #0                  // ¿Era '\0'?
-    beq   .Lconcat_end
-    add   x22, x22, #1            // Avanzar índice
-    b     .Lconcat_copy2
-
-.Lconcat_end:
-    mov   x0, x21                 // Retornar resultado
-
-    ldp   x21, x22, [sp], #16     // Restaurar registros
-    ldp   x19, x20, [sp], #16
-    ldp   x29, x30, [sp], #16
     ret
 

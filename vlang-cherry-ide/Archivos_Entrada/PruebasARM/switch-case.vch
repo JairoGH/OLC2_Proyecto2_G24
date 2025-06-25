@@ -383,3 +383,64 @@ fn main() {
     println("=========== FIN DE EJEMPLOS =============")
     println("¡Switch-case implementado exitosamente!")
 }
+
+
+// ============================== BREAK ===============================
+
+fn main() {
+
+    // Switch/Case (3 puntos)
+    println("==================== Switch/Case ========================")
+    mut puntosSwitch := 0
+
+    println("================ Switch simple ====================")
+    mut dia := 1
+    switch dia {
+    case 1:
+        println("Lunes")
+        puntosSwitch += 1
+    case 2:
+        println("Martes")
+    case 3:
+        println("Miércoles")
+    case 4:
+        println("Jueves")
+    case 5:
+        println("Viernes")
+    case 6:
+        println("Sábado")
+    case 7:
+        println("Domingo")
+    default:
+        println("Día inválido")
+    }
+
+    println("================ Switch con default ================")
+    mut numero := 100
+    switch numero {
+    case 1:
+        println("No se debería imprimir")
+    case 2:
+        println("No se debería imprimir")
+    default:
+        println("Número no reconocido, se ejecuta default")
+        puntosSwitch += 1
+    }
+
+    println("================ Switch con break explícito ================")
+    mut numeroBreak := 2
+    switch numeroBreak {
+    case 1:
+        println("No se debería imprimir")
+    case 2:
+        println("Caso 2 - Se ejecuta este y debe detenerse")
+        puntosSwitch += 1
+        break
+        println("No debería ejecutarse si el break funciona")
+        puntosSwitch -= 1
+    case 3:
+        println("No se debería imprimir")
+    }
+
+    println("TotalPuntos: ", puntosSwitch)
+}

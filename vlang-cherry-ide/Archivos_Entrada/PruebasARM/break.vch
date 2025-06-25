@@ -1,0 +1,111 @@
+// =========================== FOR ================================
+
+fn main() {
+
+    // Break (3 puntos)
+    println("============== Break ==============")
+    mut puntosBreak := 0
+    mut suma := 0
+    mut i := 0
+
+    println("=========== Break en for infinito ===========")
+    mut contador := 0
+    suma = 0
+    for true {
+        println("contador =", contador)
+        suma += contador
+        contador += 1
+        if contador >= 5 {
+            break
+        }
+    }
+    if suma == 10 {
+        puntosBreak += 1
+        println("OK Break en for infinito: correcto")
+    } else {
+        println("X Break en for infinito: incorrecto")
+    }
+
+    println("=========== Break en for clásico ===========")
+    suma = 0
+    for i = 0; i < 10; i += 1 {
+        println("i =", i)
+        suma += i
+        if i >= 4 {
+            break
+        }
+    }
+    if suma == 10 {
+        puntosBreak += 2
+        println("OK Break en for clásico: correcto")
+        println("Puntos Break: ",puntosBreak )
+
+    } else {
+        println("X Break en for clásico: incorrecto")
+    }
+
+    print("PuntosTotales: ", puntosBreak )
+}
+
+
+======================== SWITCH-CASE =================================
+
+
+fn main() {
+// Switch/Case (3 puntos)
+
+    println("============ Switch/Case ============")
+    mut puntosSwitch := 0
+
+    println("Switch simple")
+    mut dia := 1
+    switch dia {
+    case 1:
+        println("Lunes")
+        puntosSwitch += 1
+    case 2:
+        println("Martes")
+    case 3:
+        println("Miércoles")
+    case 4:
+        println("Jueves")
+    case 5:
+        println("Viernes")
+    case 6:
+        println("Sábado")
+    case 7:
+        println("Domingo")
+    default:
+        println("Día inválido")
+    }
+
+    println("\nSwitch con default")
+    mut numero := 100
+    switch numero {
+    case 1:
+        println("No se debería imprimir")
+    case 2:
+        println("No se debería imprimir")
+    default:
+        println("Número no reconocido, se ejecuta default")
+        puntosSwitch += 1
+    }
+
+    println("\nSwitch con break explícito")
+    mut numeroBreak := 2
+    switch numeroBreak {
+    case 1:
+        println("No se debería imprimir")
+    case 2:
+        println("Caso 2 - Se ejecuta este y debe detenerse")
+        puntosSwitch += 1
+        break
+        println("No debería ejecutarse si el break funciona")
+        puntosSwitch -= 1
+    case 3:
+        println("No se debería imprimir")
+    }
+
+println("TotalPuntos: ", puntosSwitch)
+
+}
