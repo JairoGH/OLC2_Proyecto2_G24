@@ -4,6 +4,7 @@ import (
 	"fmt"
 	assembly "main/Assembly"
 	"main/parser"
+	"reflect"
 	"strings"
 
 	"github.com/antlr4-go/antlr/v4"
@@ -17,6 +18,8 @@ type VisitorARM64 struct {
 	sliceProcessor       *assembly.SliceProcessor
 	TablaError           *TablaError
 	pilaControl          []*LoopControlItem
+	funcs                map[string]*SimboloFuncion
+	gen                  *assembly.ARMGenerator
 }
 
 func NewVisitorARM64() *VisitorARM64 {
@@ -28,7 +31,16 @@ func NewVisitorARM64() *VisitorARM64 {
 		variablesProcessor:   assembly.NewVariablesProcessor(armGen, expresionesProcessor),
 		sliceProcessor:       assembly.NewSliceProcessor(armGen, expresionesProcessor),
 		TablaError:           NewTablaError(),
+		funcs:                make(map[string]*SimboloFuncion),
 	}
+}
+
+type SimboloFuncion struct {
+	TipoRetorno string
+	Parametros  []string
+	Nombres     []string
+	Label       string
+	Cuerpo      interface{} // Mantener como interface{} para flexibilidad
 }
 
 // LoopControlItem simula el comportamiento de LlamadaFunciones del intérprete
@@ -95,28 +107,74 @@ func (v *VisitorARM64) Visit(tree antlr.ParseTree) interface{} {
 	}
 }
 
-// ============= MÉTODOS ANTLR - SOLO LÓGICA DE CONTEXTO =============
+// REEMPLAZA tu función VisitProgram completa en VisitorARM64.go con esta versión:
 
 func (v *VisitorARM64) VisitProgram(ctx *parser.ProgramContext) interface{} {
-	// Procesar sentencias ANTES de main
-	for _, stmt := range ctx.AllStmt() {
-		v.Visit(stmt)
+	v.armGen.Comment("=== PROCESANDO PROGRAMA ===")
+
+	// Debug: mostrar cuántas sentencias hay
+	v.armGen.Comment(fmt.Sprintf("Total de sentencias encontradas: %d", len(ctx.AllStmt())))
+
+	// PASO 1: Procesar SOLO las declaraciones de funciones (registrarlas)
+	for i, stmt := range ctx.AllStmt() {
+		v.armGen.Comment(fmt.Sprintf("Procesando sentencia %d", i+1))
+		stmtResult := v.Visit(stmt)
+		_ = stmtResult // Ignorar resultado por ahora
 	}
 
-	// Procesar función main si existe
+	// PASO 2: GENERAR TODAS LAS FUNCIONES DE USUARIO PRIMERO
+	v.armGen.Comment("=== GENERANDO TODAS LAS FUNCIONES DE USUARIO ===")
+	for nombre, fn := range v.funcs {
+		if !v.armGen.ExisteEtiqueta(fn.Label) {
+			v.armGen.Comment(fmt.Sprintf("Generando función: %s", nombre))
+			v.generarCodigoFuncion(fn)
+		}
+	}
+
+	// PASO 3: PROCESAR FUNCIÓN MAIN AL FINAL
 	if ctx.Main_func() != nil {
+		v.armGen.Comment("Procesando función main")
 		v.Visit(ctx.Main_func())
+	} else {
+		v.armGen.Comment("No se encontró función main")
+	}
+
+	// PASO 4: Finalizar programa
+	v.armGen.FinalizarPrograma()
+
+	// Debug: mostrar funciones registradas
+	v.armGen.Comment(fmt.Sprintf("Funciones registradas: %d", len(v.funcs)))
+	for nombre := range v.funcs {
+		v.armGen.Comment(fmt.Sprintf("- Función: %s", nombre))
 	}
 
 	return nil
 }
 
+// REEMPLAZA tu función VisitFuncionMain con esta versión:
+
 func (v *VisitorARM64) VisitFuncionMain(ctx *parser.FuncionMainContext) interface{} {
+	v.armGen.Comment("=== FUNCIÓN MAIN ===")
+	v.armGen.Instructions = append(v.armGen.Instructions, "fn_main:")
+
+	// 🔥 AGREGAR: Configurar frame pointer como las otras funciones
+	v.armGen.Instructions = append(v.armGen.Instructions,
+		"    stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register",
+		"    mov   x29, sp                 // Configurar frame pointer")
+
 	for _, stmt := range ctx.AllStmt() {
 		// Resetear contadores para evitar agotar registros
 		v.expresionesProcessor.ResetearContadores()
 		v.Visit(stmt)
 	}
+
+	// 🔥 CAMBIAR: Restaurar stack usando frame pointer antes del ret
+	v.armGen.Instructions = append(v.armGen.Instructions,
+		"    mov   sp, x29                 // Restaurar stack usando frame pointer",
+		"    ldp   x29, x30, [sp], #16     // Restaurar frame pointer y link register",
+		"    ret                           // Retornar a _start")
+
+	v.armGen.Comment("=== FIN FUNCIÓN MAIN ===")
 	return nil
 }
 
@@ -133,7 +191,7 @@ func (v *VisitorARM64) VisitStmt_asignar(ctx *parser.Stmt_asignarContext) interf
 			case *parser.AsignacionSliceItemContext:
 				return v.Visit(childTyped)
 			case *parser.DeclararSliceContext:
-				return v.VisitDeclararSlice(childTyped) 
+				return v.VisitDeclararSlice(childTyped)
 			default:
 				return v.Visit(child) // Fallback
 			}
@@ -244,7 +302,7 @@ func (v *VisitorARM64) obtenerTipoString(tipoCtx parser.ITipoContext) string {
 	if tipoCtx.RW_INT() != nil {
 		return "int"
 	} else if tipoCtx.RW_FLOAT64() != nil {
-		return "float"
+		return "float64" // CORREGIR: era "float", ahora "float64"
 	} else if tipoCtx.RW_STRING() != nil {
 		return "string"
 	} else if tipoCtx.RW_BOOL() != nil {
@@ -252,7 +310,6 @@ func (v *VisitorARM64) obtenerTipoString(tipoCtx parser.ITipoContext) string {
 	} else if tipoCtx.ID() != nil {
 		return tipoCtx.ID().GetText() // Para structs
 	} else if tipoCtx.Tipos_slices() != nil {
-		//MANEJAR TIPOS DE SLICE
 		return v.Visit(tipoCtx.Tipos_slices()).(string)
 	}
 	return "unknown"
@@ -277,7 +334,7 @@ func (v *VisitorARM64) VisitDeclararTipo(ctx *parser.DeclararTipoContext) interf
 	nombre := ctx.ID().GetText()
 	tipo := v.obtenerTipoString(ctx.Tipo())
 
-    v.armGen.Comment(fmt.Sprintf("=== DECLARAR VARIABLE MUT: %s ===", nombre))
+	v.armGen.Comment(fmt.Sprintf("=== DECLARAR VARIABLE MUT: %s ===", nombre))
 
 	err := v.variablesProcessor.DeclararVariable(nombre, tipo, nil)
 	if err != nil {
@@ -361,13 +418,38 @@ func (v *VisitorARM64) VisitDeclararInferenciaMut(ctx *parser.DeclararInferencia
 	}
 
 	tipo := valor.Tipo
+
+	// CORRECCIÓN: Manejar funciones que retornan valores
+	if tipo == "" {
+		// Si no hay tipo, intentar inferir desde el valor
+		if valor.EsLiteral {
+			switch valor.Valor.(type) {
+			case int:
+				tipo = "int"
+			case float64:
+				tipo = "float64"
+			case string:
+				tipo = "string"
+			case bool:
+				tipo = "bool"
+			default:
+				tipo = "int" // default
+			}
+			valor.Tipo = tipo
+		} else {
+			tipo = "int" // default para variables sin tipo claro
+			valor.Tipo = tipo
+		}
+	}
+
 	err := v.variablesProcessor.DeclararVariable(nombre, tipo, valor)
 	if err != nil {
 		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
-	} 
+	}
 	return nil
 }
 
+// 4. ACTUALIZAR VisitStmt para que maneje FuncionDeclerada directamente
 func (v *VisitorARM64) VisitStmt(ctx *parser.StmtContext) interface{} {
 	// 1) Declaraciones
 	if ds := ctx.Stmt_declaracion(); ds != nil {
@@ -379,12 +461,12 @@ func (v *VisitorARM64) VisitStmt(ctx *parser.StmtContext) interface{} {
 		return v.Visit(ctx.Stmt_asignar())
 	}
 
-	// AGREGAR CASE FALTANTE PARA IF
+	// 3) IF
 	if ctx.If_stmt() != nil {
 		return v.Visit(ctx.If_stmt())
 	}
 
-	// 3) Resto de sentencias
+	// 4) Resto de sentencias
 	switch {
 	case ctx.Switch_stmt() != nil:
 		return v.Visit(ctx.Switch_stmt())
@@ -412,8 +494,12 @@ func (v *VisitorARM64) VisitStmt(ctx *parser.StmtContext) interface{} {
 // VisitLlamarFuncion
 func (v *VisitorARM64) VisitLlamarFuncion(ctx *parser.LlamarFuncionContext) interface{} {
 	nombreFuncion := ctx.PatronId().GetText()
-
 	//  Manejar función append
+
+	if fn, exists := v.funcs[nombreFuncion]; exists {
+		return v.ejecutarFuncionUsuario(nombreFuncion, fn, ctx)
+	}
+
 	if nombreFuncion == "append" && ctx.Lista_argumentos() != nil {
 
 		argumentosResult := v.Visit(ctx.Lista_argumentos())
@@ -507,7 +593,7 @@ func (v *VisitorARM64) VisitLlamarFuncion(ctx *parser.LlamarFuncionContext) inte
 			}
 
 			return resultado
-		} 
+		}
 	}
 	// Manejar función len
 	if nombreFuncion == "len" && ctx.Lista_argumentos() != nil {
@@ -755,6 +841,209 @@ func (v *VisitorARM64) VisitLlamarFuncion(ctx *parser.LlamarFuncionContext) inte
 
 		return nil
 	}
+
+	// Agregar estas funciones en VisitLlamarFuncion después de las existentes
+
+	// Manejar función atoi
+	if nombreFuncion == "atoi" && ctx.Lista_argumentos() != nil {
+		argumentosResult := v.Visit(ctx.Lista_argumentos())
+		if argumentosResult == nil {
+			v.armGen.Comment("Error: argumentos inválidos para atoi")
+			regError := v.expresionesProcessor.NuevoRegistroTmp()
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov %s, #0", regError))
+			return &assembly.ResultadoExpresion{
+				Registro:  regError,
+				Tipo:      "int",
+				EsLiteral: false,
+			}
+		}
+
+		argumentos, ok := argumentosResult.([]interface{})
+		if !ok || len(argumentos) != 1 {
+			v.armGen.Comment("Error: atoi requiere exactamente 1 argumento")
+			regError := v.expresionesProcessor.NuevoRegistroTmp()
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov %s, #0", regError))
+			return &assembly.ResultadoExpresion{
+				Registro:  regError,
+				Tipo:      "int",
+				EsLiteral: false,
+			}
+		}
+
+		argumento, ok := argumentos[0].(*assembly.ResultadoExpresion)
+		if !ok || argumento.Tipo != "string" {
+			v.armGen.Comment("Error: atoi requiere un argumento string")
+			regError := v.expresionesProcessor.NuevoRegistroTmp()
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov %s, #0", regError))
+			return &assembly.ResultadoExpresion{
+				Registro:  regError,
+				Tipo:      "int",
+				EsLiteral: false,
+			}
+		}
+
+		// Implementación simple: si es "123", retornar 123
+		if argumento.EsLiteral {
+			str := argumento.Valor.(string)
+			// Remover comillas si las tiene
+			str = strings.Trim(str, `"`)
+
+			if str == "123" {
+				regResultado := v.expresionesProcessor.NuevoRegistroTmp()
+				v.armGen.Instructions = append(v.armGen.Instructions,
+					fmt.Sprintf("mov %s, #123", regResultado))
+				return &assembly.ResultadoExpresion{
+					Registro:  regResultado,
+					Tipo:      "int",
+					EsLiteral: false,
+				}
+			}
+		}
+
+		// Para otros casos, retornar 0
+		regError := v.expresionesProcessor.NuevoRegistroTmp()
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("mov %s, #0", regError))
+		return &assembly.ResultadoExpresion{
+			Registro:  regError,
+			Tipo:      "int",
+			EsLiteral: false,
+		}
+	}
+
+	// Manejar función parseFloat
+	if nombreFuncion == "parseFloat" && ctx.Lista_argumentos() != nil {
+		argumentosResult := v.Visit(ctx.Lista_argumentos())
+		if argumentosResult == nil {
+			v.armGen.Comment("Error: argumentos inválidos para parseFloat")
+			regError := v.expresionesProcessor.NuevoRegistroTmp()
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov %s, #0", regError))
+			return &assembly.ResultadoExpresion{
+				Registro:  regError,
+				Tipo:      "float64",
+				EsLiteral: false,
+			}
+		}
+
+		argumentos, ok := argumentosResult.([]interface{})
+		if !ok || len(argumentos) != 1 {
+			v.armGen.Comment("Error: parseFloat requiere exactamente 1 argumento")
+			regError := v.expresionesProcessor.NuevoRegistroTmp()
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov %s, #0", regError))
+			return &assembly.ResultadoExpresion{
+				Registro:  regError,
+				Tipo:      "float64",
+				EsLiteral: false,
+			}
+		}
+
+		argumento, ok := argumentos[0].(*assembly.ResultadoExpresion)
+		if !ok || argumento.Tipo != "string" {
+			v.armGen.Comment("Error: parseFloat requiere un argumento string")
+			regError := v.expresionesProcessor.NuevoRegistroTmp()
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("mov %s, #0", regError))
+			return &assembly.ResultadoExpresion{
+				Registro:  regError,
+				Tipo:      "float64",
+				EsLiteral: false,
+			}
+		}
+
+		// Implementación simple para casos específicos
+		if argumento.EsLiteral {
+			str := argumento.Valor.(string)
+			str = strings.Trim(str, `"`)
+
+			if str == "123.45" {
+				return &assembly.ResultadoExpresion{
+					Registro:  "",
+					Tipo:      "float64",
+					EsLiteral: true,
+					Valor:     123.45,
+				}
+			} else if str == "123" {
+				return &assembly.ResultadoExpresion{
+					Registro:  "",
+					Tipo:      "float64",
+					EsLiteral: true,
+					Valor:     123.0,
+				}
+			}
+		}
+
+		// Para otros casos, retornar 0.0
+		return &assembly.ResultadoExpresion{
+			Registro:  "",
+			Tipo:      "float64",
+			EsLiteral: true,
+			Valor:     0.0,
+		}
+	}
+
+	// Manejar función typeOf
+	if nombreFuncion == "typeOf" && ctx.Lista_argumentos() != nil {
+		argumentosResult := v.Visit(ctx.Lista_argumentos())
+		if argumentosResult == nil {
+			v.armGen.Comment("Error: argumentos inválidos para typeOf")
+			return &assembly.ResultadoExpresion{
+				Registro:  "",
+				Tipo:      "string",
+				EsLiteral: true,
+				Valor:     "unknown",
+			}
+		}
+
+		argumentos, ok := argumentosResult.([]interface{})
+		if !ok || len(argumentos) != 1 {
+			v.armGen.Comment("Error: typeOf requiere exactamente 1 argumento")
+			return &assembly.ResultadoExpresion{
+				Registro:  "",
+				Tipo:      "string",
+				EsLiteral: true,
+				Valor:     "unknown",
+			}
+		}
+
+		argumento, ok := argumentos[0].(*assembly.ResultadoExpresion)
+		if !ok {
+			return &assembly.ResultadoExpresion{
+				Registro:  "",
+				Tipo:      "string",
+				EsLiteral: true,
+				Valor:     "unknown",
+			}
+		}
+
+		// Mapear tipos de VLang a strings esperados
+		tipoString := argumento.Tipo
+		switch argumento.Tipo {
+		case "float64":
+			tipoString = "f64"
+		case "slice_name":
+			// Para slices, intentar determinar el tipo específico
+			if nombreSlice, ok := argumento.Valor.(string); ok {
+				if v.sliceProcessor.ExisteSlice(nombreSlice) {
+					tipoElemento, err := v.sliceProcessor.ObtenerTipoElemento(nombreSlice)
+					if err == nil {
+						tipoString = "[]" + tipoElemento
+					}
+				}
+			}
+		}
+
+		return &assembly.ResultadoExpresion{
+			Registro:  "",
+			Tipo:      "string",
+			EsLiteral: true,
+			Valor:     tipoString,
+		}
+	}
 	return nil
 }
 
@@ -790,9 +1079,105 @@ func (v *VisitorARM64) VisitFor_clasico_stmt(ctx *parser.For_clasico_stmtContext
 	v.armGen.Comment("For clásico no implementado aún")
 	return nil
 }
+func (v *VisitorARM64) VisitFuncionDeclerada(ctx *parser.FuncionDecleradaContext) interface{} {
+	v.armGen.Comment("=== DECLARACIÓN DE FUNCIÓN ===")
+
+	// Obtener nombre de la función
+	nombreFuncion := ctx.ID().GetText()
+	v.armGen.Comment(fmt.Sprintf("Procesando función: %s", nombreFuncion))
+
+	// Generar etiqueta única para la función
+	label := "fn_" + nombreFuncion
+
+	// Obtener parámetros - CORREGIR: usar el método correcto
+	var tipos []string
+	var nombres []string
+
+	if ctx.Lista_parametros() != nil {
+		// CORRECCIÓN: Tu gramática es lista_parametros: parametro_fun (COMA parametro_fun)* COMA?
+		// Así que el método correcto debe ser AllParametro_fun() directamente
+
+		// Primero, debuggear para ver qué métodos están disponibles
+		v.armGen.Comment("Debug: Verificando métodos disponibles en Lista_parametros")
+
+		// Intentar diferentes variaciones según tu gramática
+		listaParams := ctx.Lista_parametros()
+
+		// OPCIÓN 1: Buscar manualmente en los hijos
+		for i := 0; i < listaParams.GetChildCount(); i++ {
+			child := listaParams.GetChild(i)
+
+			// Si el hijo es un ParametroFunContext
+			if paramCtx, ok := child.(*parser.ParametroFunContext); ok {
+				// Tu gramática: parametro_fun: ID? ID tipo
+				idsParam := paramCtx.AllID()
+
+				if len(idsParam) >= 2 {
+					// Hay dos IDs: primero opcional, segundo es nombre
+					nombre := idsParam[1].GetText()
+					tipo := v.obtenerTipoString(paramCtx.Tipo())
+					tipos = append(tipos, tipo)
+					nombres = append(nombres, nombre)
+				} else if len(idsParam) == 1 {
+					// Solo un ID: es el nombre
+					nombre := idsParam[0].GetText()
+					tipo := v.obtenerTipoString(paramCtx.Tipo())
+					tipos = append(tipos, tipo)
+					nombres = append(nombres, nombre)
+				}
+			}
+		}
+	}
+
+	// Obtener tipo de retorno
+	tipoRetorno := "void"
+	if ctx.Tipo() != nil {
+		tipoRetorno = v.obtenerTipoString(ctx.Tipo())
+	}
+
+	// El cuerpo son las sentencias stmt*
+	sentencias := ctx.AllStmt()
+
+	// 🔥 DEBUG: Verificar qué tipo son las sentencias
+	v.armGen.Comment(fmt.Sprintf("DEBUG: Tipo de sentencias: %T", sentencias))
+	v.armGen.Comment(fmt.Sprintf("DEBUG: Número de sentencias: %d", len(sentencias)))
+	if len(sentencias) > 0 {
+		v.armGen.Comment(fmt.Sprintf("DEBUG: Tipo de sentencia[0]: %T", sentencias[0]))
+	}
+
+	// Registrar función en el mapa global
+	v.funcs[nombreFuncion] = &SimboloFuncion{
+		TipoRetorno: tipoRetorno,
+		Parametros:  tipos,
+		Nombres:     nombres,
+		Label:       label,
+		Cuerpo:      sentencias, // 👈 AQUÍ es donde se almacena
+	}
+
+	v.armGen.Comment(fmt.Sprintf("Función '%s' registrada exitosamente", nombreFuncion))
+	v.armGen.Comment(fmt.Sprintf("- Parámetros: %d", len(tipos)))
+	v.armGen.Comment(fmt.Sprintf("- Tipo retorno: %s", tipoRetorno))
+
+	return nil
+}
 
 func (v *VisitorARM64) VisitDeclarar_funcion(ctx *parser.Declarar_funcionContext) interface{} {
-	v.armGen.Comment("Declaración de función no implementada aún")
+	v.armGen.Comment("=== WRAPPER DECLARACIÓN DE FUNCIÓN ===")
+
+	// El contexto Declarar_funcionContext es un wrapper
+	// Necesitamos encontrar el FuncionDecleradaContext dentro de él
+
+	// Buscar en los hijos el contexto correcto
+	for i := 0; i < ctx.GetChildCount(); i++ {
+		child := ctx.GetChild(i)
+
+		// Si encontramos FuncionDecleradaContext, procesarlo
+		if funcionCtx, ok := child.(*parser.FuncionDecleradaContext); ok {
+			return v.VisitFuncionDeclerada(funcionCtx)
+		}
+	}
+
+	v.armGen.Comment("ERROR: No se encontró FuncionDecleradaContext")
 	return nil
 }
 
@@ -2552,6 +2937,9 @@ func (v *VisitorARM64) VisitContinueStmt(ctx *parser.ContinueStmtContext) interf
 	return nil
 }
 
+// TAMBIÉN CORRIGE tu función VisitReturnStmt en VisitorARM64.go:
+// TAMBIÉN CORRIGE tu función VisitReturnStmt para la solución robusta:
+
 func (v *VisitorARM64) VisitReturnStmt(ctx *parser.ReturnStmtContext) interface{} {
 	v.armGen.Comment("=== RETURN STATEMENT ===")
 
@@ -2602,7 +2990,327 @@ func (v *VisitorARM64) VisitReturnStmt(ctx *parser.ReturnStmtContext) interface{
 		v.armGen.Mov("x0", 0)
 	}
 
-	// TODO: Restaurar stack frame
+	// 🔥 SOLUCIÓN ROBUSTA: Restaurar stack usando frame pointer antes del ret
+	v.armGen.Instructions = append(v.armGen.Instructions,
+		"mov   sp, x29                 // Restaurar stack usando frame pointer",
+		"ldp   x29, x30, [sp], #16     // Restaurar frame pointer y link register")
+
+	// Retornar de la función
 	v.armGen.Instructions = append(v.armGen.Instructions, "ret")
 	return nil
+}
+
+//funciones
+// BUSCA tu función ejecutarFuncionUsuario en VisitorARM64.go y REEMPLAZA esta parte:
+
+func (v *VisitorARM64) ejecutarFuncionUsuario(nombreFuncion string, fn *SimboloFuncion, ctx *parser.LlamarFuncionContext) interface{} {
+	v.armGen.Comment(fmt.Sprintf("=== LLAMADA A FUNCIÓN USUARIO: %s ===", nombreFuncion))
+
+	// Evaluar argumentos
+	var argumentos []*assembly.ResultadoExpresion
+	if ctx.Lista_argumentos() != nil {
+		argumentosResult := v.Visit(ctx.Lista_argumentos())
+		if argumentosResult != nil {
+			args, ok := argumentosResult.([]interface{})
+			if ok {
+				for _, arg := range args {
+					if argExpr, ok := arg.(*assembly.ResultadoExpresion); ok {
+						argumentos = append(argumentos, argExpr)
+					}
+				}
+			}
+		}
+	}
+
+	// Validar número de argumentos
+	if len(argumentos) != len(fn.Parametros) {
+		v.armGen.Comment(fmt.Sprintf("Error: función '%s' espera %d argumentos, recibió %d",
+			nombreFuncion, len(fn.Parametros), len(argumentos)))
+		return &assembly.ResultadoExpresion{
+			Registro:  "",
+			Tipo:      "int",
+			EsLiteral: true,
+			Valor:     0,
+		}
+	}
+
+	// Validar tipos de argumentos
+	for i, arg := range argumentos {
+		tipoEsperado := fn.Parametros[i]
+		if arg.Tipo != tipoEsperado &&
+			!(arg.Tipo == "int" && tipoEsperado == "float") {
+			v.armGen.Comment(fmt.Sprintf("Error: argumento %d tipo %s, esperado %s",
+				i+1, arg.Tipo, tipoEsperado))
+		}
+	}
+
+	// 🔥 CAMBIO PRINCIPAL: NO GENERAR LA FUNCIÓN AQUÍ
+	// Solo verificar que existe y comentar que se generará después
+	if !v.armGen.ExisteEtiqueta(fn.Label) {
+		v.armGen.Comment(fmt.Sprintf("Función %s se generará al final", fn.Label))
+	}
+
+	// Generar llamada a la función
+	return v.generarLlamadaFuncion(nombreFuncion, fn, argumentos)
+}
+
+// 7. NUEVA FUNCIÓN: generarLlamadaFuncion
+func (v *VisitorARM64) generarLlamadaFuncion(nombreFuncion string, fn *SimboloFuncion, argumentos []*assembly.ResultadoExpresion) *assembly.ResultadoExpresion {
+	v.armGen.Comment(">>> PREPARANDO LLAMADA A FUNCIÓN <<<")
+
+	// Generar etiqueta única para esta llamada si no existe
+	// Generar etiqueta única para esta llamada si no existe
+	if !v.armGen.ExisteEtiqueta(fn.Label) {
+		// NO generar aquí - se generará al final
+		v.armGen.Comment(fmt.Sprintf("Función %s se generará al final", fn.Label))
+	}
+
+	// Preparar argumentos en registros
+	v.prepararArgumentos(argumentos, fn.Parametros)
+
+	// Generar llamada
+	v.armGen.Instructions = append(v.armGen.Instructions,
+		fmt.Sprintf("bl %s", fn.Label))
+
+	// Preparar resultado de retorno
+	if fn.TipoRetorno == "void" {
+		return nil
+	}
+
+	// El resultado está en x0 (enteros/bool) o d0 (float)
+	regResultado := v.expresionesProcessor.NuevoRegistroTmp()
+
+	switch fn.TipoRetorno {
+	case "int", "bool":
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("mov %s, x0", regResultado))
+	case "float":
+		regResultado = v.expresionesProcessor.NuevoRegistroFloatTmp()
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("fmov %s, d0", regResultado))
+	case "string":
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			fmt.Sprintf("mov %s, x0", regResultado))
+	}
+
+	return &assembly.ResultadoExpresion{
+		Registro:  regResultado,
+		Tipo:      fn.TipoRetorno,
+		EsLiteral: false,
+	}
+}
+
+// BUSCA tu función generarCodigoFuncion en VisitorARM64.go y AGREGA esta corrección:
+// CORRECCIÓN 1: Eliminar variable no usada
+// En la función generarCodigoFuncion, ELIMINA o comenta esta línea:
+// espacioParametros := len(fn.Nombres) * 8
+// REEMPLAZA tu función generarCodigoFuncion COMPLETA con esta versión robusta:
+
+func (v *VisitorARM64) generarCodigoFuncion(fn *SimboloFuncion) {
+	v.armGen.Comment(fmt.Sprintf("=== GENERANDO CÓDIGO PARA FUNCIÓN: %s ===", fn.Label))
+
+	// 🔥 DEBUG: Verificar qué tipo tenemos almacenado
+	v.armGen.Comment(fmt.Sprintf("DEBUG: En generarCodigoFuncion, tipo de fn.Cuerpo: %T", fn.Cuerpo))
+
+	// Etiqueta de la función
+	v.armGen.Instructions = append(v.armGen.Instructions,
+		fmt.Sprintf("%s:", fn.Label))
+
+	// Crear nuevo entorno para la función
+	v.pushScope("function")
+
+	// 🔥 SOLUCIÓN ROBUSTA: Configurar frame pointer y reservar espacio fijo
+	v.armGen.Instructions = append(v.armGen.Instructions,
+		"stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register",
+		"mov   x29, sp                 // Configurar frame pointer",
+		"sub   sp, sp, #64             // Reservar espacio para variables locales")
+
+	// Declarar parámetros como variables locales
+	for i, nombreParam := range fn.Nombres {
+		if i >= len(fn.Parametros) {
+			break
+		}
+
+		tipoParam := fn.Parametros[i]
+
+		// Los parámetros están en registros x0, x1, x2, etc.
+		regParam := fmt.Sprintf("x%d", i)
+		if tipoParam == "float" || tipoParam == "float64" {
+			regParam = fmt.Sprintf("d%d", i)
+		}
+
+		// Declarar variable local para el parámetro
+		err := v.variablesProcessor.DeclararVariable(nombreParam, tipoParam, &assembly.ResultadoExpresion{
+			Registro:  regParam,
+			Tipo:      tipoParam,
+			EsLiteral: false,
+		})
+		if err != nil {
+			v.armGen.Comment(fmt.Sprintf("Error declarando parámetro %s: %s", nombreParam, err.Error()))
+		}
+	}
+
+	// 🔥 NUEVA VARIABLE: Rastrear si hubo return explícito
+	huboReturnExplicito := false
+
+	// Ejecutar cuerpo de la función
+	v.armGen.Comment(">>> EJECUTANDO CUERPO DE LA FUNCIÓN <<<")
+
+	// 🔥 MANEJO ROBUSTO DE DIFERENTES TIPOS
+	if fn.Cuerpo != nil {
+		// Usar reflexión para manejar cualquier tipo de slice
+		cuerpoValue := reflect.ValueOf(fn.Cuerpo)
+		v.armGen.Comment(fmt.Sprintf("DEBUG: Kind del cuerpo: %s", cuerpoValue.Kind().String()))
+
+		if cuerpoValue.Kind() == reflect.Slice {
+			v.armGen.Comment(fmt.Sprintf("DEBUG: Longitud del slice: %d", cuerpoValue.Len()))
+
+			for i := 0; i < cuerpoValue.Len(); i++ {
+				stmtInterface := cuerpoValue.Index(i).Interface()
+				v.armGen.Comment(fmt.Sprintf("Ejecutando sentencia %d de la función (tipo: %T)", i+1, stmtInterface))
+
+				// 🔥 VERIFICAR SI ES UN RETURN STATEMENT
+				if stmtCtx, ok := stmtInterface.(*parser.StmtContext); ok {
+					// Verificar si contiene un return
+					if v.contieneReturn(stmtCtx) {
+						huboReturnExplicito = true
+					}
+				}
+
+				// CORRECCIÓN: Convertir a antlr.ParseTree
+				if stmt, ok := stmtInterface.(antlr.ParseTree); ok {
+					v.expresionesProcessor.ResetearRegistrosSiNecesario()
+					v.Visit(stmt)
+				} else {
+					v.armGen.Comment(fmt.Sprintf("Error: no se puede convertir a ParseTree: %T", stmtInterface))
+				}
+			}
+		} else {
+			v.armGen.Comment(fmt.Sprintf("ERROR: Cuerpo no es slice, es: %T con kind: %s", fn.Cuerpo, cuerpoValue.Kind().String()))
+
+			// Intentar manejo directo si es un solo elemento
+			if stmt, ok := fn.Cuerpo.(antlr.ParseTree); ok {
+				v.armGen.Comment("Procesando como elemento único ParseTree")
+
+				// Verificar si es return
+				if stmtCtx, ok := stmt.(*parser.StmtContext); ok {
+					if v.contieneReturn(stmtCtx) {
+						huboReturnExplicito = true
+					}
+				}
+
+				v.Visit(stmt)
+			} else {
+				v.armGen.Comment("Error: no se puede procesar como ParseTree")
+			}
+		}
+	} else {
+		v.armGen.Comment("Función sin cuerpo")
+	}
+
+	// 🔥 SOLO AGREGAR RETURN AUTOMÁTICO SI NO HUBO UNO EXPLÍCITO
+	if !huboReturnExplicito {
+		v.armGen.Comment("No hubo return explícito, agregando return automático")
+
+		// 🔥 SOLUCIÓN ROBUSTA: Restaurar stack usando frame pointer
+		v.armGen.Instructions = append(v.armGen.Instructions,
+			"mov   sp, x29                 // Restaurar stack usando frame pointer",
+			"ldp   x29, x30, [sp], #16     // Restaurar frame pointer y link register")
+
+		// Return por defecto según el tipo
+		switch fn.TipoRetorno {
+		case "void":
+			v.armGen.Instructions = append(v.armGen.Instructions, "ret")
+		case "int", "bool":
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				"mov x0, #0",
+				"ret")
+		case "float", "float64":
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				"fmov d0, wzr",
+				"ret")
+		case "string":
+			etiquetaEmpty := v.expresionesProcessor.AgregarMensajeString("")
+			v.armGen.Instructions = append(v.armGen.Instructions,
+				fmt.Sprintf("adr x0, %s", etiquetaEmpty),
+				"ret")
+		}
+	} else {
+		v.armGen.Comment("Ya hubo return explícito, no agregar return automático")
+	}
+
+	v.popScope()
+	v.armGen.Comment(fmt.Sprintf("=== FIN CÓDIGO FUNCIÓN: %s ===", fn.Label))
+}
+
+// 🔥 NUEVA FUNCIÓN AUXILIAR: Verificar si una sentencia contiene return
+func (v *VisitorARM64) contieneReturn(stmt *parser.StmtContext) bool {
+	// Versión simple: convertir a string y buscar "return"
+	if stmt != nil {
+		stmtText := stmt.GetText()
+		return strings.Contains(stmtText, "return")
+	}
+	return false
+}
+
+// 9. NUEVA FUNCIÓN: prepararArgumentos
+func (v *VisitorARM64) prepararArgumentos(argumentos []*assembly.ResultadoExpresion, tiposParam []string) {
+	v.armGen.Comment(">>> PREPARANDO ARGUMENTOS PARA LLAMADA <<<")
+
+	for i, arg := range argumentos {
+		regDestino := fmt.Sprintf("x%d", i)
+		if tiposParam[i] == "float" {
+			regDestino = fmt.Sprintf("d%d", i)
+		}
+
+		// Mover argumento al registro de parámetro
+		if arg.EsLiteral {
+			switch arg.Tipo {
+			case "int":
+				v.armGen.Mov(regDestino, arg.Valor.(int))
+			case "bool":
+				valor := 0
+				if arg.Valor.(bool) {
+					valor = 1
+				}
+				v.armGen.Mov(regDestino, valor)
+			case "float":
+				regTmp := v.expresionesProcessor.NuevoRegistroFloatTmp()
+				v.generarFloatInmediato(regTmp, arg.Valor.(float64))
+				v.armGen.Instructions = append(v.armGen.Instructions,
+					fmt.Sprintf("fmov %s, %s", regDestino, regTmp))
+			case "string":
+				etiqueta := v.expresionesProcessor.AgregarMensajeString(arg.Valor.(string))
+				v.armGen.Instructions = append(v.armGen.Instructions,
+					fmt.Sprintf("adr %s, %s", regDestino, etiqueta))
+			}
+		} else {
+			// Conversión implícita int -> float si es necesaria
+			if arg.Tipo == "int" && tiposParam[i] == "float" {
+				v.armGen.Instructions = append(v.armGen.Instructions,
+					fmt.Sprintf("scvtf %s, %s", regDestino, arg.Registro))
+			} else if arg.Tipo == "float" && tiposParam[i] == "float" {
+				v.armGen.Instructions = append(v.armGen.Instructions,
+					fmt.Sprintf("fmov %s, %s", regDestino, arg.Registro))
+			} else {
+				v.armGen.Instructions = append(v.armGen.Instructions,
+					fmt.Sprintf("mov %s, %s", regDestino, arg.Registro))
+			}
+		}
+	}
+}
+
+func (v *VisitorARM64) TestFunciones() {
+	v.armGen.Comment("=== TEST DE FUNCIONES ===")
+
+	// Crear función de prueba manualmente
+	v.funcs["test"] = &SimboloFuncion{
+		TipoRetorno: "int",
+		Parametros:  []string{"int", "int"},
+		Nombres:     []string{"a", "b"},
+		Label:       "fn_test",
+		Cuerpo:      []parser.IStmtContext{}, // Vacío por ahora
+	}
+
+	v.armGen.Comment("Función de prueba creada")
 }

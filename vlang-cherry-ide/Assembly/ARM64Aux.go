@@ -43,7 +43,7 @@ func generarSeccionDatos(armGen *ARMGenerator) string {
 	codigo += "msg_menos: .asciz \"-\"\n"
 	codigo += "msg_punto: .asciz \".\"\n"
 	codigo += "const_100: .double 100.0\n"
-    codigo += "str_empty: .asciz \"\"\n" 
+	codigo += "str_empty: .asciz \"\"\n"
 
 	// CONSTANTES FLOAT
 	for constName, value := range armGen.FloatConstants {
@@ -64,6 +64,10 @@ func generarSeccionTexto() string {
 	codigo := ".section .text\n"
 	codigo += ".global _start\n\n"
 	codigo += "_start:\n"
+	codigo += "    bl fn_main      // Llamar a la función main\n"
+	codigo += "    mov x8, #93     // sys_exit como respaldo\n"
+	codigo += "    mov x0, #0      // exit status\n"
+	codigo += "    svc #0          // system call\n\n"
 	return codigo
 }
 
@@ -89,14 +93,8 @@ func generarInstruccionesPrograma(armGen *ARMGenerator) string {
 
 // generarSalidaPrograma genera el código de salida del programa
 func generarSalidaPrograma() string {
-    codigo := "\n"
-    codigo += "    // Limpiar stack de slices antes de salir\n"
-    codigo += "    add sp, sp, #256\n"
-    codigo += "    // Salir del programa\n"
-    codigo += "    mov x8, #93\n"
-    codigo += "    mov x0, #0\n"
-    codigo += "    svc 0\n\n"
-    return codigo
+	// Ya no generar código de salida aquí porque lo manejamos en _start
+	return "\n"
 }
 
 // Generar solo las funciones auxiliares que se usan
@@ -158,7 +156,7 @@ func generarFuncionesAuxiliaresDinamicas(armGen *ARMGenerator) string {
 // Funciones individuales para cada función auxiliar
 
 func getFuncionPrintInt() string {
-    return `print_int:
+	return `print_int:
     stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register
     mov   x29, sp
     stp   x1, x2, [sp, #-16]!     // Guardar registros que vamos a usar
@@ -265,6 +263,7 @@ func getFuncionPrintFloat() string {
 `
 }
 
+/*
 func getFuncionPrintString() string {
 	return `print_string:
     stp   x29, x30, [sp, #-16]!   // Guardar frame
@@ -278,6 +277,60 @@ func getFuncionPrintString() string {
     mov   x8, #64                 // Syscall write
     svc   0
 
+    ldp   x29, x30, [sp], #16
+    ret
+
+`
+}*/
+
+// REEMPLAZA la función getFuncionPrintString() en tu assembly/code_generator.go:
+
+func getFuncionPrintString() string {
+	return `print_string:
+    stp   x29, x30, [sp, #-16]!   // Guardar frame
+    mov   x29, sp
+    stp   x19, x20, [sp, #-16]!   // Guardar registros adicionales
+    
+    mov   x19, x0                 // Guardar dirección del string
+    mov   x20, #0                 // Contador manual de longitud
+
+    // Verificar que el string no sea NULL
+    cmp   x19, #0
+    beq   .Lps_null_string
+
+// Contar manualmente la longitud (más seguro que strlen separado)
+.Lps_count_loop:
+    ldrb  w1, [x19, x20]         // Cargar byte
+    cmp   w1, #0                 // ¿Es '\0'?
+    beq   .Lps_count_done
+    add   x20, x20, #1           // Incrementar contador
+    cmp   x20, #500              // Límite de seguridad
+    bge   .Lps_count_done        // Evitar loops infinitos
+    b     .Lps_count_loop
+
+.Lps_count_done:
+    // Verificar que tengamos algo que imprimir
+    cmp   x20, #0
+    beq   .Lps_empty_string
+
+    // Imprimir el string
+    mov   x0, #1                 // stdout
+    mov   x1, x19                // dirección string
+    mov   x2, x20                // longitud calculada
+    mov   x8, #64                // syscall write
+    svc   0
+    b     .Lps_end
+
+.Lps_null_string:
+    // String NULL - no hacer nada
+    b     .Lps_end
+
+.Lps_empty_string:
+    // String vacío - no hacer nada
+    b     .Lps_end
+
+.Lps_end:
+    ldp   x19, x20, [sp], #16    // Restaurar registros
     ldp   x29, x30, [sp], #16
     ret
 

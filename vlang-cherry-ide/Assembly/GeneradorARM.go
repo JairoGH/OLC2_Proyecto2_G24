@@ -7,20 +7,28 @@ import (
 
 // ARMGenerator genera instrucciones ARM en formato texto
 type ARMGenerator struct {
-	Instructions    []string
-	FloatConstants  map[string]string
-	StringConstants map[string]string
-	FuncionesUsadas map[string]bool
+	Instructions        []string
+	FloatConstants      map[string]string
+	StringConstants     map[string]string
+	FuncionesUsadas     map[string]bool
+	funcionesPendientes []string // 🔴 NUEVO: para guardar funciones al final
 }
 
 // Constructor
 func NewARMGenerator() *ARMGenerator {
 	return &ARMGenerator{
-		Instructions:    []string{},
-		FloatConstants:  make(map[string]string),
-		StringConstants: make(map[string]string),
-		FuncionesUsadas: make(map[string]bool),
+		Instructions:        []string{},
+		FloatConstants:      make(map[string]string),
+		StringConstants:     make(map[string]string),
+		FuncionesUsadas:     make(map[string]bool),
+		funcionesPendientes: []string{}, // 🔴 Inicializar
 	}
+}
+
+func (g *ARMGenerator) AgregarFuncion(nombre string, cuerpo []string) {
+	codigo := append([]string{fmt.Sprintf("%s:", nombre)}, cuerpo...)
+	codigo = append(codigo, "    ret") // siempre cerrar con ret
+	g.funcionesPendientes = append(g.funcionesPendientes, strings.Join(codigo, "\n"))
 }
 
 // ============= FUNCIONES AUXILIARES A USAR =============
@@ -43,6 +51,10 @@ func (g *ARMGenerator) UsarFuncion(nombreFuncion string) {
 	case "print_bool":
 		g.FuncionesUsadas["print_char"] = true
 	}
+}
+
+func (g *ARMGenerator) Escribir(linea string) {
+	g.Instructions = append(g.Instructions, linea)
 }
 
 // ============= OPERACIONES ENTERAS =============
@@ -141,7 +153,7 @@ func (g *ARMGenerator) StrCmp(rs1, rs2, resultReg string) {
 		fmt.Sprintf("mov %s, x0", strings.ToLower(resultReg)))
 }
 
-//  NUEVO: Método para agregar llamada a función auxiliar manualmente
+// NUEVO: Método para agregar llamada a función auxiliar manualmente
 func (g *ARMGenerator) LlamarFuncion(nombreFuncion string) {
 	g.UsarFuncion(nombreFuncion)
 	g.Instructions = append(g.Instructions, fmt.Sprintf("bl %s", nombreFuncion))
@@ -231,4 +243,38 @@ func (g *ARMGenerator) String() string {
 	}
 
 	return sb.String()
+}
+
+func (gen *ARMGenerator) ExisteEtiqueta(etiqueta string) bool {
+	for _, instr := range gen.Instructions {
+		if strings.HasPrefix(instr, etiqueta+":") {
+			return true
+		}
+	}
+	return false
+}
+
+/*
+func (g *ARMGenerator) FinalizarPrograma() {
+	g.Escribir("\n// === FINALIZACIÓN DEL PROGRAMA ===")
+	g.Escribir("mov x8, #93")
+	g.Escribir("mov x0, #0")
+	g.Escribir("svc 0")
+
+	// Escribir funciones definidas por el usuario
+	g.Escribir("\n// === FUNCIONES DEFINIDAS POR EL USUARIO ===")
+	for _, f := range g.funcionesPendientes {
+		g.Escribir("\n" + f)
+	}
+}
+*/
+
+func (g *ARMGenerator) FinalizarPrograma() {
+	// NO agregar código de salida aquí - eso debe estar en _start
+
+	// Solo escribir funciones definidas por el usuario
+	g.Escribir("\n// === FUNCIONES DEFINIDAS POR EL USUARIO ===")
+	for _, f := range g.funcionesPendientes {
+		g.Escribir("\n" + f)
+	}
 }
