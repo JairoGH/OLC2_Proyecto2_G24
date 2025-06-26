@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	// Imports del backend original - ajusta las rutas según tu estructura
 	errores "main/Errores"
 	instrucciones "main/Instrucciones"
 	compiler "main/parser"
@@ -15,26 +14,18 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 )
 
-// AnalyzerService integra la lógica completa del backend original
 type AnalyzerService struct{}
 
-// NewAnalyzerService crea una nueva instancia del servicio
 func NewAnalyzerService() *AnalyzerService {
 	return &AnalyzerService{}
 }
 
-// AnalyzeCode usa la lógica completa del backend original
-func (a *AnalyzerService) AnalyzeCode(code, filename string) (*models.AnalysisResponse, error) {
+// 🆕 MÉTODO 1: Solo análisis léxico, sintáctico y semántico
+func (a *AnalyzerService) AnalyzeOnly(code, filename string) (*models.AnalysisOnlyResponse, antlr.ParseTree, *instrucciones.PatronVIsitor, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// Manejo de errores - no crashear la aplicación
 		}
-	}()
-
-	// Generar AST con ANTLR externo (en paralelo como en el original)
-	resultChannel := make(chan string)
-	go func() {
-		resultChannel <- crearArbol.ReporteArbol(code)
 	}()
 
 	// === ANÁLISIS LÉXICO ===
@@ -64,85 +55,133 @@ func (a *AnalyzerService) AnalyzeCode(code, filename string) (*models.AnalysisRe
 	replVisitor := instrucciones.NewVisitor(dclVisitor)
 	replVisitor.Visit(tree)
 
-	// Obtener el reporte del AST
-	cstReport := <-resultChannel
-
-	// === CONVERTIR A FORMATO DEL FRONTEND ===
+	// === CONVERTIR ERRORES ===
 	success := len(replVisitor.TablaError.Errores) == 0
-
-	// === COMPILACIÓN A ARM64 (SOLO SI NO HAY ERRORES) ===
-	var armInfo string
-	if success {
-		// Generar código ARM64
-		armVisitor := instrucciones.NewVisitorARM64()
-		armVisitor.Visit(tree) // Mismo árbol que usó el intérprete
-		armCode := armVisitor.GetCodigo()
-
-		// Crear directorio output si no existe
-		outputDir := "output"
-		os.MkdirAll(outputDir, 0755)
-
-		// Guardar archivo ARM64
-		archivoAsm := filepath.Join(outputDir, "programa.s")
-		err := os.WriteFile(archivoAsm, []byte(armCode), 0644)
-		if err != nil {
-			armInfo = fmt.Sprintf("⚠️ Error al guardar archivo ARM64: %v", err)
-		} else {
-			armInfo = fmt.Sprintf("✅ Código ARM64 generado exitosamente en: %s\n\n=== CÓDIGO ARM64 GENERADO ===\n%s", archivoAsm, armCode)
-		}
-	} else {
-		armInfo = "❌ No se generó código ARM64 porque hubo errores."
-	}
-
-	// Convertir errores - usando la estructura real correcta
 	frontendErrors := []models.ErrorReport{}
 	for _, err := range replVisitor.TablaError.Errores {
 		frontendErrors = append(frontendErrors, models.ErrorReport{
-			Linea:       err.Linea,       // ← CORRECTO: usa Line, no Linea
-			Columna:     err.Columna,     // ← CORRECTO: usa Columna
-			Descripcion: err.Descripcion, // ← CORRECTO: usa Descripcion
-			Tipo:        err.Tipo,        // ← CORRECTO: usa Tipo (que ya es string)
+			Linea:       err.Linea,
+			Columna:     err.Columna,
+			Descripcion: err.Descripcion,
+			Tipo:        err.Tipo,
 		})
 	}
 
-	// Convertir tabla de símbolos
+	// === CONVERTIR TABLA DE SÍMBOLOS ===
 	symbolTable := a.convertSymbolTable(replVisitor.RegistroAmbito.Report())
 
-	// Preparar output de consola
+	// === PREPARAR OUTPUT DE CONSOLA ===
 	consoleOutput := replVisitor.Consola.GetSalida()
 	if consoleOutput == "" {
 		if success {
-			consoleOutput = "✅ Análisis completado exitosamente\n✅ Código interpretado sin errores"
+			consoleOutput = "✅ Análisis completado exitosamente\n✅ No se encontraron errores"
 		} else {
 			consoleOutput = "❌ Se encontraron errores durante el análisis"
 		}
 	}
 
-	// Agregar información de ARM64 al output de consola
-	consoleOutput += "\n\n=== GENERACIÓN DE CÓDIGO ARM64 ===\n" + armInfo
-
-	result := &models.AnalysisResponse{
+	result := &models.AnalysisOnlyResponse{
 		Success:       success,
-		AST:           "Árbol de Sintaxis Abstracta generado exitosamente",
 		Errors:        frontendErrors,
 		SymbolTable:   symbolTable,
 		ConsoleOutput: consoleOutput,
-		CSTSvg:        cstReport,
-		ASTPng:        nil,
+		ParseTree:     tree,
+		Visitor:       replVisitor,
 	}
 
-	return result, nil
+	return result, tree, replVisitor, nil
 }
 
-// Convertir tabla de símbolos del backend al formato del frontend
+// 🆕 MÉTODO 2: Solo generación ARM64 (recibe el árbol ya parseado)
+func (a *AnalyzerService) GenerateARM64Only(tree antlr.ParseTree, visitor *instrucciones.PatronVIsitor) (*models.ARM64Response, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			// Manejo de errores
+		}
+	}()
+
+	// Verificar que no hay errores antes de generar ARM64
+	if len(visitor.TablaError.Errores) > 0 {
+		return &models.ARM64Response{
+			Success:       false,
+			ErrorMessage:  "No se puede generar ARM64 porque hay errores en el código",
+			ConsoleOutput: "❌ No se generó código ARM64 porque hubo errores.",
+		}, nil
+	}
+
+	// === GENERAR CÓDIGO ARM64 ===
+	armVisitor := instrucciones.NewVisitorARM64()
+	armVisitor.Visit(tree) // Usar el árbol ya parseado
+	armCode := armVisitor.GetCodigo()
+
+	// === CREAR DIRECTORIO Y GUARDAR ARCHIVO ===
+	outputDir := "output"
+	os.MkdirAll(outputDir, 0755)
+
+	archivoAsm := filepath.Join(outputDir, "programa.s")
+	err := os.WriteFile(archivoAsm, []byte(armCode), 0644)
+
+	var consoleOutput string
+	if err != nil {
+		consoleOutput = fmt.Sprintf("⚠️ Error al guardar archivo ARM64: %v", err)
+		return &models.ARM64Response{
+			Success:       false,
+			ErrorMessage:  err.Error(),
+			ConsoleOutput: consoleOutput,
+		}, err
+	}
+
+	consoleOutput = fmt.Sprintf("\n📁 Archivo: %s ", archivoAsm)
+
+	return &models.ARM64Response{
+		Success:       true,
+		ConsoleOutput: consoleOutput,
+		ARM64Code:     armCode,
+		FilePath:      archivoAsm,
+	}, nil
+}
+
+// 🆕 MÉTODO 3: Solo generación AST (independiente)
+func (a *AnalyzerService) GenerateASTOnly(code string) (*models.ASTResponse, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			// Manejo de errores
+		}
+	}()
+
+	// === GENERAR AST EN PARALELO ===
+	resultChannel := make(chan string)
+	go func() {
+		resultChannel <- crearArbol.ReporteArbol(code)
+	}()
+
+	// Obtener el reporte del AST
+	cstReport := <-resultChannel
+
+	if cstReport == "" {
+		return &models.ASTResponse{
+			Success:       false,
+			ErrorMessage:  "No se pudo generar el AST",
+			ConsoleOutput: "❌ Error al generar el árbol de sintaxis",
+		}, fmt.Errorf("AST generation failed")
+	}
+
+	consoleOutput := "\n🌳 Árbol AST generado exitosamente\n✅ SVG generado correctamente"
+
+	return &models.ASTResponse{
+		Success:       true,
+		ConsoleOutput: consoleOutput,
+		SVGContent:    cstReport,
+	}, nil
+}
+
+// Mantener métodos auxiliares sin cambios
 func (a *AnalyzerService) convertSymbolTable(registroAmbito instrucciones.ReporteTabla) []models.SymbolEntry {
 	var symbolTable []models.SymbolEntry
 
-	// Función recursiva con jerarquía de puntos
 	var procesarAmbitoRecursivo func(ambito instrucciones.ReporteAmbito, rutaScope string)
 
 	procesarAmbitoRecursivo = func(ambito instrucciones.ReporteAmbito, rutaScope string) {
-		// Procesar variables del ámbito actual
 		for _, variable := range ambito.Variables {
 			line := variable.Linea
 			column := variable.Columna
@@ -161,7 +200,6 @@ func (a *AnalyzerService) convertSymbolTable(registroAmbito instrucciones.Report
 			})
 		}
 
-		// Procesar funciones del ámbito actual
 		for _, function := range ambito.Funciones {
 			line := function.Linea
 			column := function.Columna
@@ -180,7 +218,6 @@ func (a *AnalyzerService) convertSymbolTable(registroAmbito instrucciones.Report
 			})
 		}
 
-		// Procesar estructuras del ámbito actual
 		for _, estructura := range ambito.Estructuras {
 			line := estructura.Linea
 			column := estructura.Columna
@@ -199,31 +236,41 @@ func (a *AnalyzerService) convertSymbolTable(registroAmbito instrucciones.Report
 			})
 		}
 
-		// Procesar ámbitos hijos con nueva ruta
 		for i, hijo := range ambito.AmbitosHijos {
-			// Crear nombre del ámbito hijo
 			nombreHijo := hijo.Nombre
 			if nombreHijo == "" {
 				nombreHijo = fmt.Sprintf("block_%d", i+1)
 			}
 
-			// Crear ruta jerárquica con puntos
 			nuevaRuta := rutaScope + "." + nombreHijo
-
-			// Llamada recursiva
 			procesarAmbitoRecursivo(hijo, nuevaRuta)
 		}
 	}
 
-	// Iniciar desde global
 	procesarAmbitoRecursivo(registroAmbito.AmbitoGlobal, "global")
-
 	return symbolTable
 }
 
 // ValidateCode valida la sintaxis del código
 func (a *AnalyzerService) ValidateCode(code string) (*models.AnalysisResponse, error) {
-	return a.AnalyzeCode(code, "temp.vch")
+	// Usar el método optimizado
+	analysisResult, _, _, err := a.AnalyzeOnly(code, "validation.vch")
+	if err != nil {
+		return nil, err
+	}
+
+	// Convertir a formato legacy para compatibilidad
+	result := &models.AnalysisResponse{
+		Success:       analysisResult.Success,
+		AST:           "Validación completada",
+		Errors:        analysisResult.Errors,
+		SymbolTable:   analysisResult.SymbolTable,
+		ConsoleOutput: analysisResult.ConsoleOutput,
+		CSTSvg:        "",
+		ASTPng:        nil,
+	}
+
+	return result, nil
 }
 
 // GetVersion retorna información del analizador

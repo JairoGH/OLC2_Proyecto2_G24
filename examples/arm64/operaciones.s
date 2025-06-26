@@ -1,12 +1,13 @@
 .section .data
     .align 3    // alinea dobles a 8 bytes
-    msg_1: .asciz "=== Calculadora Cherry ARM64 ==="
-    float_const_2: .double 15.500000
-    float_const_3: .double 4.200000
-    msg_4: .asciz "Suma:"
-    msg_5: .asciz "Resta:"
-    msg_6: .asciz "Multiplicación:"
-    msg_7: .asciz "División:"
+    msg_1: .asciz "Suma:"
+    msg_2: .asciz "Resta:"
+    msg_3: .asciz "Multiplicación:"
+    msg_4: .asciz "División:"
+    msg_5: .asciz "Módulo:"
+    float_const_6: .double 10.500000
+    float_const_7: .double 2.500000
+    msg_8: .asciz "Decimal:"
 buffer_int: .skip 32
 buffer_float: .skip 64
 buffer_string: .skip 512
@@ -34,30 +35,142 @@ _start:
 fn_main:
         stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register
         mov   x29, sp                 // Configurar frame pointer
-// === IMPRIMIR STRING  ===
-    adr x9, msg_1
-    mov x0, x9
-    bl print_string
-    bl print_newline
-    bl print_newline
 // === DECLARAR VARIABLE MUT: a ===
     sub sp, sp, #8  // Reservar espacio para a
-    adr x9, float_const_2
-    ldr d0, [x9]
-    str d0, [sp]
+    mov x9, #10
+    str x9, [sp]
 // a en [sp+0] 
 
 // === DECLARAR VARIABLE MUT: b ===
     sub sp, sp, #8  // Reservar espacio para b
-    adr x9, float_const_3
-    ldr d0, [x9]
-    str d0, [sp]
+    mov x9, #5
+    str x9, [sp]
 // b en [sp+0] 
 
 // ===  EXPRESIÓN BINARIA + ===
 // === CARGAR VARIABLE: a (offset: 8) ===
-    ldr d0, [sp, #8]
+    ldr x9, [sp, #8]
 // === CARGAR VARIABLE: b (offset: 0) ===
+    ldr x10, [sp, #0]
+    mov x11, x9
+    mov x12, x10
+    add x13, x11, x12
+// === FIN EXPRESIÓN BINARIA === 
+
+// === IMPRIMIR STRING  ===
+    adr x14, msg_1
+    mov x0, x14
+    bl print_string
+    mov x0, #32          // ' ' (espacio)
+    bl print_char
+// === IMPRIMIR INT  ===
+    mov x0, x13
+    bl print_int
+    bl print_newline
+    bl print_newline
+// ===  EXPRESIÓN BINARIA - ===
+// === CARGAR VARIABLE: a (offset: 8) ===
+    ldr x9, [sp, #8]
+// === CARGAR VARIABLE: b (offset: 0) ===
+    ldr x10, [sp, #0]
+    mov x11, x9
+    mov x12, x10
+    sub x13, x11, x12
+// === FIN EXPRESIÓN BINARIA === 
+
+// === IMPRIMIR STRING  ===
+    adr x14, msg_2
+    mov x0, x14
+    bl print_string
+    mov x0, #32          // ' ' (espacio)
+    bl print_char
+// === IMPRIMIR INT  ===
+    mov x0, x13
+    bl print_int
+    bl print_newline
+    bl print_newline
+// ===  EXPRESIÓN BINARIA * ===
+// === CARGAR VARIABLE: a (offset: 8) ===
+    ldr x9, [sp, #8]
+// === CARGAR VARIABLE: b (offset: 0) ===
+    ldr x10, [sp, #0]
+    mov x11, x9
+    mov x12, x10
+    mul x13, x11, x12
+// === FIN EXPRESIÓN BINARIA === 
+
+// === IMPRIMIR STRING  ===
+    adr x14, msg_3
+    mov x0, x14
+    bl print_string
+    mov x0, #32          // ' ' (espacio)
+    bl print_char
+// === IMPRIMIR INT  ===
+    mov x0, x13
+    bl print_int
+    bl print_newline
+    bl print_newline
+// ===  EXPRESIÓN BINARIA / ===
+// === CARGAR VARIABLE: a (offset: 8) ===
+    ldr x9, [sp, #8]
+// === CARGAR VARIABLE: b (offset: 0) ===
+    ldr x10, [sp, #0]
+    mov x11, x9
+    mov x12, x10
+    udiv x13, x11, x12
+// === FIN EXPRESIÓN BINARIA === 
+
+// === IMPRIMIR STRING  ===
+    adr x14, msg_4
+    mov x0, x14
+    bl print_string
+    mov x0, #32          // ' ' (espacio)
+    bl print_char
+// === IMPRIMIR INT  ===
+    mov x0, x13
+    bl print_int
+    bl print_newline
+    bl print_newline
+// ===  EXPRESIÓN BINARIA % ===
+// === CARGAR VARIABLE: a (offset: 8) ===
+    ldr x9, [sp, #8]
+// === CARGAR VARIABLE: b (offset: 0) ===
+    ldr x10, [sp, #0]
+    mov x11, x9
+    mov x12, x10
+    udiv x13, x11, x12
+    msub x13, x13, x12, x11
+// === FIN EXPRESIÓN BINARIA === 
+
+// === IMPRIMIR STRING  ===
+    adr x14, msg_5
+    mov x0, x14
+    bl print_string
+    mov x0, #32          // ' ' (espacio)
+    bl print_char
+// === IMPRIMIR INT  ===
+    mov x0, x13
+    bl print_int
+    bl print_newline
+    bl print_newline
+// === DECLARAR VARIABLE MUT: x ===
+    sub sp, sp, #8  // Reservar espacio para x
+    adr x9, float_const_6
+    ldr d0, [x9]
+    str d0, [sp]
+// x en [sp+0] 
+
+// === DECLARAR VARIABLE MUT: y ===
+    sub sp, sp, #8  // Reservar espacio para y
+    adr x9, float_const_7
+    ldr d0, [x9]
+    str d0, [sp]
+// y en [sp+0] 
+
+// ===  EXPRESIÓN BINARIA + ===
+// === CARGAR VARIABLE: x (offset: 8) ===
+    ldr d0, [sp, #8]
+// === CARGAR VARIABLE: y (offset: 0) ===
     ldr d1, [sp, #0]
     fmov d2, d0
     fmov d3, d1
@@ -65,70 +178,7 @@ fn_main:
 // === FIN EXPRESIÓN BINARIA === 
 
 // === IMPRIMIR STRING  ===
-    adr x9, msg_4
-    mov x0, x9
-    bl print_string
-    mov x0, #32          // ' ' (espacio)
-    bl print_char
-// === IMPRIMIR FLOAT  ===
-    fmov d0, d4
-    bl print_float
-    bl print_newline
-    bl print_newline
-// ===  EXPRESIÓN BINARIA - ===
-// === CARGAR VARIABLE: a (offset: 8) ===
-    ldr d0, [sp, #8]
-// === CARGAR VARIABLE: b (offset: 0) ===
-    ldr d1, [sp, #0]
-    fmov d2, d0
-    fmov d3, d1
-    fsub d4, d2, d3
-// === FIN EXPRESIÓN BINARIA === 
-
-// === IMPRIMIR STRING  ===
-    adr x9, msg_5
-    mov x0, x9
-    bl print_string
-    mov x0, #32          // ' ' (espacio)
-    bl print_char
-// === IMPRIMIR FLOAT  ===
-    fmov d0, d4
-    bl print_float
-    bl print_newline
-    bl print_newline
-// ===  EXPRESIÓN BINARIA * ===
-// === CARGAR VARIABLE: a (offset: 8) ===
-    ldr d0, [sp, #8]
-// === CARGAR VARIABLE: b (offset: 0) ===
-    ldr d1, [sp, #0]
-    fmov d2, d0
-    fmov d3, d1
-    fmul d4, d2, d3
-// === FIN EXPRESIÓN BINARIA === 
-
-// === IMPRIMIR STRING  ===
-    adr x9, msg_6
-    mov x0, x9
-    bl print_string
-    mov x0, #32          // ' ' (espacio)
-    bl print_char
-// === IMPRIMIR FLOAT  ===
-    fmov d0, d4
-    bl print_float
-    bl print_newline
-    bl print_newline
-// ===  EXPRESIÓN BINARIA / ===
-// === CARGAR VARIABLE: a (offset: 8) ===
-    ldr d0, [sp, #8]
-// === CARGAR VARIABLE: b (offset: 0) ===
-    ldr d1, [sp, #0]
-    fmov d2, d0
-    fmov d3, d1
-    fdiv d4, d2, d3
-// === FIN EXPRESIÓN BINARIA === 
-
-// === IMPRIMIR STRING  ===
-    adr x9, msg_7
+    adr x9, msg_8
     mov x0, x9
     bl print_string
     mov x0, #32          // ' ' (espacio)

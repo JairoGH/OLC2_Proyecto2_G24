@@ -1,0 +1,14 @@
+fn main() {
+    println("=== Calculadora Cherry ARM64 ===")
+    
+    mut a := 15.5
+    mut b := 4.2
+    
+    println("Suma:", a + b)
+    println("Resta:", a - b)
+    println("Multiplicación:", a * b)
+    println("División:", a / b)
+    
+    // Compilado automáticamente a ARM64 Assembly
+    // Ejecutado con QEMU aarch64
+}

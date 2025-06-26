@@ -1,655 +1,229 @@
-/*
-
 package ui
 
 import (
-	"fmt"
+	"main/api"
+	"main/models"
 	"strings"
-	"vlang-cherry-ide/api" // Importar el paquete api
+
+	instrucciones "main/Instrucciones" // 🆕 AGREGAR ESTE IMPORT
+
+	"github.com/antlr4-go/antlr/v4" // 🆕 AGREGAR ESTE IMPORT
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 )
 
-type MainWindow struct {
-	App       fyne.App
-	Window    fyne.Window
-	Editor    *Editor
-	Console   *Console
-	Reports   *Reports
-	MenuBar   *Menus
-	APIClient *api.Client // AGREGAR ESTE CAMPO
+// 🔧 ACTUALIZAR: Estado para controlar las fases (tipos correctos)
+type AnalysisState struct {
+	IsAnalyzed   bool
+	HasErrors    bool
+	Code         string
+	Filename     string
+	ParseTree    antlr.ParseTree              // 🔧 Tipo correcto
+	Visitor      *instrucciones.PatronVIsitor // 🔧 Tipo correcto
+	LastAnalysis *models.AnalysisOnlyResponse // 🔧 Tipo correcto
 }
 
-func NewMainWindow(myApp fyne.App) *MainWindow {
-	// Crear ventana principal
-	window := myApp.NewWindow("V-Lang Cherry IDE")
+type MainWindow struct {
+	App           fyne.App
+	Window        fyne.Window
+	Editor        *Editor
+	Console       *Console
+	Reports       *Reports
+	MenuBar       *Menus
+	APIClient     *api.Client
+	AnalysisState *AnalysisState
+}
+
+func NewMainWindow(app fyne.App) *MainWindow {
+	window := app.NewWindow("V-Lang Cherry IDE")
+	window.SetMaster()
 	window.Resize(fyne.NewSize(1200, 800))
 	window.CenterOnScreen()
 
-	// Crear componentes
-	editor := NewEditor()
-	console := NewConsole()
-	reports := NewReports()
-	menuBar := NewMenus()
+	mainWindow := &MainWindow{
+		App:     app,
+		Window:  window,
+		Editor:  NewEditor(),
+		Console: NewConsole(),
+		Reports: NewReports(),
 
-	mainWin := &MainWindow{
-		App:       myApp,
-		Window:    window,
-		Editor:    editor,
-		Console:   console,
-		Reports:   reports,
-		MenuBar:   menuBar,
-		APIClient: api.NewClient(), // INICIALIZAR EL CLIENTE
+		// 🆕 INICIALIZAR estado
+		AnalysisState: &AnalysisState{
+			IsAnalyzed: false,
+			HasErrors:  false,
+		},
 	}
+
+	// Crear cliente API
+	mainWindow.APIClient = api.NewClient()
+
+	// Crear menús pasando la referencia a mainWindow
+	mainWindow.MenuBar = NewMenus(mainWindow)
+
+	// Configurar layout
+	content := mainWindow.createLayout()
+	mainWindow.Window.SetContent(content)
 
 	// Configurar menús
-	menuBar.SetupMenus(mainWin)
-	window.SetMainMenu(menuBar.MainMenu)
+	mainWindow.Window.SetMainMenu(mainWindow.MenuBar.MainMenu)
 
-	// Crear layout principal
-	content := mainWin.createLayout()
-	window.SetContent(content)
-
-	return mainWin
+	return mainWindow
 }
 
-func (mw *MainWindow) createLayout() *container.Split {
-	// Panel superior: Editor y Reportes
-	topPanel := container.NewHSplit(
-		mw.Editor.Container,  // Izquierda: Editor
-		mw.Reports.Container, // Derecha: Reportes
-	)
-	topPanel.SetOffset(0.5) // 70% para editor, 30% para reportes
-
-	// Layout principal: Split vertical con consola en la parte inferior
-	mainSplit := container.NewVSplit(
-		topPanel,             // Arriba: Editor + Reportes
-		mw.Console.Container, // Abajo: Consola (ancho completo)
-	)
-	mainSplit.SetOffset(0.6) // 75% para panel superior, 25% para consola
-
-	return mainSplit
-}
-
-func (mw *MainWindow) ShowAndRun() {
-	mw.Window.ShowAndRun()
-}
-
-// Métodos para manejar acciones del menú
-func (mw *MainWindow) NewFile() {
-	mw.Editor.NewFile()
-}
-
-func (mw *MainWindow) OpenFile() {
-	mw.Editor.OpenFile(mw.Window)
-}
-
-func (mw *MainWindow) SaveFile() {
-	mw.Editor.SaveFile(mw.Window)
-}
-
-func (mw *MainWindow) ExecuteCode() {
-	code := mw.Editor.GetCode()
-
-	// Verificar que hay código
-	if strings.TrimSpace(code) == "" {
-		dialog.ShowInformation("Advertencia", "No hay código para analizar", mw.Window)
-		return
-	}
-
-	// Limpiar consola y reportes antes de ejecutar
-	mw.Console.ClearOutput()
-	mw.Reports.ClearAll()
-
-	// Verificar conexión con el servidor
-	mw.Console.AddOutput("Verificando conexión con el servidor...\n")
-	if err := mw.APIClient.Ping(); err != nil {
-		mw.Console.AddOutput("❌ Error: No se puede conectar con el servidor del compilador\n")
-		mw.Console.AddOutput("💡 Asegúrate de que el servidor esté ejecutándose:\n")
-		mw.Console.AddOutput("   cd docs && go run main.go\n")
-		dialog.ShowError(fmt.Errorf("servidor no disponible: %v", err), mw.Window)
-		return
-	}
-
-	// Mostrar mensaje de carga
-	mw.Console.AddOutput("✅ Conexión establecida\n")
-	mw.Console.AddOutput("🔍 Analizando código...\n")
-
-	// Llamar al backend para análisis
-	filename := mw.Editor.CurrentFile
-	if filename == "" {
-		filename = "untitled.vch"
-	}
-
-	result, err := mw.APIClient.AnalyzeCode(code, filename)
-	if err != nil {
-		mw.Console.AddOutput("❌ Error al analizar código: " + err.Error() + "\n")
-		dialog.ShowError(err, mw.Window)
-		return
-	}
-
-	// Mostrar resultados en consola
-	mw.Console.ClearOutput()
-	mw.Console.AddOutput(result.ConsoleOutput)
-
-	if result.Success {
-		mw.Console.AddOutput("\n✅ Análisis completado exitosamente\n")
-		mw.Console.AddOutput(fmt.Sprintf("📊 Errores encontrados: %d\n", len(result.Errors)))
-		mw.Console.AddOutput(fmt.Sprintf("🏷️  Símbolos en tabla: %d\n", len(result.SymbolTable)))
-	} else {
-		mw.Console.AddOutput("\n❌ Se encontraron errores en el código\n")
-		mw.Console.AddOutput(fmt.Sprintf("📊 Total de errores: %d\n", len(result.Errors)))
-	}
-
-	// Actualizar reportes
-	mw.Reports.UpdateErrors(result.Errors)
-	mw.Reports.UpdateSymbolTable(result.SymbolTable)
-	mw.Reports.UpdateASTWithSVG(result.AST, result.CSTSvg)
-
-	// Si hay SVG, mostrar solo información, no el contenido completo
-	if result.CSTSvg != "" {
-		mw.Console.AddOutput("\n🌳 SVG del AST generado exitosamente\n")
-		mw.Console.AddOutput(fmt.Sprintf("📄 Tamaño del SVG: %d caracteres\n", len(result.CSTSvg)))
-		mw.Console.AddOutput("💡 Visualiza el AST en la pestaña 'AST'\n")
-	}
-
-	// Mostrar pestaña de errores si hay errores
-	if len(result.Errors) > 0 {
-		mw.Reports.Container.SelectTab(mw.Reports.Container.Items[0]) // Pestaña de errores
-	}
-}
-*/
-/*
-package ui
-
-import (
-	"fmt"
-	"strings"
-	"vlang-cherry-ide/api" // Importar el paquete api
-
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
-)
-
-type MainWindow struct {
-	App       fyne.App
-	Window    fyne.Window
-	Editor    *Editor
-	Console   *Console
-	Reports   *Reports
-	MenuBar   *Menus
-	APIClient *api.Client // AGREGAR ESTE CAMPO
-}
-
-func NewMainWindow(myApp fyne.App) *MainWindow {
-	// Crear ventana principal
-	window := myApp.NewWindow("V-Lang Cherry IDE")
-	window.Resize(fyne.NewSize(1200, 800))
-	window.CenterOnScreen()
-
-	// Crear componentes
-	editor := NewEditor()
-	console := NewConsole()
-	reports := NewReports()
-	menuBar := NewMenus()
-
-	mainWin := &MainWindow{
-		App:       myApp,
-		Window:    window,
-		Editor:    editor,
-		Console:   console,
-		Reports:   reports,
-		MenuBar:   menuBar,
-		APIClient: api.NewClient(), // INICIALIZAR EL CLIENTE
-	}
-
-	// Configurar menús
-	menuBar.SetupMenus(mainWin)
-	window.SetMainMenu(menuBar.MainMenu)
-
-	// Crear layout principal
-	content := mainWin.createLayout()
-	window.SetContent(content)
-
-	return mainWin
-}
-
-func (mw *MainWindow) createLayout() *container.Split {
-	// Panel superior: Editor y Reportes
-	topPanel := container.NewHSplit(
-		mw.Editor.Container,  // Izquierda: Editor
-		mw.Reports.Container, // Derecha: Reportes
-	)
-	topPanel.SetOffset(0.5) // 70% para editor, 30% para reportes
-
-	// Layout principal: Split vertical con consola en la parte inferior
-	mainSplit := container.NewVSplit(
-		topPanel,             // Arriba: Editor + Reportes
-		mw.Console.Container, // Abajo: Consola (ancho completo)
-	)
-	mainSplit.SetOffset(0.6) // 75% para panel superior, 25% para consola
-
-	return mainSplit
-}
-
-func (mw *MainWindow) ShowAndRun() {
-	mw.Window.ShowAndRun()
-}
-
-// Métodos para manejar acciones del menú
-func (mw *MainWindow) NewFile() {
-	mw.Editor.NewFile()
-}
-
-func (mw *MainWindow) OpenFile() {
-	mw.Editor.OpenFile(mw.Window)
-}
-
-func (mw *MainWindow) SaveFile() {
-	mw.Editor.SaveFile(mw.Window)
-}
-
-func (mw *MainWindow) ExecuteCode() {
-	code := mw.Editor.GetCode()
-
-	// Verificar que hay código
-	if strings.TrimSpace(code) == "" {
-		dialog.ShowInformation("Advertencia", "No hay código para analizar", mw.Window)
-		return
-	}
-
-	// Limpiar consola y reportes antes de ejecutar
-	mw.Console.ClearOutput()
-	mw.Reports.ClearAll()
-
-	// Verificar conexión con el servidor
-	mw.Console.AddOutput("Verificando conexión con el servidor...\n")
-	if err := mw.APIClient.Ping(); err != nil {
-		mw.Console.AddOutput("❌ Error: No se puede conectar con el servidor del compilador\n")
-		mw.Console.AddOutput("💡 Asegúrate de que el servidor esté ejecutándose:\n")
-		mw.Console.AddOutput("   cd docs && go run main.go\n")
-		dialog.ShowError(fmt.Errorf("servidor no disponible: %v", err), mw.Window)
-		return
-	}
-
-	// Mostrar mensaje de carga
-	mw.Console.AddOutput("✅ Conexión establecida\n")
-	mw.Console.AddOutput("🔍 Analizando código...\n")
-
-	// Llamar al backend para análisis
-	filename := mw.Editor.CurrentFile
-	if filename == "" {
-		filename = "untitled.vch"
-	}
-
-	result, err := mw.APIClient.AnalyzeCode(code, filename)
-	if err != nil {
-		mw.Console.AddOutput("❌ Error al analizar código: " + err.Error() + "\n")
-		dialog.ShowError(err, mw.Window)
-		return
-	}
-
-	// Mostrar resultados en consola
-	mw.Console.ClearOutput()
-	mw.Console.AddOutput(result.ConsoleOutput)
-
-	if result.Success {
-		mw.Console.AddOutput("\n✅ Análisis completado exitosamente\n")
-		mw.Console.AddOutput(fmt.Sprintf("📊 Errores encontrados: %d\n", len(result.Errors)))
-		mw.Console.AddOutput(fmt.Sprintf("🏷️  Símbolos en tabla: %d\n", len(result.SymbolTable)))
-	} else {
-		mw.Console.AddOutput("\n❌ Se encontraron errores en el código\n")
-		mw.Console.AddOutput(fmt.Sprintf("📊 Total de errores: %d\n", len(result.Errors)))
-	}
-
-	// Actualizar reportes
-	mw.Reports.UpdateErrors(result.Errors)
-	mw.Reports.UpdateSymbolTable(result.SymbolTable)
-	mw.Reports.UpdateASTWithPNG(result.AST, result.ASTPng) // USAR PNG EN LUGAR DE SVG
-
-	// Si hay PNG generado, mostrar información
-	if len(result.ASTPng) > 0 {
-		mw.Console.AddOutput("\n🌳 AST convertido a PNG exitosamente\n")
-		mw.Console.AddOutput(fmt.Sprintf("📄 Tamaño del PNG: %d bytes\n", len(result.ASTPng)))
-		mw.Console.AddOutput("💡 Visualiza el AST en la pestaña 'AST'\n")
-	}
-
-	// Mostrar pestaña de errores si hay errores
-	if len(result.Errors) > 0 {
-		mw.Reports.Container.SelectTab(mw.Reports.Container.Items[0]) // Pestaña de errores
-	}
-}
-*/
-/*
-package ui
-
-import (
-	"fmt"
-	"strings"
-	"vlang-cherry-ide/api" // Importar el paquete api
-
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
-)
-
-type MainWindow struct {
-	App       fyne.App
-	Window    fyne.Window
-	Editor    *Editor
-	Console   *Console
-	Reports   *Reports
-	MenuBar   *Menus
-	APIClient *api.Client // AGREGAR ESTE CAMPO
-}
-
-func NewMainWindow(myApp fyne.App) *MainWindow {
-	// Crear ventana principal
-	window := myApp.NewWindow("V-Lang Cherry IDE")
-	window.Resize(fyne.NewSize(1200, 800))
-	window.CenterOnScreen()
-
-	// Crear componentes
-	editor := NewEditor()
-	console := NewConsole()
-	reports := NewReports()
-	menuBar := NewMenus()
-
-	mainWin := &MainWindow{
-		App:       myApp,
-		Window:    window,
-		Editor:    editor,
-		Console:   console,
-		Reports:   reports,
-		MenuBar:   menuBar,
-		APIClient: api.NewClient(), // INICIALIZAR EL CLIENTE
-	}
-
-	// Configurar menús
-	menuBar.SetupMenus(mainWin)
-	window.SetMainMenu(menuBar.MainMenu)
-
-	// Crear layout principal
-	content := mainWin.createLayout()
-	window.SetContent(content)
-
-	return mainWin
-}
-
-func (mw *MainWindow) createLayout() *container.Split {
-	// Panel superior: Editor y Reportes
-	topPanel := container.NewHSplit(
-		mw.Editor.Container,  // Izquierda: Editor
-		mw.Reports.Container, // Derecha: Reportes
-	)
-	topPanel.SetOffset(0.5) // 70% para editor, 30% para reportes
-
-	// Layout principal: Split vertical con consola en la parte inferior
-	mainSplit := container.NewVSplit(
-		topPanel,             // Arriba: Editor + Reportes
-		mw.Console.Container, // Abajo: Consola (ancho completo)
-	)
-	mainSplit.SetOffset(0.6) // 75% para panel superior, 25% para consola
-
-	return mainSplit
-}
-
-func (mw *MainWindow) ShowAndRun() {
-	mw.Window.ShowAndRun()
-}
-
-// Métodos para manejar acciones del menú
-func (mw *MainWindow) NewFile() {
-	mw.Editor.NewFile()
-}
-
-func (mw *MainWindow) OpenFile() {
-	mw.Editor.OpenFile(mw.Window)
-}
-
-func (mw *MainWindow) SaveFile() {
-	mw.Editor.SaveFile(mw.Window)
-}
-
-func (mw *MainWindow) ExecuteCode() {
-	code := mw.Editor.GetCode()
-
-	// Verificar que hay código
-	if strings.TrimSpace(code) == "" {
-		dialog.ShowInformation("Advertencia", "No hay código para analizar", mw.Window)
-		return
-	}
-
-	// Limpiar consola y reportes antes de ejecutar
-	mw.Console.ClearOutput()
-	mw.Reports.ClearAll()
-
-	// Verificar conexión con el servidor
-	mw.Console.AddOutput("Verificando conexión con el servidor...\n")
-	if err := mw.APIClient.Ping(); err != nil {
-		mw.Console.AddOutput("❌ Error: No se puede conectar con el servidor del compilador\n")
-		mw.Console.AddOutput("💡 Asegúrate de que el servidor esté ejecutándose:\n")
-		mw.Console.AddOutput("   cd docs && go run main.go\n")
-		dialog.ShowError(fmt.Errorf("servidor no disponible: %v", err), mw.Window)
-		return
-	}
-
-	// Mostrar mensaje de carga
-	mw.Console.AddOutput("✅ Conexión establecida\n")
-	mw.Console.AddOutput("🔍 Analizando código...\n")
-
-	// Llamar al backend para análisis
-	filename := mw.Editor.CurrentFile
-	if filename == "" {
-		filename = "untitled.vch"
-	}
-
-	result, err := mw.APIClient.AnalyzeCode(code, filename)
-	if err != nil {
-		mw.Console.AddOutput("❌ Error al analizar código: " + err.Error() + "\n")
-		dialog.ShowError(err, mw.Window)
-		return
-	}
-
-	// Mostrar resultados en consola
-	mw.Console.ClearOutput()
-	mw.Console.AddOutput(result.ConsoleOutput)
-
-	if result.Success {
-		mw.Console.AddOutput("\n✅ Análisis completado exitosamente\n")
-		mw.Console.AddOutput(fmt.Sprintf("📊 Errores encontrados: %d\n", len(result.Errors)))
-		mw.Console.AddOutput(fmt.Sprintf("🏷️  Símbolos en tabla: %d\n", len(result.SymbolTable)))
-	} else {
-		mw.Console.AddOutput("\n❌ Se encontraron errores en el código\n")
-		mw.Console.AddOutput(fmt.Sprintf("📊 Total de errores: %d\n", len(result.Errors)))
-	}
-
-	// Actualizar reportes
-	mw.Reports.UpdateErrors(result.Errors)
-	mw.Reports.UpdateSymbolTable(result.SymbolTable)
-	mw.Reports.UpdateASTWithPNG(result.AST, result.ASTPng) // USAR PNG EN LUGAR DE SVG
-
-	// Si hay PNG generado, mostrar información y ruta del archivo
-	if len(result.ASTPng) > 0 {
-		mw.Console.AddOutput("\n🌳 AST convertido a PNG exitosamente\n")
-		mw.Console.AddOutput(fmt.Sprintf("📄 Tamaño del PNG: %d bytes\n", len(result.ASTPng)))
-		mw.Console.AddOutput("💡 Visualiza el AST en la pestaña 'AST'\n")
-
-		// Mostrar información del archivo guardado si está disponible
-		if strings.Contains(result.AST, "Archivo:") {
-			mw.Console.AddOutput("💾 " + result.AST + "\n")
-		}
-	}
-
-	// Mostrar pestaña de errores si hay errores
-	if len(result.Errors) > 0 {
-		mw.Reports.Container.SelectTab(mw.Reports.Container.Items[0]) // Pestaña de errores
-	}
-}*/
-package ui
-
-import (
-	"fmt"
-	instrucciones "main/Instrucciones"
-	"main/api" // Importar el paquete api
-	"strings"
-
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
-)
-
-type MainWindow struct {
-	App       fyne.App
-	Window    fyne.Window
-	Editor    *Editor
-	Console   *Console
-	Reports   *Reports
-	MenuBar   *Menus
-	APIClient *api.Client
-}
-
-func NewMainWindow(myApp fyne.App) *MainWindow {
-	// Crear ventana principal
-	window := myApp.NewWindow("V-Lang Cherry IDE")
-	window.Resize(fyne.NewSize(1200, 800))
-	window.CenterOnScreen()
-
-	// Crear componentes
-	editor := NewEditor()
-	console := NewConsole()
-	reports := NewReports() // ✅ SIN PARÁMETROS
-	menuBar := NewMenus()
-
-	mainWin := &MainWindow{
-		App:       myApp,
-		Window:    window,
-		Editor:    editor,
-		Console:   console,
-		Reports:   reports,
-		MenuBar:   menuBar,
-		APIClient: api.NewClient(),
-	}
-
-	// Configurar menús
-	menuBar.SetupMenus(mainWin)
-	window.SetMainMenu(menuBar.MainMenu)
-
-	// Crear layout principal
-	content := mainWin.createLayout()
-	window.SetContent(content)
-
-	return mainWin
-}
-
-// ...existing code...
-// [El resto del código permanece igual]
-
-func (mw *MainWindow) createLayout() *container.Split {
-	// Panel superior: Editor y Reportes
-	topPanel := container.NewHSplit(
-		mw.Editor.Container,  // Izquierda: Editor
-		mw.Reports.Container, // Derecha: Reportes
-	)
-	topPanel.SetOffset(0.5) // 70% para editor, 30% para reportes
-
-	// Layout principal: Split vertical con consola en la parte inferior
-	mainSplit := container.NewVSplit(
-		topPanel,             // Arriba: Editor + Reportes
-		mw.Console.Container, // Abajo: Consola (ancho completo)
-	)
-	mainSplit.SetOffset(0.6) // 75% para panel superior, 25% para consola
-
-	return mainSplit
-}
-
-func (mw *MainWindow) ShowAndRun() {
-	mw.Window.ShowAndRun()
-}
-
-// Métodos para manejar acciones del menú
-func (mw *MainWindow) NewFile() {
-	mw.Editor.NewFile()
-}
-
-func (mw *MainWindow) OpenFile() {
-	mw.Editor.OpenFile(mw.Window)
-}
-
-func (mw *MainWindow) SaveFile() {
-	mw.Editor.SaveFile(mw.Window)
-}
-
-func (mw *MainWindow) ExecuteCode() {
+// 🔧 MÉTODO 1: Ejecutar solo análisis (IMPLEMENTACIÓN REAL)
+func (mw *MainWindow) ExecuteAnalysis() {
 	instrucciones.ResetAllRecursionFlags()
 	code := mw.Editor.GetCode()
-
-	// Verificar que hay código
 	if strings.TrimSpace(code) == "" {
 		dialog.ShowInformation("Advertencia", "No hay código para analizar", mw.Window)
 		return
 	}
 
-	// Limpiar consola y reportes antes de ejecutar
 	mw.Console.ClearOutput()
 	mw.Reports.ClearAll()
+	mw.Console.AddOutput("🔍 Iniciando análisis léxico, sintáctico y semántico...\n")
 
-	// Verificar conexión con el servidor
-	mw.Console.AddOutput("Verificando conexión con el servidor...\n")
-	if err := mw.APIClient.Ping(); err != nil {
-		mw.Console.AddOutput("❌ Error: No se puede conectar con el servidor del compilador\n")
-		mw.Console.AddOutput("💡 Asegúrate de que el servidor esté ejecutándose:\n")
-		mw.Console.AddOutput("   cd docs && go run main.go\n")
-		dialog.ShowError(fmt.Errorf("servidor no disponible: %v", err), mw.Window)
-		return
-	}
-
-	// Mostrar mensaje de carga
-	mw.Console.AddOutput("✅ Conexión establecida\n")
-	mw.Console.AddOutput("🔍 Analizando código...\n")
-
-	// Llamar al backend para análisis
-	filename := mw.Editor.CurrentFile
-	if filename == "" {
-		filename = "untitled.vch"
-	}
-
-	result, err := mw.APIClient.AnalyzeCode(code, filename)
+	// 🚀 IMPLEMENTACIÓN REAL - Usar el servicio separado
+	result, tree, visitor, err := mw.APIClient.AnalyzeOnly(code, "temp.vch")
 	if err != nil {
-		mw.Console.AddOutput("❌ Error al analizar código: " + err.Error() + "\n")
-		dialog.ShowError(err, mw.Window)
+		mw.Console.AddOutput("❌ Error durante el análisis: " + err.Error() + "\n")
+		mw.AnalysisState.IsAnalyzed = false
 		return
 	}
 
-	// Mostrar resultados en consola
-	mw.Console.ClearOutput()
-	mw.Console.AddOutput(result.ConsoleOutput)
-
-	if result.Success {
-		mw.Console.AddOutput("\n✅ Análisis completado exitosamente\n")
-		mw.Console.AddOutput(fmt.Sprintf("📊 Errores encontrados: %d\n", len(result.Errors)))
-		mw.Console.AddOutput(fmt.Sprintf("🏷️  Símbolos en tabla: %d\n", len(result.SymbolTable)))
-	} else {
-		mw.Console.AddOutput("\n❌ Se encontraron errores en el código\n")
-		mw.Console.AddOutput(fmt.Sprintf("📊 Total de errores: %d\n", len(result.Errors)))
+	// 🎯 GUARDAR ESTADO PARA LOS SIGUIENTES MÉTODOS
+	mw.AnalysisState = &AnalysisState{
+		IsAnalyzed:   true,
+		HasErrors:    !result.Success,
+		Code:         code,
+		Filename:     "temp.vch",
+		ParseTree:    tree,
+		Visitor:      visitor,
+		LastAnalysis: result,
 	}
 
-	// Actualizar reportes con SVG nativo integrado
+	// 🎨 MOSTRAR RESULTADOS EN LA UI
+	mw.Console.AddOutput(result.ConsoleOutput + "\n")
 	mw.Reports.UpdateErrors(result.Errors)
 	mw.Reports.UpdateSymbolTable(result.SymbolTable)
-	mw.Reports.UpdateASTWithSVG(result.AST, result.CSTSvg) // SVG NATIVO EN EL IDE
 
-	// Si hay SVG, mostrar información simple
-	if result.CSTSvg != "" {
-		mw.Console.AddOutput("\n🌳 AST renderizado en la pestaña AST\n")
-		mw.Console.AddOutput("💡 Ve a la pestaña 'AST' para ver el árbol\n")
-	}
-
-	// Mostrar pestaña de errores si hay errores
-	if len(result.Errors) > 0 {
-		mw.Reports.Container.SelectTab(mw.Reports.Container.Items[0]) // Pestaña de errores
+	// 🎯 MOSTRAR ESTADO FINAL
+	if result.Success {
+		mw.Console.AddOutput("\n✅ Análisis completado - ¡Listo para ARM64 y AST!\n")
+		mw.Console.AddOutput("💡 Usa '⚙️ Generar ARM64' para compilar\n")
+		mw.Console.AddOutput("💡 Usa '🌳 Generar AST' para ver el árbol\n")
+	} else {
+		mw.Console.AddOutput("\n⚠️ Análisis completado con errores\n")
+		mw.Console.AddOutput("❌ ARM64 no disponible hasta corregir errores\n")
+		mw.Console.AddOutput("✅ AST sí está disponible para depuración\n")
 	}
 }
+
+// 🔧 MÉTODO 2: Generar solo ARM64 (IMPLEMENTACIÓN REAL)
+func (mw *MainWindow) GenerateARM64() {
+    if !mw.AnalysisState.IsAnalyzed {
+        dialog.ShowInformation("Análisis requerido",
+            "Primero ejecuta '🔍 Ejecutar Análisis'", mw.Window)
+        return
+    }
+
+    if mw.AnalysisState.HasErrors {
+        dialog.ShowInformation("Errores encontrados",
+            "No se puede generar ARM64 con errores presentes.\n\nRevisa la pestaña 'Errores' y corrige el código.", mw.Window)
+        return
+    }
+
+    mw.Console.AddOutput("⚙️ Generando ARM64...\n")
+
+    // 🚀 IMPLEMENTACIÓN REAL - Usar árbol y visitor ya procesados
+    armResult, err := mw.APIClient.GenerateARM64Only(mw.AnalysisState.ParseTree, mw.AnalysisState.Visitor)
+    if err != nil {
+        mw.Console.AddOutput("❌ Error generando ARM64: " + err.Error() + "\n")
+        return
+    }
+
+    // 🎨 MOSTRAR RESULTADO EN CONSOLA
+    mw.Console.AddOutput(armResult.ConsoleOutput + "\n")
+
+    if armResult.Success {
+        // 🆕 MOSTRAR CÓDIGO EN LA PESTAÑA ARM64
+        mw.Reports.UpdateARM64Content(armResult.ARM64Code, armResult.FilePath)
+        mw.Console.AddOutput("✅ ARM64 generado - Ve a la pestaña ARM64\n")
+    }
+}
+
+// 🔧 MÉTODO 3: Generar solo AST (IMPLEMENTACIÓN REAL)
+// 🔧 MÉTODO 3: Generar solo AST (IMPLEMENTACIÓN REAL)
+func (mw *MainWindow) GenerateAST() {
+    if !mw.AnalysisState.IsAnalyzed {
+        dialog.ShowInformation("Análisis requerido",
+            "Primero ejecuta '🔍 Ejecutar Análisis'", mw.Window)
+        return
+    }
+
+    mw.Console.AddOutput("🌳 Generando AST...\n")
+
+    // 🚀 IMPLEMENTACIÓN REAL - Generar AST independiente
+    astResult, err := mw.APIClient.GenerateASTOnly(mw.AnalysisState.Code)
+    if err != nil {
+        mw.Console.AddOutput("❌ Error generando AST: " + err.Error() + "\n")
+        return
+    }
+
+    // 🎨 MOSTRAR RESULTADO
+    mw.Console.AddOutput(astResult.ConsoleOutput + "\n")
+
+    if astResult.Success {
+        // 🔧 CONECTAR CON LA PESTAÑA AST - ESTO FALTABA
+        mw.Reports.UpdateASTWithSVG("", astResult.SVGContent)
+        mw.Console.AddOutput("✅ AST generado - Ve a la pestaña 'AST'\n")
+    }
+}
+
+func (mw *MainWindow) createLayout() *container.Split {
+	// Panel superior: Editor y Reportes
+	topPanel := container.NewHSplit(
+		mw.Editor.Container,  // Izquierda: Editor
+		mw.Reports.Container, // Derecha: Reportes
+	)
+	topPanel.SetOffset(0.5) // 50% para editor, 50% para reportes
+
+	// Layout principal: Split vertical con consola en la parte inferior
+	mainSplit := container.NewVSplit(
+		topPanel,             // Arriba: Editor + Reportes
+		mw.Console.Container, // Abajo: Consola (ancho completo)
+	)
+	mainSplit.SetOffset(0.6) // 60% para panel superior, 40% para consola
+
+	return mainSplit
+}
+
+func (mw *MainWindow) ShowAndRun() {
+	mw.Window.ShowAndRun()
+}
+
+// Métodos para manejar acciones del menú
+func (mw *MainWindow) NewFile() {
+	mw.Editor.NewFile()
+	// 🆕 RESETEAR ESTADO AL CREAR NUEVO ARCHIVO
+	mw.AnalysisState = &AnalysisState{
+		IsAnalyzed: false,
+		HasErrors:  false,
+	}
+}
+
+func (mw *MainWindow) OpenFile() {
+	mw.Editor.OpenFile(mw.Window)
+	// 🆕 RESETEAR ESTADO AL ABRIR ARCHIVO
+	mw.AnalysisState = &AnalysisState{
+		IsAnalyzed: false,
+		HasErrors:  false,
+	}
+}
+
+func (mw *MainWindow) SaveFile() {
+	mw.Editor.SaveFile(mw.Window)
+}
+

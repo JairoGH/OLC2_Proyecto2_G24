@@ -1,12 +1,13 @@
 .section .data
     .align 3    // alinea dobles a 8 bytes
-    msg_1: .asciz "=== Calculadora Cherry ARM64 ==="
-    float_const_2: .double 15.500000
-    float_const_3: .double 4.200000
-    msg_4: .asciz "Suma:"
-    msg_5: .asciz "Resta:"
-    msg_6: .asciz "Multiplicación:"
-    msg_7: .asciz "División:"
+    float_const_1: .double 3.141590
+    msg_2: .asciz "Hola, Cherry!"
+    float_const_3: .double 3.140000
+    msg_4: .asciz "V-Lang Cherry"
+    msg_5: .asciz "entero:"
+    msg_6: .asciz "decimal:"
+    msg_7: .asciz "texto:"
+    msg_8: .asciz "booleano:"
 buffer_int: .skip 32
 buffer_float: .skip 64
 buffer_string: .skip 512
@@ -34,78 +35,66 @@ _start:
 fn_main:
         stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register
         mov   x29, sp                 // Configurar frame pointer
-// === IMPRIMIR STRING  ===
-    adr x9, msg_1
-    mov x0, x9
-    bl print_string
-    bl print_newline
-    bl print_newline
-// === DECLARAR VARIABLE MUT: a ===
-    sub sp, sp, #8  // Reservar espacio para a
-    adr x9, float_const_2
+// === DECLARAR VARIABLE MUT: entero ===
+    sub sp, sp, #8  // Reservar espacio para entero
+    mov x9, #42
+    str x9, [sp]
+// entero en [sp+0] 
+
+// === DECLARAR VARIABLE MUT: decimal ===
+    sub sp, sp, #8  // Reservar espacio para decimal
+    adr x9, float_const_1
     ldr d0, [x9]
     str d0, [sp]
-// a en [sp+0] 
+// decimal en [sp+0] 
 
-// === DECLARAR VARIABLE MUT: b ===
-    sub sp, sp, #8  // Reservar espacio para b
+// === DECLARAR VARIABLE MUT: texto ===
+    sub sp, sp, #8  // Reservar espacio para texto
+    adr x9, msg_2
+    str x9, [sp]
+// texto en [sp+0] 
+
+// === DECLARAR VARIABLE MUT: booleano ===
+// === LITERAL BOOL: true ===
+    sub sp, sp, #8  // Reservar espacio para booleano
+    mov x9, #1
+    str x9, [sp]
+// booleano en [sp+0] 
+
+// === DECLARAR VARIABLE MUT: edad ===
+    sub sp, sp, #8  // Reservar espacio para edad
+    mov x9, #25
+    str x9, [sp]
+// edad en [sp+0] 
+
+// === DECLARAR VARIABLE MUT: pi ===
+    sub sp, sp, #8  // Reservar espacio para pi
     adr x9, float_const_3
     ldr d0, [x9]
     str d0, [sp]
-// b en [sp+0] 
+// pi en [sp+0] 
 
-// ===  EXPRESIÓN BINARIA + ===
-// === CARGAR VARIABLE: a (offset: 8) ===
-    ldr d0, [sp, #8]
-// === CARGAR VARIABLE: b (offset: 0) ===
-    ldr d1, [sp, #0]
-    fmov d2, d0
-    fmov d3, d1
-    fadd d4, d2, d3
-// === FIN EXPRESIÓN BINARIA === 
-
-// === IMPRIMIR STRING  ===
+// === DECLARAR VARIABLE MUT: nombre ===
+    sub sp, sp, #8  // Reservar espacio para nombre
     adr x9, msg_4
-    mov x0, x9
-    bl print_string
-    mov x0, #32          // ' ' (espacio)
-    bl print_char
-// === IMPRIMIR FLOAT  ===
-    fmov d0, d4
-    bl print_float
-    bl print_newline
-    bl print_newline
-// ===  EXPRESIÓN BINARIA - ===
-// === CARGAR VARIABLE: a (offset: 8) ===
-    ldr d0, [sp, #8]
-// === CARGAR VARIABLE: b (offset: 0) ===
-    ldr d1, [sp, #0]
-    fmov d2, d0
-    fmov d3, d1
-    fsub d4, d2, d3
-// === FIN EXPRESIÓN BINARIA === 
+    str x9, [sp]
+// nombre en [sp+0] 
 
+// === CARGAR VARIABLE: entero (offset: 48) ===
+    ldr x9, [sp, #48]
 // === IMPRIMIR STRING  ===
-    adr x9, msg_5
-    mov x0, x9
+    adr x10, msg_5
+    mov x0, x10
     bl print_string
     mov x0, #32          // ' ' (espacio)
     bl print_char
-// === IMPRIMIR FLOAT  ===
-    fmov d0, d4
-    bl print_float
+// === IMPRIMIR INT  ===
+    mov x0, x9
+    bl print_int
     bl print_newline
     bl print_newline
-// ===  EXPRESIÓN BINARIA * ===
-// === CARGAR VARIABLE: a (offset: 8) ===
-    ldr d0, [sp, #8]
-// === CARGAR VARIABLE: b (offset: 0) ===
-    ldr d1, [sp, #0]
-    fmov d2, d0
-    fmov d3, d1
-    fmul d4, d2, d3
-// === FIN EXPRESIÓN BINARIA === 
-
+// === CARGAR VARIABLE: decimal (offset: 40) ===
+    ldr d0, [sp, #40]
 // === IMPRIMIR STRING  ===
     adr x9, msg_6
     mov x0, x9
@@ -113,29 +102,34 @@ fn_main:
     mov x0, #32          // ' ' (espacio)
     bl print_char
 // === IMPRIMIR FLOAT  ===
-    fmov d0, d4
+    fmov d0, d0
     bl print_float
     bl print_newline
     bl print_newline
-// ===  EXPRESIÓN BINARIA / ===
-// === CARGAR VARIABLE: a (offset: 8) ===
-    ldr d0, [sp, #8]
-// === CARGAR VARIABLE: b (offset: 0) ===
-    ldr d1, [sp, #0]
-    fmov d2, d0
-    fmov d3, d1
-    fdiv d4, d2, d3
-// === FIN EXPRESIÓN BINARIA === 
-
+// === CARGAR VARIABLE: texto (offset: 32) ===
+    ldr x9, [sp, #32]
 // === IMPRIMIR STRING  ===
-    adr x9, msg_7
-    mov x0, x9
+    adr x10, msg_7
+    mov x0, x10
     bl print_string
     mov x0, #32          // ' ' (espacio)
     bl print_char
-// === IMPRIMIR FLOAT  ===
-    fmov d0, d4
-    bl print_float
+// === IMPRIMIR STRING  ===
+    mov x0, x9
+    bl print_string
+    bl print_newline
+    bl print_newline
+// === CARGAR VARIABLE: booleano (offset: 24) ===
+    ldr x9, [sp, #24]
+// === IMPRIMIR STRING  ===
+    adr x10, msg_8
+    mov x0, x10
+    bl print_string
+    mov x0, #32          // ' ' (espacio)
+    bl print_char
+// === IMPRIMIR BOOL  ===
+    mov x0, x9
+    bl print_bool
     bl print_newline
     bl print_newline
         mov   sp, x29                 // Restaurar stack usando frame pointer
@@ -295,6 +289,16 @@ print_string:
 
 .Lps_end:
     ldp   x19, x20, [sp], #16    // Restaurar registros
+    ldp   x29, x30, [sp], #16
+    ret
+
+print_bool:
+    stp   x29, x30, [sp, #-16]!   // Guardar frame
+    mov   x29, sp
+
+    add   w0, w0, #48             // 0→'0', 1→'1' (ASCII)
+    bl    print_char              // Imprimir carácter
+
     ldp   x29, x30, [sp], #16
     ret
 
