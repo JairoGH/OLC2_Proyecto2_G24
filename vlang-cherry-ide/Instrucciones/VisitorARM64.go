@@ -108,12 +108,8 @@ func (v *VisitorARM64) Visit(tree antlr.ParseTree) interface{} {
 }
 
 // REEMPLAZA tu función VisitProgram completa en VisitorARM64.go con esta versión:
-
 func (v *VisitorARM64) VisitProgram(ctx *parser.ProgramContext) interface{} {
 	v.armGen.Comment("=== PROCESANDO PROGRAMA ===")
-
-	// Debug: mostrar cuántas sentencias hay
-	v.armGen.Comment(fmt.Sprintf("Total de sentencias encontradas: %d", len(ctx.AllStmt())))
 
 	// PASO 1: Procesar SOLO las declaraciones de funciones (registrarlas)
 	for i, stmt := range ctx.AllStmt() {
@@ -142,8 +138,6 @@ func (v *VisitorARM64) VisitProgram(ctx *parser.ProgramContext) interface{} {
 	// PASO 4: Finalizar programa
 	v.armGen.FinalizarPrograma()
 
-	// Debug: mostrar funciones registradas
-	v.armGen.Comment(fmt.Sprintf("Funciones registradas: %d", len(v.funcs)))
 	for nombre := range v.funcs {
 		v.armGen.Comment(fmt.Sprintf("- Función: %s", nombre))
 	}
@@ -152,7 +146,6 @@ func (v *VisitorARM64) VisitProgram(ctx *parser.ProgramContext) interface{} {
 }
 
 // REEMPLAZA tu función VisitFuncionMain con esta versión:
-
 func (v *VisitorARM64) VisitFuncionMain(ctx *parser.FuncionMainContext) interface{} {
 	v.armGen.Comment("=== FUNCIÓN MAIN ===")
 	v.armGen.Instructions = append(v.armGen.Instructions, "fn_main:")
@@ -168,7 +161,15 @@ func (v *VisitorARM64) VisitFuncionMain(ctx *parser.FuncionMainContext) interfac
 		v.Visit(stmt)
 	}
 
-	// 🔥 CAMBIAR: Restaurar stack usando frame pointer antes del ret
+	//  Limpieza final y salida del programa ANTES del ret
+	v.armGen.Instructions = append(v.armGen.Instructions,
+		"// === LIMPIEZA FINAL ===",
+		"mov x8, #93     // sys_exit",
+		"mov x0, #0      // exit status 0",
+		"svc #0          // llamada al sistema")
+
+	// Estas líneas ya no son necesarias porque svc #0 termina el programa
+	// Pero las mantenemos por si acaso no se ejecuta el svc
 	v.armGen.Instructions = append(v.armGen.Instructions,
 		"    mov   sp, x29                 // Restaurar stack usando frame pointer",
 		"    ldp   x29, x30, [sp], #16     // Restaurar frame pointer y link register",
@@ -1094,11 +1095,7 @@ func (v *VisitorARM64) VisitFuncionDeclerada(ctx *parser.FuncionDecleradaContext
 	var nombres []string
 
 	if ctx.Lista_parametros() != nil {
-		// CORRECCIÓN: Tu gramática es lista_parametros: parametro_fun (COMA parametro_fun)* COMA?
-		// Así que el método correcto debe ser AllParametro_fun() directamente
-
-		// Primero, debuggear para ver qué métodos están disponibles
-		v.armGen.Comment("Debug: Verificando métodos disponibles en Lista_parametros")
+		//  Tu gramática es lista_parametros: parametro_fun (COMA parametro_fun)* COMA?
 
 		// Intentar diferentes variaciones según tu gramática
 		listaParams := ctx.Lista_parametros()
@@ -1138,9 +1135,7 @@ func (v *VisitorARM64) VisitFuncionDeclerada(ctx *parser.FuncionDecleradaContext
 	// El cuerpo son las sentencias stmt*
 	sentencias := ctx.AllStmt()
 
-	// 🔥 DEBUG: Verificar qué tipo son las sentencias
-	v.armGen.Comment(fmt.Sprintf("DEBUG: Tipo de sentencias: %T", sentencias))
-	v.armGen.Comment(fmt.Sprintf("DEBUG: Número de sentencias: %d", len(sentencias)))
+	// Verificar qué tipo son las sentencias
 	if len(sentencias) > 0 {
 		v.armGen.Comment(fmt.Sprintf("DEBUG: Tipo de sentencia[0]: %T", sentencias[0]))
 	}
@@ -1320,45 +1315,50 @@ func (v *VisitorARM64) VisitUnarioExp(ctx *parser.UnarioExpContext) interface{} 
 
 // VisitIdExp  correctamente
 func (v *VisitorARM64) VisitIdExp(ctx *parser.IdExpContext) interface{} {
-	nombreVariable := ctx.PatronId().GetText()
+    if ctx == nil || ctx.PatronId() == nil {
+        return &assembly.ResultadoExpresion{
+            Registro:  "",
+            Tipo:      "int",
+            EsLiteral: true,
+            Valor:     0,
+        }
+    }
 
-	// Protección contra panic
-	var resultado *assembly.ResultadoExpresion
-	var err error
+    nombreVariable := ctx.PatronId().GetText()
 
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("❌ PANIC en CargarVariable(%s): %v\n", nombreVariable, r)
-				err = fmt.Errorf("panic al cargar variable: %v", r)
-			}
-		}()
-		resultado, err = v.variablesProcessor.CargarVariable(nombreVariable, "")
-	}()
+    // VERIFICAR SI ES UN SLICE
+    if v.sliceProcessor.ExisteSlice(nombreVariable) {
+        return &assembly.ResultadoExpresion{
+            Registro:  "",
+            Tipo:      "slice_name",
+            EsLiteral: true,
+            Valor:     nombreVariable,
+        }
+    }
 
-	if err != nil {
-		fmt.Printf("❌ ERROR: %s\n", err.Error())
-		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
-		return &assembly.ResultadoExpresion{
-			Registro:  "",
-			Tipo:      "int",
-			EsLiteral: true,
-			Valor:     0,
-		}
-	}
+    // BUSCAR COMO VARIABLE NORMAL
+    var resultado *assembly.ResultadoExpresion
+    var err error
 
-	if resultado == nil {
-		fmt.Printf("❌ ERROR: CargarVariable retornó nil para %s\n", nombreVariable)
-		v.armGen.Comment(fmt.Sprintf("Error: CargarVariable retornó nil para %s", nombreVariable))
-		return &assembly.ResultadoExpresion{
-			Registro:  "",
-			Tipo:      "int",
-			EsLiteral: true,
-			Valor:     0,
-		}
-	}
+    func() {
+        defer func() {
+            if r := recover(); r != nil {
+                err = fmt.Errorf("error interno al cargar variable")
+            }
+        }()
+        resultado, err = v.variablesProcessor.CargarVariable(nombreVariable, "")
+    }()
 
-	return resultado
+    if err != nil || resultado == nil {
+        return &assembly.ResultadoExpresion{
+            Registro:  "",
+            Tipo:      "int",
+            EsLiteral: true,
+            Valor:     0,
+        }
+    }
+
+    return resultado
 }
 
 func (v *VisitorARM64) VisitLlamarFuncionExp(ctx *parser.LlamarFuncionExpContext) interface{} {
@@ -1403,11 +1403,9 @@ func (v *VisitorARM64) VisitParentecisExp(ctx *parser.ParentecisExpContext) inte
 func (v *VisitorARM64) VisitID_Patron(ctx *parser.ID_PatronContext) interface{} {
 	nombreVariable := ctx.GetText()
 
-	// CASO 1: Si se usa en contexto de string (como PatronId en asignaciones)
-	// En algunos contextos, necesitamos retornar solo el nombre
-
-	// CASO 2: Verificar si es un slice
+	// 🔥 CORRECCIÓN: Primero verificar si es un slice
 	if v.sliceProcessor.ExisteSlice(nombreVariable) {
+		v.armGen.Comment(fmt.Sprintf("Patrón ID '%s' encontrado como slice", nombreVariable))
 		return &assembly.ResultadoExpresion{
 			Registro:  "",
 			Tipo:      "slice_name",
@@ -1416,7 +1414,7 @@ func (v *VisitorARM64) VisitID_Patron(ctx *parser.ID_PatronContext) interface{} 
 		}
 	}
 
-	// CASO 3: Intentar cargar variable desde el stack
+	// Si no es slice, intentar cargar como variable
 	resultado, err := v.variablesProcessor.CargarVariable(nombreVariable, "")
 	if err != nil {
 		v.armGen.Comment(fmt.Sprintf("Error: %s", err.Error()))
@@ -1964,7 +1962,7 @@ func (v *VisitorARM64) obtenerValorBoolSeguro(expr *assembly.ResultadoExpresion)
 
 // Agregar estas funciones a tu archivo VisitorARM64.go
 
-// ============= IMPLEMENTACIÓN SWITCH-CASE CON DEBUG =============
+// ============= IMPLEMENTACIÓN SWITCH-CASE  =============
 
 func (v *VisitorARM64) VisitSwitchStmt(ctx *parser.SwitchStmtContext) interface{} {
 	v.armGen.Comment("=== INICIO SWITCH STATEMENT ===")
@@ -2320,265 +2318,335 @@ func (v *VisitorARM64) ejecutarCuerpoWhile(ctx *parser.WhileStmtContext, etiquet
 
 // ============= IMPLEMENTACIÓN FOR TIPO RANGE ============= // SEGUIR IMPLEMENTANDO.
 func (v *VisitorARM64) VisitForStmt(ctx *parser.ForStmtContext) interface{} {
-	v.armGen.Comment("=== INICIO FOR TIPO WHILE ===")
+    v.armGen.Comment("=== INICIO FOR TIPO RANGE ===")
 
-	// VALIDACIÓN INICIAL
-	if ctx == nil {
-		v.armGen.Comment("Error: contexto de for inválido")
-		return nil
-	}
+    if ctx == nil {
+        v.armGen.Comment("Error: contexto de for inválido")
+        return nil
+    }
 
-	// VERIFICAR QUE TENEMOS AL MENOS UN ID
-	if len(ctx.AllID()) == 0 {
-		v.armGen.Comment("Error: el for debe tener al menos una variable")
-		return nil
-	}
+    if len(ctx.AllID()) == 0 {
+        v.armGen.Comment("Error: el for debe tener al menos una variable")
+        return nil
+    }
 
-	// DETECTAR SI HAY UNA O DOS VARIABLES
-	var nombreIndice string = ""
-	var nombreValor string = ""
+    var nombreIndice string = ""
+    var nombreValor string = ""
 
-	if len(ctx.AllID()) == 1 {
-		// for val in collection
-		if ctx.ID(0) == nil {
-			v.armGen.Comment("Error: variable del for no válida")
-			return nil
-		}
-		nombreValor = ctx.ID(0).GetText()
-	} else if len(ctx.AllID()) == 2 {
-		// for idx, val in collection
-		if ctx.ID(0) == nil || ctx.ID(1) == nil {
-			v.armGen.Comment("Error: variables del for no válidas")
-			return nil
-		}
-		nombreIndice = ctx.ID(0).GetText()
-		nombreValor = ctx.ID(1).GetText()
-	} else {
-		v.armGen.Comment("Error: el for debe tener 1 ó 2 variables")
-		return nil
-	}
+    if len(ctx.AllID()) == 1 {
+        if ctx.ID(0) == nil {
+            v.armGen.Comment("Error: variable del for no válida")
+            return nil
+        }
+        nombreValor = ctx.ID(0).GetText()
+    } else if len(ctx.AllID()) == 2 {
+        if ctx.ID(0) == nil || ctx.ID(1) == nil {
+            v.armGen.Comment("Error: variables del for no válidas")
+            return nil
+        }
+        nombreIndice = ctx.ID(0).GetText()
+        nombreValor = ctx.ID(1).GetText()
+    } else {
+        v.armGen.Comment(fmt.Sprintf("Error: el for debe tener 1 ó 2 variables, recibió: %d", len(ctx.AllID())))
+        return nil
+    }
 
-	var iterableResult *assembly.ResultadoExpresion = nil
+    var nombreSlice string = ""
 
-	// EVALUAR RANGE (opcional)
-	if ctx.Range_() != nil {
-		rangeResult := v.Visit(ctx.Range_())
-		if rangeResult == nil {
-			v.armGen.Comment("Error: error evaluando rango")
-			return nil
-		}
+    // EVALUAR RANGE (opcional)
+    if ctx.Range_() != nil {
+        rangeResult := v.Visit(ctx.Range_())
+        if rangeResult == nil {
+            v.armGen.Comment("Error: rango inválido")
+            return nil
+        }
 
-		// El rango debe retornar un slice_name
-		if rangeExpr, ok := rangeResult.(*assembly.ResultadoExpresion); ok {
-			if rangeExpr.Tipo == "slice_name" {
-				iterableResult = rangeExpr
-			} else {
-				v.armGen.Comment("Error: el rango debe producir un slice")
-				return nil
-			}
-		} else {
-			v.armGen.Comment("Error: resultado de rango inválido")
-			return nil
-		}
-	}
+        rangeExpr, ok := rangeResult.(*assembly.ResultadoExpresion)
+        if !ok {
+            v.armGen.Comment("Error: tipo de rango inválido")
+            return nil
+        }
 
-	// EVALUAR EXPRESIÓN (opcional)
-	if ctx.Expr() != nil {
-		exprResult := v.Visit(ctx.Expr())
-		if exprResult == nil {
-			v.armGen.Comment("Error: error evaluando expresión del for")
-			return nil
-		}
+        if rangeExpr.Tipo != "slice_name" {
+            v.armGen.Comment(fmt.Sprintf("Error: el rango debe ser un slice, recibido: %s", rangeExpr.Tipo))
+            return nil
+        }
 
-		if exprVal, ok := exprResult.(*assembly.ResultadoExpresion); ok {
-			// VERIFICAR QUE SEA UN SLICE
-			if exprVal.Tipo == "slice_name" {
-				iterableResult = exprVal
-			} else if exprVal.Tipo == "string" {
-				// Convertir string a slice de caracteres si es necesario
-				v.armGen.Comment("Iteración sobre string no implementada aún")
-				return nil
-			} else {
-				v.armGen.Comment(fmt.Sprintf("Error: no se puede iterar sobre tipo %s", exprVal.Tipo))
-				return nil
-			}
-		} else {
-			v.armGen.Comment("Error: expresión del for no válida")
-			return nil
-		}
-	}
+        if nombreSliceRange, ok := rangeExpr.Valor.(string); ok {
+            nombreSlice = nombreSliceRange
+        } else {
+            v.armGen.Comment(fmt.Sprintf("Error: valor del rango no es string: %T", rangeExpr.Valor))
+            return nil
+        }
+    }
 
-	// VALIDAR QUE TENEMOS ALGO QUE ITERAR
-	if iterableResult == nil {
-		v.armGen.Comment("Error: no se pudo determinar qué iterar")
-		return nil
-	}
+    // EVALUAR EXPRESIÓN (opcional)
+    if ctx.Expr() != nil {
+        exprResult := v.Visit(ctx.Expr())
+        if exprResult == nil {
+            v.armGen.Comment("Error: expresión inválida")
+            return nil
+        }
 
-	nombreSlice := iterableResult.Valor.(string)
+        exprValue, ok := exprResult.(*assembly.ResultadoExpresion)
+        if !ok {
+            v.armGen.Comment(fmt.Sprintf("Error: tipo de expresión inválido: %T", exprResult))
+            return nil
+        }
 
-	// VERIFICAR QUE EL SLICE EXISTE
-	if !v.sliceProcessor.ExisteSlice(nombreSlice) {
-		v.armGen.Comment(fmt.Sprintf("Error: slice '%s' no encontrado", nombreSlice))
-		return nil
-	}
+        switch exprValue.Tipo {
+        case "slice_name":
+            if nombreSliceExpr, ok := exprValue.Valor.(string); ok {
+                nombreSlice = nombreSliceExpr
+            } else {
+                // Intento de recuperación
+                if valorInt, esInt := exprValue.Valor.(int); esInt {
+                    nombreSlice = fmt.Sprintf("slice_%d", valorInt)
+                } else {
+                    v.armGen.Comment("Error: valor del slice no es convertible")
+                    return nil
+                }
+            }
 
-	// GENERAR CÓDIGO ARM64 PARA EL FOR
-	v.generarForWhileARM64(ctx, nombreSlice, nombreIndice, nombreValor)
+        case "string":
+            v.armGen.Comment("Error: iteración sobre string no implementada")
+            return nil
 
-	v.armGen.Comment("=== FIN FOR TIPO WHILE ===")
-	return nil
+        default:
+            v.armGen.Comment(fmt.Sprintf("Error: tipo no soportado: %s", exprValue.Tipo))
+            return nil
+        }
+    }
+
+    // VALIDAR QUE TENEMOS ALGO QUE ITERAR
+    if nombreSlice == "" {
+        v.armGen.Comment("Error: no se pudo determinar qué iterar")
+        return nil
+    }
+
+    // VERIFICAR QUE EL SLICE EXISTE
+    if !v.sliceProcessor.ExisteSlice(nombreSlice) {
+        v.armGen.Comment(fmt.Sprintf("Error: slice '%s' no encontrado", nombreSlice))
+        return nil
+    }
+
+    // GENERAR CÓDIGO ARM64 PARA EL FOR
+    v.generarForRangeARM64(ctx, nombreSlice, nombreIndice, nombreValor)
+
+    v.armGen.Comment("=== FIN FOR TIPO RANGE ===")
+    return nil
 }
 
-// FUNCIÓN PRINCIPAL PARA GENERAR CÓDIGO ARM64 DEL FOR
-func (v *VisitorARM64) generarForWhileARM64(ctx *parser.ForStmtContext, nombreSlice, nombreIndice, nombreValor string) {
-	v.armGen.Comment("=== GENERANDO FOR WHILE ARM64 ===")
+func (v *VisitorARM64) generarForRangeARM64(ctx *parser.ForStmtContext, nombreSlice, nombreIndice, nombreValor string) {
+    v.armGen.Comment("=== GENERANDO FOR RANGE ARM64 ===")
 
-	// GENERAR ETIQUETAS ÚNICAS
-	contadorFor := v.expresionesProcessor.GetContadorEtiqueta()
-	etiquetaInicioFor := fmt.Sprintf(".Lfor_start_%d", contadorFor)
-	etiquetaFinFor := fmt.Sprintf(".Lfor_end_%d", contadorFor)
-	etiquetaContinueFor := fmt.Sprintf(".Lfor_continue_%d", contadorFor)
+    if !v.sliceProcessor.ExisteSlice(nombreSlice) {
+        v.armGen.Comment(fmt.Sprintf("ERROR: Slice '%s' no encontrado", nombreSlice))
+        return
+    }
 
-	// OBTENER REGISTROS PARA CONTROL DEL LOOP
-	regIndiceActual := v.expresionesProcessor.NuevoRegistroTmp()  // Para el índice actual
-	regLongitudSlice := v.expresionesProcessor.NuevoRegistroTmp() // Para la longitud del slice
+    sliceInfo, err := v.sliceProcessor.CargarSlice(nombreSlice)
+    if err != nil {
+        v.armGen.Comment(fmt.Sprintf("ERROR: %s", err.Error()))
+        return
+    }
 
-	v.armGen.Comment(">>> INICIALIZACIÓN DEL FOR <<<")
+    if sliceInfo == nil {
+        v.armGen.Comment("ERROR: sliceInfo es nil")
+        return
+    }
 
-	// INICIALIZAR ÍNDICE EN 0
-	v.armGen.Mov(regIndiceActual, 0)
-	v.armGen.Comment(fmt.Sprintf("Inicializar índice del for en %s = 0", regIndiceActual))
+    contadorFor := v.expresionesProcessor.GetContadorEtiqueta()
+    etiquetaInicioFor := fmt.Sprintf(".Lfor_range_start_%d", contadorFor)
+    etiquetaFinFor := fmt.Sprintf(".Lfor_range_end_%d", contadorFor)
+    etiquetaContinueFor := fmt.Sprintf(".Lfor_range_continue_%d", contadorFor)
 
-	// OBTENER LONGITUD DEL SLICE
-	longitudResult, err := v.sliceProcessor.Len(nombreSlice)
-	if err != nil {
-		v.armGen.Comment(fmt.Sprintf("Error obteniendo longitud del slice: %s", err.Error()))
-		return
-	}
+    forItem := v.pushLoopControl("for_range", []string{"break", "continue"}, etiquetaFinFor, etiquetaContinueFor)
+    defer func() {
+        v.popLoopControl()
+        v.limpiarItem(forItem)
+    }()
 
-	if longitudResult.EsLiteral {
-		v.armGen.Mov(regLongitudSlice, longitudResult.Valor.(int))
-	} else {
-		v.armGen.MovReg(regLongitudSlice, longitudResult.Registro)
-	}
-	v.armGen.Comment(fmt.Sprintf("Longitud del slice en %s", regLongitudSlice))
+    regIndiceActual := "x25"
+    regLongitudSlice := "x26"
 
-	// CREAR ÁMBITO PARA LAS VARIABLES DEL FOR
-	v.pushScope("for")
+    v.armGen.Instructions = append(v.armGen.Instructions,
+        fmt.Sprintf("mov %s, #0", regIndiceActual))
 
-	// DECLARAR VARIABLE DEL ÍNDICE (si existe)
-	if nombreIndice != "" {
-		err := v.variablesProcessor.DeclararVariable(nombreIndice, "int", &assembly.ResultadoExpresion{
-			Registro:  regIndiceActual,
-			Tipo:      "int",
-			EsLiteral: false,
-		})
-		if err != nil {
-			v.armGen.Comment(fmt.Sprintf("Error declarando variable índice: %s", err.Error()))
-		}
-	}
+    longitudResult, err := v.sliceProcessor.Len(nombreSlice)
+    if err != nil {
+        v.armGen.Comment(fmt.Sprintf("Error obteniendo longitud del slice: %s", err.Error()))
+        return
+    }
 
-	// DECLARAR VARIABLE DEL VALOR
-	// Obtener tipo del slice para la variable valor
-	tipoElemento, err := v.sliceProcessor.ObtenerTipoElemento(nombreSlice)
-	if err != nil {
-		v.armGen.Comment(fmt.Sprintf("Error obteniendo tipo del slice: %s", err.Error()))
-		tipoElemento = "int" // Valor por defecto
-	}
+    if longitudResult == nil {
+        v.armGen.Comment("ERROR: longitudResult es nil")
+        return
+    }
 
-	err = v.variablesProcessor.DeclararVariable(nombreValor, tipoElemento, &assembly.ResultadoExpresion{
-		Registro:  "",
-		Tipo:      tipoElemento,
-		EsLiteral: true,
-		Valor:     0, // Valor inicial por defecto
-	})
-	if err != nil {
-		v.armGen.Comment(fmt.Sprintf("Error declarando variable valor: %s", err.Error()))
-	}
+    if longitudResult.EsLiteral {
+        longitud := longitudResult.Valor.(int)
+        v.armGen.Instructions = append(v.armGen.Instructions,
+            fmt.Sprintf("mov %s, #%d", regLongitudSlice, longitud))
+    } else {
+        v.armGen.Instructions = append(v.armGen.Instructions,
+            fmt.Sprintf("mov %s, %s", regLongitudSlice, longitudResult.Registro))
+    }
 
-	// ETIQUETA DE INICIO DEL LOOP
-	v.armGen.Instructions = append(v.armGen.Instructions,
-		fmt.Sprintf("%s:", etiquetaInicioFor))
-	v.armGen.Comment(">>> INICIO DEL BUCLE <<<")
+    nombreAmbitoFor := fmt.Sprintf("for_range_%d", contadorFor)
+    v.pushScope(nombreAmbitoFor)
 
-	// VERIFICAR CONDICIÓN: índice < longitud
-	v.armGen.Instructions = append(v.armGen.Instructions,
-		fmt.Sprintf("cmp %s, %s", regIndiceActual, regLongitudSlice),
-		fmt.Sprintf("bge %s", etiquetaFinFor)) // Si índice >= longitud, salir
+    if nombreIndice != "" {
+        func() {
+            defer func() {
+                if r := recover(); r != nil {
+                    // Error silencioso
+                }
+            }()
 
-	v.armGen.Comment("Condición del bucle verificada")
+            err := v.variablesProcessor.DeclararVariable(nombreIndice, "int", &assembly.ResultadoExpresion{
+                Registro:  regIndiceActual,
+                Tipo:      "int",
+                EsLiteral: false,
+            })
+            if err != nil {
+                v.armGen.Comment(fmt.Sprintf("Error declarando variable índice: %s", err.Error()))
+            }
+        }()
+    }
 
-	// ACTUALIZAR VARIABLE DEL ÍNDICE (si existe)
-	if nombreIndice != "" {
-		err := v.variablesProcessor.AsignarVariable(nombreIndice, &assembly.ResultadoExpresion{
-			Registro:  regIndiceActual,
-			Tipo:      "int",
-			EsLiteral: false,
-		})
-		if err != nil {
-			v.armGen.Comment(fmt.Sprintf("Error actualizando variable índice: %s", err.Error()))
-		}
-	}
+    tipoElemento, err := v.sliceProcessor.ObtenerTipoElemento(nombreSlice)
+    if err != nil {
+        v.armGen.Comment(fmt.Sprintf("Error obteniendo tipo del slice: %s", err.Error()))
+        tipoElemento = "int"
+    }
 
-	// OBTENER ELEMENTO ACTUAL DEL SLICE
-	elementoActual, err := v.sliceProcessor.AccederElementoPorIndice(nombreSlice, &assembly.ResultadoExpresion{
-		Registro:  regIndiceActual,
-		Tipo:      "int",
-		EsLiteral: false,
-	})
-	if err != nil {
-		v.armGen.Comment(fmt.Sprintf("Error accediendo elemento del slice: %s", err.Error()))
-		return
-	}
+    func() {
+        defer func() {
+            if r := recover(); r != nil {
+                // Error silencioso
+            }
+        }()
 
-	// ACTUALIZAR VARIABLE DEL VALOR
-	err = v.variablesProcessor.AsignarVariable(nombreValor, elementoActual)
-	if err != nil {
-		v.armGen.Comment(fmt.Sprintf("Error actualizando variable valor: %s", err.Error()))
-	}
+        var valorDefecto interface{} = 0
+        switch tipoElemento {
+        case "string":
+            valorDefecto = ""
+        case "bool":
+            valorDefecto = false
+        case "float64":
+            valorDefecto = 0.0
+        }
 
-	v.armGen.Comment("Variables del for actualizadas")
+        err := v.variablesProcessor.DeclararVariable(nombreValor, tipoElemento, &assembly.ResultadoExpresion{
+            Registro:  "",
+            Tipo:      tipoElemento,
+            EsLiteral: true,
+            Valor:     valorDefecto,
+        })
+        if err != nil {
+            v.armGen.Comment(fmt.Sprintf("Error declarando variable valor: %s", err.Error()))
+        }
+    }()
 
-	// EJECUTAR CUERPO DEL BUCLE
-	v.armGen.Comment(">>> EJECUTANDO CUERPO DEL BUCLE <<<")
+    v.armGen.Instructions = append(v.armGen.Instructions,
+        fmt.Sprintf("%s:", etiquetaInicioFor))
 
-	// Manejar break y continue con defer
-	defer func() {
-		if r := recover(); r != nil {
-			// Manejar break y continue
-			v.armGen.Comment("Manejo de break/continue en for")
-		}
-	}()
+    v.armGen.Instructions = append(v.armGen.Instructions,
+        fmt.Sprintf("cmp %s, %s", regIndiceActual, regLongitudSlice),
+        fmt.Sprintf("bge %s", etiquetaFinFor))
 
-	for i, stmt := range ctx.AllStmt() {
-		v.armGen.Comment(fmt.Sprintf("Ejecutando sentencia %d del for", i+1))
-		v.expresionesProcessor.ResetearRegistrosSiNecesario() // Evitar agotar registros
-		v.Visit(stmt)
-	}
+    regIndiceCopia := "x27"
+    v.armGen.Instructions = append(v.armGen.Instructions,
+        fmt.Sprintf("mov %s, %s", regIndiceCopia, regIndiceActual))
 
-	// ETIQUETA CONTINUE (para continue statements)
-	v.armGen.Instructions = append(v.armGen.Instructions,
-		fmt.Sprintf("%s:", etiquetaContinueFor))
-	v.armGen.Comment(">>> INCREMENTO E ITERACIÓN <<<")
+    if nombreIndice != "" {
+        func() {
+            defer func() {
+                if r := recover(); r != nil {
+                    // Error silencioso
+                }
+            }()
 
-	// INCREMENTAR ÍNDICE
-	v.armGen.Instructions = append(v.armGen.Instructions,
-		fmt.Sprintf("add %s, %s, #1", regIndiceActual, regIndiceActual))
-	v.armGen.Comment("Incrementar índice del for")
+            err := v.variablesProcessor.AsignarVariable(nombreIndice, &assembly.ResultadoExpresion{
+                Registro:  regIndiceCopia,
+                Tipo:      "int",
+                EsLiteral: false,
+            })
 
-	// SALTAR DE VUELTA AL INICIO
-	v.armGen.Instructions = append(v.armGen.Instructions,
-		fmt.Sprintf("b %s", etiquetaInicioFor))
+            if err != nil {
+                v.armGen.Comment(fmt.Sprintf("Error actualizando variable índice: %s", err.Error()))
+            }
+        }()
+    }
 
-	// ETIQUETA DE FIN DEL LOOP
-	v.armGen.Instructions = append(v.armGen.Instructions,
-		fmt.Sprintf("%s:", etiquetaFinFor))
-	v.armGen.Comment(">>> FIN DEL BUCLE <<<")
+    var elementoActual *assembly.ResultadoExpresion
+    func() {
+        defer func() {
+            if r := recover(); r != nil {
+                // Error silencioso
+            }
+        }()
 
-	// LIMPIAR ÁMBITO
-	v.popScope()
+        elementoActual, err = v.sliceProcessor.AccederElementoPorIndice(nombreSlice, &assembly.ResultadoExpresion{
+            Registro:  regIndiceCopia,
+            Tipo:      "int",
+            EsLiteral: false,
+        })
+        if err != nil {
+            return
+        }
 
-	v.armGen.Comment("=== FIN GENERACIÓN FOR WHILE ARM64 ===")
+        if elementoActual == nil {
+            return
+        }
+    }()
+
+    if elementoActual != nil {
+        func() {
+            defer func() {
+                if r := recover(); r != nil {
+                    // Error silencioso
+                }
+            }()
+
+            err := v.variablesProcessor.AsignarVariable(nombreValor, elementoActual)
+            if err != nil {
+                v.armGen.Comment(fmt.Sprintf("Error actualizando variable valor: %s", err.Error()))
+            }
+        }()
+    }
+
+    for i, stmt := range ctx.AllStmt() {
+        v.armGen.Comment(fmt.Sprintf("Ejecutando sentencia %d del for range", i+1))
+
+        func() {
+            defer func() {
+                if r := recover(); r != nil {
+                    v.armGen.Comment("Error recuperado en sentencia del for range")
+                }
+            }()
+
+            v.expresionesProcessor.ResetearRegistrosSiNecesario()
+            v.Visit(stmt)
+        }()
+    }
+
+    v.armGen.Instructions = append(v.armGen.Instructions,
+        fmt.Sprintf("%s:", etiquetaContinueFor))
+
+    v.armGen.Instructions = append(v.armGen.Instructions,
+        fmt.Sprintf("add %s, %s, #1", regIndiceActual, regIndiceActual))
+
+    v.armGen.Instructions = append(v.armGen.Instructions,
+        fmt.Sprintf("b %s", etiquetaInicioFor))
+
+    v.armGen.Instructions = append(v.armGen.Instructions,
+        fmt.Sprintf("%s:", etiquetaFinFor))
+
+    v.popScope()
+
+    v.armGen.Comment("=== FIN GENERACIÓN FOR RANGE ARM64 ===")
 }
 
 // IMPLEMENTAR VisitRangoNum PARA ARM64
@@ -3109,9 +3177,6 @@ func (v *VisitorARM64) generarLlamadaFuncion(nombreFuncion string, fn *SimboloFu
 func (v *VisitorARM64) generarCodigoFuncion(fn *SimboloFuncion) {
 	v.armGen.Comment(fmt.Sprintf("=== GENERANDO CÓDIGO PARA FUNCIÓN: %s ===", fn.Label))
 
-	// 🔥 DEBUG: Verificar qué tipo tenemos almacenado
-	v.armGen.Comment(fmt.Sprintf("DEBUG: En generarCodigoFuncion, tipo de fn.Cuerpo: %T", fn.Cuerpo))
-
 	// Etiqueta de la función
 	v.armGen.Instructions = append(v.armGen.Instructions,
 		fmt.Sprintf("%s:", fn.Label))
@@ -3160,11 +3225,9 @@ func (v *VisitorARM64) generarCodigoFuncion(fn *SimboloFuncion) {
 	if fn.Cuerpo != nil {
 		// Usar reflexión para manejar cualquier tipo de slice
 		cuerpoValue := reflect.ValueOf(fn.Cuerpo)
-		v.armGen.Comment(fmt.Sprintf("DEBUG: Kind del cuerpo: %s", cuerpoValue.Kind().String()))
-
+	
 		if cuerpoValue.Kind() == reflect.Slice {
-			v.armGen.Comment(fmt.Sprintf("DEBUG: Longitud del slice: %d", cuerpoValue.Len()))
-
+		
 			for i := 0; i < cuerpoValue.Len(); i++ {
 				stmtInterface := cuerpoValue.Index(i).Interface()
 				v.armGen.Comment(fmt.Sprintf("Ejecutando sentencia %d de la función (tipo: %T)", i+1, stmtInterface))

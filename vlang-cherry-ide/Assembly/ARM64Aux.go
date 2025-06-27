@@ -34,29 +34,35 @@ func GenerateCode(visitor VisitorARM64Interface) string {
 
 // generarSeccionDatos genera la sección .data con constantes float y string
 func generarSeccionDatos(armGen *ARMGenerator) string {
-	codigo := ".section .data\n"
-	codigo += "buffer_int: .skip 32\n"
-	codigo += "buffer_float: .skip 64\n"
-	codigo += "buffer_string: .skip 512\n"
-	codigo += "temp_buffer: .skip 256\n"
-	codigo += "msg_nl: .asciz \"\\n\"\n"
-	codigo += "msg_menos: .asciz \"-\"\n"
-	codigo += "msg_punto: .asciz \".\"\n"
-	codigo += "const_100: .double 100.0\n"
-	codigo += "str_empty: .asciz \"\"\n"
+    codigo := ".section .data\n"
+    codigo += "buffer_int: .skip 32\n"
+    codigo += "buffer_float: .skip 64\n"
+    codigo += "buffer_string: .skip 512\n"
+    codigo += "temp_buffer: .skip 256\n"
+    codigo += "msg_nl: .asciz \"\\n\"\n"
+    codigo += "msg_menos: .asciz \"-\"\n"
+    codigo += "msg_punto: .asciz \".\"\n"
+    codigo += "const_100: .double 100.0\n"
+    codigo += "str_empty: .asciz \"\"\n"
 
-	// CONSTANTES FLOAT
-	for constName, value := range armGen.FloatConstants {
-		codigo += fmt.Sprintf("%s: .double %s\n", constName, value)
-	}
+    // CONSTANTES FLOAT
+    for constName, value := range armGen.FloatConstants {
+        codigo += fmt.Sprintf("%s: .double %s\n", constName, value)
+    }
 
-	// CONSTANTES STRING
-	for constName, value := range armGen.StringConstants {
-		codigo += fmt.Sprintf("%s: .asciz \"%s\"\n", constName, value)
-	}
+    // CONSTANTES STRING (incluyendo buffers dinámicos)
+    for constName, value := range armGen.StringConstants {
+        // 🔥 NUEVO: Detectar buffers de join
+        if strings.HasPrefix(constName, "join_buffer_") {
+            // Crear buffer de 512 bytes lleno de ceros
+            codigo += fmt.Sprintf("%s: .skip 512\n", constName)
+        } else {
+            codigo += fmt.Sprintf("%s: .asciz \"%s\"\n", constName, value)
+        }
+    }
 
-	codigo += "\n"
-	return codigo
+    codigo += "\n"
+    return codigo
 }
 
 // generarSeccionTexto genera la sección .text
@@ -432,35 +438,53 @@ strcmp_end:
 }
 
 func getFuncionConcatStrings() string {
-	return `concat_strings:
+    return `concat_strings:
     stp   x29, x30, [sp, #-16]!   // Guardar frame
     mov   x29, sp
     stp   x19, x20, [sp, #-16]!   // Guardar registros
     stp   x21, x22, [sp, #-16]!
 
     mov   x19, x0                 // string1
-    mov   x20, x1                 // string2
+    mov   x20, x1                 // string2  
     mov   x21, x2                 // buffer destino
     mov   x22, #0                 // índice destino
 
+    // VERIFICAR SI STRING1 ES VÁLIDO
+    cmp   x19, #0
+    beq   .Lconcat_copy2_start    // Si string1 es NULL, ir directo a string2
+
 .Lconcat_copy1:                   // Copiar string1
-    ldrb  w3, [x19], #1           // Cargar byte y avanzar
+    ldrb  w3, [x19], #1           // Cargar byte de string1
     cmp   w3, #0                  // ¿Es '\0'?
-    beq   .Lconcat_copy2
+    beq   .Lconcat_copy2_start    // Terminar string1, ir a string2
     strb  w3, [x21, x22]          // Guardar en destino
     add   x22, x22, #1            // Avanzar índice
+    cmp   x22, #500               // Límite de seguridad
+    bge   .Lconcat_end_null       // Evitar overflow
     b     .Lconcat_copy1
 
+.Lconcat_copy2_start:
+    // VERIFICAR SI STRING2 ES VÁLIDO
+    cmp   x20, #0
+    beq   .Lconcat_end_null       // Si string2 es NULL, terminar
+
 .Lconcat_copy2:                   // Copiar string2
-    ldrb  w3, [x20], #1           // Cargar byte y avanzar
-    strb  w3, [x21, x22]          // Guardar (incluye '\0')
+    ldrb  w3, [x20], #1           // Cargar byte de string2
+    strb  w3, [x21, x22]          // Guardar en destino
     cmp   w3, #0                  // ¿Era '\0'?
-    beq   .Lconcat_end
+    beq   .Lconcat_end            // Si era '\0', terminar
     add   x22, x22, #1            // Avanzar índice
+    cmp   x22, #500               // Límite de seguridad
+    bge   .Lconcat_end_null       // Evitar overflow
     b     .Lconcat_copy2
 
+.Lconcat_end_null:
+    // Terminar con '\0' si hubo algún problema
+    mov   w3, #0
+    strb  w3, [x21, x22]
+
 .Lconcat_end:
-    mov   x0, x21                 // Retornar resultado
+    mov   x0, x21                 // Retornar buffer resultado
 
     ldp   x21, x22, [sp], #16     // Restaurar registros
     ldp   x19, x20, [sp], #16

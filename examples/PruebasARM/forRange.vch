@@ -1,0 +1,29 @@
+fn main(){
+// 5. For Range (3 puntos)
+    println("\n==== For Range ====")
+    mut puntosForRange := 0
+
+    println("For range con slice")
+    numeros = []int{10, 20, 30, 40, 50}
+    suma := 0
+    mut sumaIndices := 0
+    for idx, val in numeros {
+        println("Índice", idx, "=", val)
+        suma += val
+        sumaIndices += idx
+    }
+    if suma == 150 {
+        puntosForRange += 2
+        println("OK For range con slice: correcto")
+    } else {
+        println("X For range con slice: incorrecto")
+    }
+    if sumaIndices == 10 {
+        puntosForRange += 1
+        println("OK For range con índices: correcto")
+    } else {
+        println("X For range con índices: incorrecto")
+    }
+
+    print("PUNTOS POR FOR RANGE:",puntosForRange)
+}

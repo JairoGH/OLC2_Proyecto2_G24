@@ -41,14 +41,25 @@ func NewExpresionesProcessor(armGen *ARMGenerator) *ExpresionesProcessor {
 // ============= GESTIÓN DE REGISTROS =============
 
 func (ep *ExpresionesProcessor) NuevoRegistroTmp() string {
-	// PERMITIR RECICLAJE DE REGISTROS
-	if 9+ep.tmpCounter > 30 {
-		ep.armGen.Comment("ADVERTENCIA: Reciclando registros temporales")
-		ep.tmpCounter = 0 //
+	// 🔥 EXCLUSIÓN CRÍTICA: No usar x28 (reservado para slices) ni x29 (frame pointer)
+
+	// Usar registros x9-x18 de forma cíclica, evitando x28 y x29
+	registroNum := 9 + (ep.tmpCounter % 10) // x9-x18 (10 registros disponibles)
+
+	// 🔥 IMPORTANTE: Si por alguna razón llegamos a x28 o x29, volver al rango seguro
+	if registroNum >= 19 {
+		registroNum = 9 + (ep.tmpCounter % 10)
 	}
-	reg := fmt.Sprintf("x%d", 9+ep.tmpCounter)
+
 	ep.tmpCounter++
-	return reg
+
+	// PERMITIR RECICLAJE DE REGISTROS
+	if ep.tmpCounter > 100 { // Evitar overflow del contador
+		ep.armGen.Comment("ADVERTENCIA: Reciclando contadores de registros temporales")
+		ep.tmpCounter = 0
+	}
+
+	return fmt.Sprintf("x%d", registroNum)
 }
 
 func (ep *ExpresionesProcessor) NuevoRegistroFloatTmp() string {
@@ -68,7 +79,7 @@ func (ep *ExpresionesProcessor) ResetearContadores() {
 
 func (ep *ExpresionesProcessor) ResetearRegistrosSiNecesario() {
 	// Resetear si estamos cerca del límite
-	if ep.tmpCounter > 15 {
+	if ep.tmpCounter > 50 { // Reducido para mayor seguridad
 		ep.armGen.Comment("Reseteando contadores de registros por límite")
 		ep.tmpCounter = 0
 	}

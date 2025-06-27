@@ -1,0 +1,134 @@
+fn main(){
+    println("=== EJEMPLOS DE FOR RANGE ===")
+    
+    // 1. FOR RANGE BÁSICO CON ÍNDICE Y VALOR
+    println("\n==== Ejemplo 1: For Range Básico ====")
+    numeros = []int{10, 20, 30, 40, 50}
+    suma := 0
+    mut sumaIndices := 0
+    
+    for idx, val in numeros {
+        println("Índice", idx, "=", val)
+        suma += val
+        sumaIndices += idx
+    }
+    
+    println("Suma total:", suma)
+    println("Suma de índices:", sumaIndices)
+    
+    // 2. FOR RANGE CON ÍNDICE Y VALOR PARA STRINGS
+    println("\n==== Ejemplo 2: For Range con Strings ====")
+    frutas = []string{"manzana", "banana", "naranja"}
+    contador := 0
+    mut sumaIndicesFrutas := 0
+    
+    for idx, fruta in frutas {
+        println("Índice", idx, "=", fruta)
+        contador += 1
+        sumaIndicesFrutas += idx
+    }
+    
+    println("Total de frutas:", contador)
+    println("Suma de índices frutas:", sumaIndicesFrutas)
+    
+    // 3. FOR RANGE SOLO CON VALOR (SIN ÍNDICE)
+    println("\n==== Ejemplo 3: For Range Solo Valor ====")
+    precios = []int{100, 250, 75, 180, 320}
+    totalPrecios := 0
+    caros := 0
+    
+    for precio in precios {
+        println("Precio:", precio)
+        totalPrecios += precio
+        if precio > 200 {
+            caros += 1
+        }
+    }
+    
+    println("Total precios:", totalPrecios)
+    println("Productos caros (>200):", caros)
+    promedio := totalPrecios / 5
+    println("Precio promedio:", promedio)
+    
+    // 4. FOR RANGE ANIDADO (MATRIZ SIMULADA)
+    println("\n==== Ejemplo 4: For Range Anidado ====")
+    
+    // Simular una matriz 3x3 con slices separados
+    fila1 = []int{1, 2, 3}
+    fila2 = []int{4, 5, 6}
+    fila3 = []int{7, 8, 9}
+    
+    println("Matriz 3x3:")
+    
+    // Procesar fila 1
+    println("Fila 0:")
+    for colIdx, valor in fila1 {
+        println("  [0,", colIdx, "] =", valor)
+    }
+    
+    // Procesar fila 2
+    println("Fila 1:")
+    for colIdx, valor in fila2 {
+        println("  [1,", colIdx, "] =", valor)
+    }
+    
+    // Procesar fila 3
+    println("Fila 2:")
+    for colIdx, valor in fila3 {
+        println("  [2,", colIdx, "] =", valor)
+    }
+    
+    // Calcular suma total y diagonal principal
+    sumaTotal := 0
+    sumaDiagonal := 0
+    
+    // Suma fila 1
+    for i, val in fila1 {
+        sumaTotal += val
+        if i == 0 {  // Elemento diagonal [0,0]
+            sumaDiagonal += val
+        }
+    }
+    
+    // Suma fila 2
+    for i, val in fila2 {
+        sumaTotal += val
+        if i == 1 {  // Elemento diagonal [1,1]
+            sumaDiagonal += val
+        }
+    }
+    
+    // Suma fila 3
+    for i, val in fila3 {
+        sumaTotal += val
+        if i == 2 {  // Elemento diagonal [2,2]
+            sumaDiagonal += val
+        }
+    }
+    
+    println("Suma total de la matriz:", sumaTotal)
+    println("Suma diagonal principal:", sumaDiagonal)
+    
+    // Buscar elementos pares en toda la matriz
+    elementosPares := 0
+    
+    for valor in fila1 {
+        if valor % 2 == 0 {
+            elementosPares += 1
+        }
+    }
+    
+    for valor in fila2 {
+        if valor % 2 == 0 {
+            elementosPares += 1
+        }
+    }
+    
+    for valor in fila3 {
+        if valor % 2 == 0 {
+            elementosPares += 1
+        }
+    }
+    
+    println("Elementos pares en la matriz:", elementosPares)
+}
