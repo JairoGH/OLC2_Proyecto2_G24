@@ -184,8 +184,6 @@ func (v *VisitorARM64) VisitProgram(ctx *parser.ProgramContext) interface{} {
 	return nil
 }
 
-// REEMPLAZA tu función VisitFuncionMain con esta versión:
-
 func (v *VisitorARM64) VisitFuncionMain(ctx *parser.FuncionMainContext) interface{} {
 	v.armGen.Comment("=== FUNCIÓN MAIN ===")
 	v.armGen.Instructions = append(v.armGen.Instructions, "fn_main:")
@@ -405,7 +403,6 @@ func (v *VisitorARM64) VisitDeclaraTipoValor(ctx *parser.DeclaraTipoValorContext
 	}
 	return nil
 }
-
 func (v *VisitorARM64) VisitDeclararInferencia(ctx *parser.DeclararInferenciaContext) interface{} {
 	nombre := ctx.ID().GetText()
 	v.armGen.Comment(fmt.Sprintf("=== DECLARAR VARIABLE: %s ===", nombre))
@@ -416,13 +413,45 @@ func (v *VisitorARM64) VisitDeclararInferencia(ctx *parser.DeclararInferenciaCon
 		return nil
 	}
 
-	// CONVERSIÓN SEGURA
+	// 🔥 CASO ESPECIAL: Si es una lista de slice, manejar como slice
+	if listaElementos, ok := exprResult.([]interface{}); ok {
+		v.armGen.Comment(fmt.Sprintf("Detectado slice para variable: %s", nombre))
+
+		// Parsear elementos del slice
+		elementos, tipoElemento, err := v.sliceProcessor.ParsearListaSlice(listaElementos)
+		if err != nil {
+			v.armGen.Comment(fmt.Sprintf("Error parseando slice: %s", err.Error()))
+			return nil
+		}
+
+		// Declarar como slice
+		err = v.sliceProcessor.DeclararSlice(nombre, tipoElemento, elementos)
+		if err != nil {
+			v.armGen.Comment(fmt.Sprintf("Error declarando slice: %s", err.Error()))
+			return nil
+		}
+
+		v.armGen.Comment(fmt.Sprintf("Slice %s declarado exitosamente con tipo %s", nombre, tipoElemento))
+		return nil
+	}
+
+	// CONVERSIÓN SEGURA para variables normales
 	valor, ok := exprResult.(*assembly.ResultadoExpresion)
 	if !ok {
 		v.armGen.Comment(fmt.Sprintf("Error: tipo de expresión inválido para %s", nombre))
 		return nil
 	}
 
+	// 🔥 DETECTAR SI ES RESULTADO DE typeOf
+	if valor.EsTypeOfResult {
+		v.armGen.Comment(fmt.Sprintf("=== DECLARAR VARIABLE TYPEOF: %s = %s ===", nombre, valor.TypeOfValue))
+		etiqueta := v.expresionesProcessor.AgregarMensajeString(valor.TypeOfValue)
+		v.typeOfVariables[nombre] = etiqueta
+		v.armGen.Comment(fmt.Sprintf("Variable typeOf %s mapeada a %s", nombre, etiqueta))
+		return nil
+	}
+
+	// Para variables normales
 	tipo := valor.Tipo
 	err := v.variablesProcessor.DeclararVariable(nombre, tipo, valor)
 	if err != nil {
@@ -430,7 +459,6 @@ func (v *VisitorARM64) VisitDeclararInferencia(ctx *parser.DeclararInferenciaCon
 	}
 	return nil
 }
-
 func (v *VisitorARM64) VisitDeclararInferenciaMut(ctx *parser.DeclararInferenciaMutContext) interface{} {
 	nombre := ctx.ID().GetText()
 	v.armGen.Comment(fmt.Sprintf("=== DECLARAR VARIABLE MUT: %s ===", nombre))
@@ -1032,8 +1060,8 @@ func (v *VisitorARM64) VisitLlamarFuncion(ctx *parser.LlamarFuncionContext) inte
 			Valor:     0.0,
 		}
 	}
-
 	// Manejar función typeOf
+	// Buscar esta línea y reemplazar SOLO el bloque de typeOf:
 	// Manejar función typeOf
 	if nombreFuncion == "typeOf" && ctx.Lista_argumentos() != nil {
 		// REEMPLAZAR TODO EL BLOQUE CON:
@@ -2367,42 +2395,46 @@ func (v *VisitorARM64) VisitForStmt(ctx *parser.ForStmtContext) interface{} {
 			return nil
 		}
 	}
-
 	// EVALUAR EXPRESIÓN (opcional)
 	if ctx.Expr() != nil {
-		exprResult := v.Visit(ctx.Expr())
-		if exprResult == nil {
-			v.armGen.Comment("Error: expresión inválida")
-			return nil
-		}
+		// 🔥 FIX: Verificar si es un ID simple antes de hacer Visit
+		if idExpr, ok := ctx.Expr().(*parser.IdExpContext); ok {
+			nombreVar := idExpr.PatronId().GetText()
+			v.armGen.Comment(fmt.Sprintf("Verificando slice '%s': %t", nombreVar, v.sliceProcessor.ExisteSlice(nombreVar)))
 
-		exprValue, ok := exprResult.(*assembly.ResultadoExpresion)
-		if !ok {
-			v.armGen.Comment(fmt.Sprintf("Error: tipo de expresión inválido: %T", exprResult))
-			return nil
-		}
-
-		switch exprValue.Tipo {
-		case "slice_name":
-			if nombreSliceExpr, ok := exprValue.Valor.(string); ok {
-				nombreSlice = nombreSliceExpr
+			// 🔥 BUSCAR DIRECTAMENTE EN SLICE PROCESSOR
+			if v.sliceProcessor.ExisteSlice(nombreVar) {
+				nombreSlice = nombreVar
+				v.armGen.Comment(fmt.Sprintf("Slice '%s' encontrado exitosamente", nombreVar))
 			} else {
-				// Intento de recuperación
-				if valorInt, esInt := exprValue.Valor.(int); esInt {
-					nombreSlice = fmt.Sprintf("slice_%d", valorInt)
+				v.armGen.Comment(fmt.Sprintf("Error: variable '%s' no declarada", nombreVar))
+				return nil
+			}
+		} else {
+			// Para expresiones más complejas, usar el método original
+			exprResult := v.Visit(ctx.Expr())
+			if exprResult == nil {
+				v.armGen.Comment("Error: expresión inválida")
+				return nil
+			}
+
+			exprValue, ok := exprResult.(*assembly.ResultadoExpresion)
+			if !ok {
+				v.armGen.Comment(fmt.Sprintf("Error: tipo de expresión inválido: %T", exprResult))
+				return nil
+			}
+
+			if exprValue.Tipo == "slice_name" {
+				if nombreSliceExpr, ok := exprValue.Valor.(string); ok {
+					nombreSlice = nombreSliceExpr
 				} else {
 					v.armGen.Comment("Error: valor del slice no es convertible")
 					return nil
 				}
+			} else {
+				v.armGen.Comment(fmt.Sprintf("Error: tipo no soportado: %s", exprValue.Tipo))
+				return nil
 			}
-
-		case "string":
-			v.armGen.Comment("Error: iteración sobre string no implementada")
-			return nil
-
-		default:
-			v.armGen.Comment(fmt.Sprintf("Error: tipo no soportado: %s", exprValue.Tipo))
-			return nil
 		}
 	}
 

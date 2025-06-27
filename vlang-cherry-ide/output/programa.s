@@ -1,36 +1,14 @@
 .section .data
     .align 3    // alinea dobles a 8 bytes
-    msg_1: .asciz "¡Hola, mundo!"
-    msg_2: .asciz "¡Hola,"
-    msg_3: .asciz "!"
-    msg_4: .asciz "=== PRUEBA COMPLETA DE FUNCIONES PARA 20 PUNTOS ==="
-    msg_5: .asciz "\n--- FUNCIONES SIN PARÁMETROS ---"
-    msg_6: .asciz "Número obtenido:"
-    msg_7: .asciz "✅ obtener_numero() CORRECTO"
-    msg_8: .asciz "❌ obtener_numero() INCORRECTO"
-    msg_9: .asciz "\n--- FUNCIONES CON PARÁMETROS ---"
-    msg_10: .asciz "Juan"
-    msg_11: .asciz "Resultado de suma:"
-    msg_12: .asciz "✅ sumar() CORRECTO"
-    msg_13: .asciz "❌ sumar() INCORRECTO"
-    msg_14: .asciz "\n--- ATOI ---"
-    msg_15: .asciz "Resultado atoi:"
-    msg_16: .asciz "✅ atoi() CORRECTO"
-    msg_17: .asciz "❌ atoi() INCORRECTO"
-    msg_18: .asciz "\n--- PARSEFLOAT ---"
-    float_const_19: .double 123.450000
-    msg_20: .asciz "Resultado parseFloat 1:"
-    float_const_21: .double 123.000000
-    msg_22: .asciz "Resultado parseFloat 2:"
-    float_const_23: .double 123.450000
-    msg_24: .asciz "✅ parseFloat(\"123.45\") CORRECTO"
-    msg_25: .asciz "❌ parseFloat(\"123.45\") INCORRECTO"
-    float_const_26: .double 123.000000
-    msg_27: .asciz "✅ parseFloat(\"123\") CORRECTO"
-    msg_28: .asciz "❌ parseFloat(\"123\") INCORRECTO"
-    msg_29: .asciz "\n--- RESUMEN ---"
-    msg_30: .asciz "Puntos totales:"
-    msg_31: .asciz "/ 20"
+    msg_1: .asciz "\n==== For Range ===="
+    msg_2: .asciz "For range con slice"
+    msg_3: .asciz "Índice"
+    msg_4: .asciz "="
+    msg_5: .asciz "OK For range con slice: correcto"
+    msg_6: .asciz "X For range con slice: incorrecto"
+    msg_7: .asciz "OK For range con índices: correcto"
+    msg_8: .asciz "X For range con índices: incorrecto"
+    msg_9: .asciz "PUNTOS POR FOR RANGE:"
 buffer_int: .skip 32
 buffer_float: .skip 64
 buffer_string: .skip 512
@@ -51,149 +29,8 @@ _start:
     svc #0          // system call
 
 // === PROCESANDO PROGRAMA ===
-// Total de sentencias encontradas: 4
-// Registrando función en sentencia 1
-// === DECLARACIÓN DE FUNCIÓN ===
-// Procesando función: saludar
-// DEBUG: Tipo de sentencia[0]: *parser.StmtContext
-// Función 'saludar' registrada exitosamente
-// - Parámetros: 0
-// - Tipo retorno: void
-// Registrando función en sentencia 2
-// === DECLARACIÓN DE FUNCIÓN ===
-// Procesando función: obtener_numero
-// DEBUG: Tipo de sentencia[0]: *parser.StmtContext
-// Función 'obtener_numero' registrada exitosamente
-// - Parámetros: 0
-// - Tipo retorno: int
-// Registrando función en sentencia 3
-// === DECLARACIÓN DE FUNCIÓN ===
-// Procesando función: sumar
-// DEBUG: Tipo de sentencia[0]: *parser.StmtContext
-// Función 'sumar' registrada exitosamente
-// - Parámetros: 2
-// - Tipo retorno: int
-// Registrando función en sentencia 4
-// === DECLARACIÓN DE FUNCIÓN ===
-// Procesando función: saludar_persona
-// DEBUG: Tipo de sentencia[0]: *parser.StmtContext
-// Función 'saludar_persona' registrada exitosamente
-// - Parámetros: 1
-// - Tipo retorno: void
+// Total de sentencias encontradas: 0
 // === GENERANDO TODAS LAS FUNCIONES DE USUARIO ===
-// Generando función: saludar
-// === GENERANDO CÓDIGO PARA FUNCIÓN: fn_saludar ===
-fn_saludar:
-// Push scope: function
-    stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register
-    mov   x29, sp                 // Configurar frame pointer
-    sub   sp, sp, #64             // Reservar espacio para variables locales
-// >>> EJECUTANDO CUERPO DE LA FUNCIÓN <<<
-// Ejecutando sentencia 1 de la función (tipo: *parser.StmtContext)
-// === IMPRIMIR STRING  ===
-    adr x9, msg_1
-    mov x0, x9
-    bl print_string
-    bl print_newline
-    bl print_newline
-// No hubo return explícito, agregando return automático
-    mov   sp, x29                 // Restaurar stack usando frame pointer
-    ldp   x29, x30, [sp], #16     // Restaurar frame pointer y link register
-    ret
-// Pop scope
-// === FIN CÓDIGO FUNCIÓN: fn_saludar ===
-// Generando función: obtener_numero
-// === GENERANDO CÓDIGO PARA FUNCIÓN: fn_obtener_numero ===
-fn_obtener_numero:
-// Push scope: function
-    stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register
-    mov   x29, sp                 // Configurar frame pointer
-    sub   sp, sp, #64             // Reservar espacio para variables locales
-// >>> EJECUTANDO CUERPO DE LA FUNCIÓN <<<
-// Ejecutando sentencia 1 de la función (tipo: *parser.StmtContext)
-// === RETURN STATEMENT ===
-    mov x0, #42
-    mov   sp, x29                 // Restaurar stack usando frame pointer
-    ldp   x29, x30, [sp], #16     // Restaurar frame pointer y link register
-    ret
-// Ya hubo return explícito, no agregar return automático
-// Pop scope
-// === FIN CÓDIGO FUNCIÓN: fn_obtener_numero ===
-// Generando función: sumar
-// === GENERANDO CÓDIGO PARA FUNCIÓN: fn_sumar ===
-fn_sumar:
-// Push scope: function
-    stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register
-    mov   x29, sp                 // Configurar frame pointer
-    sub   sp, sp, #64             // Reservar espacio para variables locales
-    sub sp, sp, #8  // Reservar espacio para a
-    str x0, [sp]
-// a en [sp+0] 
-
-    sub sp, sp, #8  // Reservar espacio para b
-    str x1, [sp]
-// b en [sp+0] 
-
-// >>> EJECUTANDO CUERPO DE LA FUNCIÓN <<<
-// Ejecutando sentencia 1 de la función (tipo: *parser.StmtContext)
-// === RETURN STATEMENT ===
-// ===  EXPRESIÓN BINARIA + ===
-// === CARGAR VARIABLE: a (offset: 8) ===
-    ldr x10, [sp, #8]
-// === CARGAR VARIABLE: b (offset: 0) ===
-    ldr x11, [sp, #0]
-    mov x12, x10
-    mov x13, x11
-    add x14, x12, x13
-// === FIN EXPRESIÓN BINARIA === 
-
-    mov x0, x14
-    mov   sp, x29                 // Restaurar stack usando frame pointer
-    ldp   x29, x30, [sp], #16     // Restaurar frame pointer y link register
-    ret
-// Ya hubo return explícito, no agregar return automático
-// Pop scope
-// === FIN CÓDIGO FUNCIÓN: fn_sumar ===
-// Generando función: saludar_persona
-// === GENERANDO CÓDIGO PARA FUNCIÓN: fn_saludar_persona ===
-fn_saludar_persona:
-// Push scope: function
-    stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register
-    mov   x29, sp                 // Configurar frame pointer
-    sub   sp, sp, #64             // Reservar espacio para variables locales
-    sub sp, sp, #8  // Reservar espacio para nombre
-    mov x15, x0
-    str x15, [sp]
-// nombre en [sp+0] 
-
-// >>> EJECUTANDO CUERPO DE LA FUNCIÓN <<<
-// Ejecutando sentencia 1 de la función (tipo: *parser.StmtContext)
-// Verificando slice 'nombre': false
-// === CARGAR VARIABLE: nombre (offset: 0) ===
-    ldr x16, [sp, #0]
-// === IMPRIMIR STRING  ===
-    adr x17, msg_2
-    mov x0, x17
-    bl print_string
-    mov x0, #32          // ' ' (espacio)
-    bl print_char
-// === IMPRIMIR STRING  ===
-    mov x0, x16
-    bl print_string
-    mov x0, #32          // ' ' (espacio)
-    bl print_char
-// === IMPRIMIR STRING  ===
-    adr x18, msg_3
-    mov x0, x18
-    bl print_string
-    bl print_newline
-    bl print_newline
-// No hubo return explícito, agregando return automático
-    mov   sp, x29                 // Restaurar stack usando frame pointer
-    ldp   x29, x30, [sp], #16     // Restaurar frame pointer y link register
-    ret
-// Pop scope
-// === FIN CÓDIGO FUNCIÓN: fn_saludar_persona ===
 // === GENERANDO FUNCIÓN MAIN CON CÓDIGO PRINCIPAL ===
 // Procesando función main desde Main_func
 // === FUNCIÓN MAIN ===
@@ -201,195 +38,173 @@ fn_main:
         stp   x29, x30, [sp, #-16]!   // Guardar frame pointer y link register
         mov   x29, sp                 // Configurar frame pointer
 // === IMPRIMIR STRING  ===
-    adr x9, msg_4
+    adr x9, msg_1
     mov x0, x9
     bl print_string
     bl print_newline
     bl print_newline
-// === IMPRIMIR STRING  ===
-    adr x9, msg_5
-    mov x0, x9
-    bl print_string
-    bl print_newline
-    bl print_newline
-// === LLAMADA A FUNCIÓN USUARIO: saludar ===
-// >>> PREPARANDO LLAMADA A FUNCIÓN <<<
-// >>> PREPARANDO ARGUMENTOS PARA LLAMADA <<<
-    bl fn_saludar
-// === DECLARAR VARIABLE: numero ===
-// === LLAMADA A FUNCIÓN USUARIO: obtener_numero ===
-// >>> PREPARANDO LLAMADA A FUNCIÓN <<<
-// >>> PREPARANDO ARGUMENTOS PARA LLAMADA <<<
-    bl fn_obtener_numero
-    mov x9, x0
-    sub sp, sp, #8  // Reservar espacio para numero
+// === DECLARAR VARIABLE MUT: puntosForRange ===
+    sub sp, sp, #8  // Reservar espacio para puntosForRange
+    mov x9, #0
     str x9, [sp]
-// numero en [sp+0] 
-
-// Verificando slice 'numero': false
-// === CARGAR VARIABLE: numero (offset: 0) ===
-    ldr x9, [sp, #0]
-// === IMPRIMIR STRING  ===
-    adr x10, msg_6
-    mov x0, x10
-    bl print_string
-    mov x0, #32          // ' ' (espacio)
-    bl print_char
-// === IMPRIMIR INT  ===
-    mov x0, x9
-    bl print_int
-    bl print_newline
-    bl print_newline
-// === INICIO ESTRUCTURA IF-ELSE ===
-// ===  EXPRESIÓN BINARIA == ===
-// === CARGAR VARIABLE: numero (offset: 0) ===
-    ldr x9, [sp, #0]
-// === OPERACIÓN RELACIONAL == ===
-    mov x11, x9
-    mov x12, #42
-    cmp x11, x12
-    cset x10, eq
-// === FIN EXPRESIÓN BINARIA === 
-
-    cmp x10, #0
-    beq .Lskip_branch_1
-// === EJECUTANDO BLOQUE (runtime true) ===
-// Push scope: if
-// === IMPRIMIR STRING  ===
-    adr x13, msg_7
-    mov x0, x13
-    bl print_string
-    bl print_newline
-    bl print_newline
-// Pop scope
-    b .Lif_final_0
-.Lskip_branch_1:
-// === FIN PROCESAMIENTO BRANCH ===
-// --- Ejecutando ELSE ---
-// === INICIO BLOQUE ELSE ===
-// Push scope: else
-// Ejecutando sentencia 1 del bloque else
-// === IMPRIMIR STRING  ===
-    adr x14, msg_8
-    mov x0, x14
-    bl print_string
-    bl print_newline
-    bl print_newline
-// Pop scope
-// === FIN BLOQUE ELSE ===
-.Lif_final_0:
-// === FIN ESTRUCTURA IF-ELSE ===
+// puntosForRange en [sp+0] 
 
 // === IMPRIMIR STRING  ===
-    adr x9, msg_9
+    adr x9, msg_2
     mov x0, x9
     bl print_string
     bl print_newline
     bl print_newline
-// === LLAMADA A FUNCIÓN USUARIO: saludar_persona ===
-// >>> PREPARANDO LLAMADA A FUNCIÓN <<<
-// >>> PREPARANDO ARGUMENTOS PARA LLAMADA <<<
-    adr x0, msg_10
-    bl fn_saludar_persona
-// === DECLARAR VARIABLE: resultado ===
-// === LLAMADA A FUNCIÓN USUARIO: sumar ===
-// >>> PREPARANDO LLAMADA A FUNCIÓN <<<
-// >>> PREPARANDO ARGUMENTOS PARA LLAMADA <<<
+// === DECLARACIÓN SLICE numeros: []int ===
+// Ajustar stack para slices: 256 bytes
+    sub sp, sp, #256
+    mov x28, x29
+    sub x28, x28, #256
+// Elemento 0 (literal): 10
     mov x0, #10
-    mov x1, #20
-    bl fn_sumar
-    mov x9, x0
-    sub sp, sp, #8  // Reservar espacio para resultado
+    str x0, [x28, #0]
+// Elemento 1 (literal): 20
+    mov x0, #20
+    str x0, [x28, #8]
+// Elemento 2 (literal): 30
+    mov x0, #30
+    str x0, [x28, #16]
+// Elemento 3 (literal): 40
+    mov x0, #40
+    str x0, [x28, #24]
+// Elemento 4 (literal): 50
+    mov x0, #50
+    str x0, [x28, #32]
+// === DECLARAR VARIABLE: suma ===
+    sub sp, sp, #8  // Reservar espacio para suma
+    mov x9, #0
     str x9, [sp]
-// resultado en [sp+0] 
+// suma en [sp+0] 
 
-// Verificando slice 'resultado': false
-// === CARGAR VARIABLE: resultado (offset: 0) ===
-    ldr x9, [sp, #0]
-// === IMPRIMIR STRING  ===
-    adr x10, msg_11
-    mov x0, x10
-    bl print_string
-    mov x0, #32          // ' ' (espacio)
-    bl print_char
-// === IMPRIMIR INT  ===
-    mov x0, x9
-    bl print_int
-    bl print_newline
-    bl print_newline
-// === INICIO ESTRUCTURA IF-ELSE ===
-// ===  EXPRESIÓN BINARIA == ===
-// === CARGAR VARIABLE: resultado (offset: 0) ===
-    ldr x9, [sp, #0]
-// === OPERACIÓN RELACIONAL == ===
-    mov x11, x9
-    mov x12, #30
-    cmp x11, x12
-    cset x10, eq
-// === FIN EXPRESIÓN BINARIA === 
+// === DECLARAR VARIABLE MUT: sumaIndices ===
+    sub sp, sp, #8  // Reservar espacio para sumaIndices
+    mov x9, #0
+    str x9, [sp]
+// sumaIndices en [sp+0] 
 
-    cmp x10, #0
-    beq .Lskip_branch_3
-// === EJECUTANDO BLOQUE (runtime true) ===
-// Push scope: if
+// === INICIO FOR TIPO RANGE ===
+// Verificando slice 'numeros': true
+// Verificando slice 'numeros': true
+// Verificando slice 'numeros': true
+// Slice 'numeros' encontrado exitosamente
+// Verificando slice 'numeros': true
+// === GENERANDO FOR RANGE ARM64 ===
+// Verificando slice 'numeros': true
+// Push control: for_range
+    mov x25, #0
+// === FUNCIÓN len(numeros) ===
+// Slice numeros tiene 5 elementos
+    mov x9, #5
+    mov x26, x9
+// Push scope: for_range_1
+    sub sp, sp, #8  // Reservar espacio para idx
+    str x25, [sp]
+// idx en [sp+0] 
+
+    sub sp, sp, #8  // Reservar espacio para val
+    mov x10, #0
+    str x10, [sp]
+// val en [sp+0] 
+
+.Lfor_range_start_1:
+    cmp x25, x26
+    bge .Lfor_range_end_1
+    mov x27, x25
+// === ASIGNAR VARIABLE: idx = int (offset: 8) ===
+    str x27, [sp, #8]
+// === ACCESO POR ÍNDICE numeros[<nil>] ===
+// Acceso con verificación de rango en tiempo de ejecución
+    mov x9, x27
+    cmp x9, #0
+    blt range_invalid_numeros_3
+    cmp x9, #5
+    bge range_invalid_numeros_3
+range_valid_numeros_2:
+    add x10, x28, #0
+    ldr x11, [x10, x9, lsl #3]
+    b access_end_numeros_4
+range_invalid_numeros_3:
+    mov x11, #0
+    sub x11, x11, #1
+access_end_numeros_4:
+// Acceso completado, resultado en x11
+// === ASIGNAR VARIABLE: val = int (offset: 0) ===
+    str x11, [sp, #0]
+// Ejecutando sentencia 1 del for range
+// Verificando slice 'idx': false
+// === CARGAR VARIABLE: idx (offset: 8) ===
+    ldr x11, [sp, #8]
+// Verificando slice 'val': false
+// === CARGAR VARIABLE: val (offset: 0) ===
+    ldr x12, [sp, #0]
 // === IMPRIMIR STRING  ===
-    adr x13, msg_12
+    adr x13, msg_3
     mov x0, x13
     bl print_string
-    bl print_newline
-    bl print_newline
-// Pop scope
-    b .Lif_final_2
-.Lskip_branch_3:
-// === FIN PROCESAMIENTO BRANCH ===
-// --- Ejecutando ELSE ---
-// === INICIO BLOQUE ELSE ===
-// Push scope: else
-// Ejecutando sentencia 1 del bloque else
+    mov x0, #32          // ' ' (espacio)
+    bl print_char
+// === IMPRIMIR INT  ===
+    mov x0, x11
+    bl print_int
+    mov x0, #32          // ' ' (espacio)
+    bl print_char
 // === IMPRIMIR STRING  ===
-    adr x14, msg_13
+    adr x14, msg_4
     mov x0, x14
-    bl print_string
-    bl print_newline
-    bl print_newline
-// Pop scope
-// === FIN BLOQUE ELSE ===
-.Lif_final_2:
-// === FIN ESTRUCTURA IF-ELSE ===
-
-// === IMPRIMIR STRING  ===
-    adr x9, msg_14
-    mov x0, x9
-    bl print_string
-    bl print_newline
-    bl print_newline
-// === DECLARAR VARIABLE: val1 ===
-    mov x9, #123
-    sub sp, sp, #8  // Reservar espacio para val1
-    str x9, [sp]
-// val1 en [sp+0] 
-
-// Verificando slice 'val1': false
-// === CARGAR VARIABLE: val1 (offset: 0) ===
-    ldr x9, [sp, #0]
-// === IMPRIMIR STRING  ===
-    adr x10, msg_15
-    mov x0, x10
     bl print_string
     mov x0, #32          // ' ' (espacio)
     bl print_char
 // === IMPRIMIR INT  ===
-    mov x0, x9
+    mov x0, x12
     bl print_int
     bl print_newline
     bl print_newline
+// Ejecutando sentencia 2 del for range
+// === ASIGNACIÓN ARITMÉTICA: suma += ===
+// === CARGAR VARIABLE: suma (offset: 24) ===
+    ldr x15, [sp, #24]
+// === CARGAR VARIABLE: val (offset: 0) ===
+    ldr x16, [sp, #0]
+    mov x17, x15
+    mov x18, x16
+    add x9, x17, x18
+// === ASIGNAR VARIABLE: suma = int (offset: 24) ===
+    str x9, [sp, #24]
+// === FIN ASIGNACIÓN ARITMÉTICA: suma += === 
+
+// Ejecutando sentencia 3 del for range
+// === ASIGNACIÓN ARITMÉTICA: sumaIndices += ===
+// === CARGAR VARIABLE: sumaIndices (offset: 16) ===
+    ldr x10, [sp, #16]
+// === CARGAR VARIABLE: idx (offset: 8) ===
+    ldr x11, [sp, #8]
+    mov x12, x10
+    mov x13, x11
+    add x14, x12, x13
+// === ASIGNAR VARIABLE: sumaIndices = int (offset: 16) ===
+    str x14, [sp, #16]
+// === FIN ASIGNACIÓN ARITMÉTICA: sumaIndices += === 
+
+.Lfor_range_continue_1:
+    add x25, x25, #1
+    b .Lfor_range_start_1
+.Lfor_range_end_1:
+// Pop scope
+// === FIN GENERACIÓN FOR RANGE ARM64 ===
+// Pop control: for_range
+// === FIN FOR TIPO RANGE ===
 // === INICIO ESTRUCTURA IF-ELSE ===
 // ===  EXPRESIÓN BINARIA == ===
-// === CARGAR VARIABLE: val1 (offset: 0) ===
-    ldr x9, [sp, #0]
+// === CARGAR VARIABLE: suma (offset: 24) ===
+    ldr x9, [sp, #24]
 // === OPERACIÓN RELACIONAL == ===
     mov x11, x9
-    mov x12, #123
+    mov x12, #150
     cmp x11, x12
     cset x10, eq
 // === FIN EXPRESIÓN BINARIA === 
@@ -398,9 +213,19 @@ fn_main:
     beq .Lskip_branch_5
 // === EJECUTANDO BLOQUE (runtime true) ===
 // Push scope: if
+// === ASIGNACIÓN ARITMÉTICA: puntosForRange += ===
+// === CARGAR VARIABLE: puntosForRange (offset: 32) ===
+    ldr x13, [sp, #32]
+    mov x14, x13
+    mov x15, #2
+    add x16, x14, x15
+// === ASIGNAR VARIABLE: puntosForRange = int (offset: 32) ===
+    str x16, [sp, #32]
+// === FIN ASIGNACIÓN ARITMÉTICA: puntosForRange += === 
+
 // === IMPRIMIR STRING  ===
-    adr x13, msg_16
-    mov x0, x13
+    adr x17, msg_5
+    mov x0, x17
     bl print_string
     bl print_newline
     bl print_newline
@@ -413,8 +238,8 @@ fn_main:
 // Push scope: else
 // Ejecutando sentencia 1 del bloque else
 // === IMPRIMIR STRING  ===
-    adr x14, msg_17
-    mov x0, x14
+    adr x18, msg_6
+    mov x0, x18
     bl print_string
     bl print_newline
     bl print_newline
@@ -423,92 +248,37 @@ fn_main:
 .Lif_final_4:
 // === FIN ESTRUCTURA IF-ELSE ===
 
-// === IMPRIMIR STRING  ===
-    adr x9, msg_18
-    mov x0, x9
-    bl print_string
-    bl print_newline
-    bl print_newline
-// === DECLARAR VARIABLE: f1 ===
-    sub sp, sp, #8  // Reservar espacio para f1
-    adr x9, float_const_19
-    ldr d0, [x9]
-    str d0, [sp]
-// f1 en [sp+0] 
-
-// Verificando slice 'f1': false
-// === CARGAR VARIABLE: f1 (offset: 0) ===
-    ldr d0, [sp, #0]
-// === IMPRIMIR STRING  ===
-    adr x9, msg_20
-    mov x0, x9
-    bl print_string
-    mov x0, #32          // ' ' (espacio)
-    bl print_char
-// === IMPRIMIR FLOAT  ===
-    fmov d0, d0
-    bl print_float
-    bl print_newline
-    bl print_newline
-// === DECLARAR VARIABLE: f2 ===
-    sub sp, sp, #8  // Reservar espacio para f2
-    adr x9, float_const_21
-    ldr d0, [x9]
-    str d0, [sp]
-// f2 en [sp+0] 
-
-// Verificando slice 'f2': false
-// === CARGAR VARIABLE: f2 (offset: 0) ===
-    ldr d0, [sp, #0]
-// === IMPRIMIR STRING  ===
-    adr x9, msg_22
-    mov x0, x9
-    bl print_string
-    mov x0, #32          // ' ' (espacio)
-    bl print_char
-// === IMPRIMIR FLOAT  ===
-    fmov d0, d0
-    bl print_float
-    bl print_newline
-    bl print_newline
-// === DECLARAR VARIABLE MUT: ok ===
-    sub sp, sp, #8  // Reservar espacio para ok
-    mov x9, #0
-    str x9, [sp]
-// ok en [sp+0] 
-
 // === INICIO ESTRUCTURA IF-ELSE ===
 // ===  EXPRESIÓN BINARIA == ===
-// === CARGAR VARIABLE: f1 (offset: 16) ===
-    ldr d0, [sp, #16]
+// === CARGAR VARIABLE: sumaIndices (offset: 16) ===
+    ldr x9, [sp, #16]
 // === OPERACIÓN RELACIONAL == ===
-    fmov d1, d0
-    adr x10, float_const_23
-    ldr d2, [x10]
-    fcmp d1, d2
-    cset x9, eq
+    mov x11, x9
+    mov x12, #10
+    cmp x11, x12
+    cset x10, eq
 // === FIN EXPRESIÓN BINARIA === 
 
-    cmp x9, #0
+    cmp x10, #0
     beq .Lskip_branch_7
 // === EJECUTANDO BLOQUE (runtime true) ===
 // Push scope: if
+// === ASIGNACIÓN ARITMÉTICA: puntosForRange += ===
+// === CARGAR VARIABLE: puntosForRange (offset: 32) ===
+    ldr x13, [sp, #32]
+    mov x14, x13
+    mov x15, #1
+    add x16, x14, x15
+// === ASIGNAR VARIABLE: puntosForRange = int (offset: 32) ===
+    str x16, [sp, #32]
+// === FIN ASIGNACIÓN ARITMÉTICA: puntosForRange += === 
+
 // === IMPRIMIR STRING  ===
-    adr x11, msg_24
-    mov x0, x11
+    adr x17, msg_7
+    mov x0, x17
     bl print_string
     bl print_newline
     bl print_newline
-// === ASIGNACIÓN ARITMÉTICA: ok += ===
-// === CARGAR VARIABLE: ok (offset: 0) ===
-    ldr x12, [sp, #0]
-    mov x13, x12
-    mov x14, #1
-    add x15, x13, x14
-// === ASIGNAR VARIABLE: ok = int (offset: 0) ===
-    str x15, [sp, #0]
-// === FIN ASIGNACIÓN ARITMÉTICA: ok += === 
-
 // Pop scope
     b .Lif_final_6
 .Lskip_branch_7:
@@ -518,8 +288,8 @@ fn_main:
 // Push scope: else
 // Ejecutando sentencia 1 del bloque else
 // === IMPRIMIR STRING  ===
-    adr x16, msg_25
-    mov x0, x16
+    adr x18, msg_8
+    mov x0, x18
     bl print_string
     bl print_newline
     bl print_newline
@@ -528,202 +298,11 @@ fn_main:
 .Lif_final_6:
 // === FIN ESTRUCTURA IF-ELSE ===
 
-// === INICIO ESTRUCTURA IF-ELSE ===
-// ===  EXPRESIÓN BINARIA == ===
-// === CARGAR VARIABLE: f2 (offset: 8) ===
-    ldr d0, [sp, #8]
-// === OPERACIÓN RELACIONAL == ===
-    fmov d1, d0
-    adr x10, float_const_26
-    ldr d2, [x10]
-    fcmp d1, d2
-    cset x9, eq
-// === FIN EXPRESIÓN BINARIA === 
-
-    cmp x9, #0
-    beq .Lskip_branch_9
-// === EJECUTANDO BLOQUE (runtime true) ===
-// Push scope: if
-// === IMPRIMIR STRING  ===
-    adr x11, msg_27
-    mov x0, x11
-    bl print_string
-    bl print_newline
-    bl print_newline
-// === ASIGNACIÓN ARITMÉTICA: ok += ===
-// === CARGAR VARIABLE: ok (offset: 0) ===
-    ldr x12, [sp, #0]
-    mov x13, x12
-    mov x14, #1
-    add x15, x13, x14
-// === ASIGNAR VARIABLE: ok = int (offset: 0) ===
-    str x15, [sp, #0]
-// === FIN ASIGNACIÓN ARITMÉTICA: ok += === 
-
-// Pop scope
-    b .Lif_final_8
-.Lskip_branch_9:
-// === FIN PROCESAMIENTO BRANCH ===
-// --- Ejecutando ELSE ---
-// === INICIO BLOQUE ELSE ===
-// Push scope: else
-// Ejecutando sentencia 1 del bloque else
-// === IMPRIMIR STRING  ===
-    adr x16, msg_28
-    mov x0, x16
-    bl print_string
-    bl print_newline
-    bl print_newline
-// Pop scope
-// === FIN BLOQUE ELSE ===
-.Lif_final_8:
-// === FIN ESTRUCTURA IF-ELSE ===
-
-// === IMPRIMIR STRING  ===
-    adr x9, msg_29
-    mov x0, x9
-    bl print_string
-    bl print_newline
-    bl print_newline
-// === DECLARAR VARIABLE MUT: puntos ===
-    sub sp, sp, #8  // Reservar espacio para puntos
-    mov x9, #0
-    str x9, [sp]
-// puntos en [sp+0] 
-
-// === INICIO ESTRUCTURA IF-ELSE ===
-// ===  EXPRESIÓN BINARIA == ===
-// === CARGAR VARIABLE: numero (offset: 48) ===
-    ldr x9, [sp, #48]
-// === OPERACIÓN RELACIONAL == ===
-    mov x11, x9
-    mov x12, #42
-    cmp x11, x12
-    cset x10, eq
-// === FIN EXPRESIÓN BINARIA === 
-
-    cmp x10, #0
-    beq .Lskip_branch_11
-// === EJECUTANDO BLOQUE (runtime true) ===
-// Push scope: if
-// === ASIGNACIÓN ARITMÉTICA: puntos += ===
-// === CARGAR VARIABLE: puntos (offset: 0) ===
-    ldr x13, [sp, #0]
-    mov x14, x13
-    mov x15, #8
-    add x16, x14, x15
-// === ASIGNAR VARIABLE: puntos = int (offset: 0) ===
-    str x16, [sp, #0]
-// === FIN ASIGNACIÓN ARITMÉTICA: puntos += === 
-
-// Pop scope
-    b .Lif_final_10
-.Lskip_branch_11:
-// === FIN PROCESAMIENTO BRANCH ===
-.Lif_final_10:
-// === FIN ESTRUCTURA IF-ELSE ===
-
-// === INICIO ESTRUCTURA IF-ELSE ===
-// ===  EXPRESIÓN BINARIA == ===
-// === CARGAR VARIABLE: resultado (offset: 40) ===
-    ldr x9, [sp, #40]
-// === OPERACIÓN RELACIONAL == ===
-    mov x11, x9
-    mov x12, #30
-    cmp x11, x12
-    cset x10, eq
-// === FIN EXPRESIÓN BINARIA === 
-
-    cmp x10, #0
-    beq .Lskip_branch_13
-// === EJECUTANDO BLOQUE (runtime true) ===
-// Push scope: if
-// === ASIGNACIÓN ARITMÉTICA: puntos += ===
-// === CARGAR VARIABLE: puntos (offset: 0) ===
-    ldr x13, [sp, #0]
-    mov x14, x13
-    mov x15, #7
-    add x16, x14, x15
-// === ASIGNAR VARIABLE: puntos = int (offset: 0) ===
-    str x16, [sp, #0]
-// === FIN ASIGNACIÓN ARITMÉTICA: puntos += === 
-
-// Pop scope
-    b .Lif_final_12
-.Lskip_branch_13:
-// === FIN PROCESAMIENTO BRANCH ===
-.Lif_final_12:
-// === FIN ESTRUCTURA IF-ELSE ===
-
-// === INICIO ESTRUCTURA IF-ELSE ===
-// ===  EXPRESIÓN BINARIA == ===
-// === CARGAR VARIABLE: val1 (offset: 32) ===
+// Verificando slice 'puntosForRange': false
+// === CARGAR VARIABLE: puntosForRange (offset: 32) ===
     ldr x9, [sp, #32]
-// === OPERACIÓN RELACIONAL == ===
-    mov x11, x9
-    mov x12, #123
-    cmp x11, x12
-    cset x10, eq
-// === FIN EXPRESIÓN BINARIA === 
-
-    cmp x10, #0
-    beq .Lskip_branch_15
-// === EJECUTANDO BLOQUE (runtime true) ===
-// Push scope: if
-// === ASIGNACIÓN ARITMÉTICA: puntos += ===
-// === CARGAR VARIABLE: puntos (offset: 0) ===
-    ldr x13, [sp, #0]
-    mov x14, x13
-    mov x15, #2
-    add x16, x14, x15
-// === ASIGNAR VARIABLE: puntos = int (offset: 0) ===
-    str x16, [sp, #0]
-// === FIN ASIGNACIÓN ARITMÉTICA: puntos += === 
-
-// Pop scope
-    b .Lif_final_14
-.Lskip_branch_15:
-// === FIN PROCESAMIENTO BRANCH ===
-.Lif_final_14:
-// === FIN ESTRUCTURA IF-ELSE ===
-
-// === INICIO ESTRUCTURA IF-ELSE ===
-// ===  EXPRESIÓN BINARIA == ===
-// === CARGAR VARIABLE: ok (offset: 8) ===
-    ldr x9, [sp, #8]
-// === OPERACIÓN RELACIONAL == ===
-    mov x11, x9
-    mov x12, #2
-    cmp x11, x12
-    cset x10, eq
-// === FIN EXPRESIÓN BINARIA === 
-
-    cmp x10, #0
-    beq .Lskip_branch_17
-// === EJECUTANDO BLOQUE (runtime true) ===
-// Push scope: if
-// === ASIGNACIÓN ARITMÉTICA: puntos += ===
-// === CARGAR VARIABLE: puntos (offset: 0) ===
-    ldr x13, [sp, #0]
-    mov x14, x13
-    mov x15, #3
-    add x16, x14, x15
-// === ASIGNAR VARIABLE: puntos = int (offset: 0) ===
-    str x16, [sp, #0]
-// === FIN ASIGNACIÓN ARITMÉTICA: puntos += === 
-
-// Pop scope
-    b .Lif_final_16
-.Lskip_branch_17:
-// === FIN PROCESAMIENTO BRANCH ===
-.Lif_final_16:
-// === FIN ESTRUCTURA IF-ELSE ===
-
-// Verificando slice 'puntos': false
-// === CARGAR VARIABLE: puntos (offset: 0) ===
-    ldr x9, [sp, #0]
 // === IMPRIMIR STRING  ===
-    adr x10, msg_30
+    adr x10, msg_9
     mov x0, x10
     bl print_string
     mov x0, #32          // ' ' (espacio)
@@ -731,13 +310,6 @@ fn_main:
 // === IMPRIMIR INT  ===
     mov x0, x9
     bl print_int
-    mov x0, #32          // ' ' (espacio)
-    bl print_char
-// === IMPRIMIR STRING  ===
-    adr x11, msg_31
-    mov x0, x11
-    bl print_string
-    bl print_newline
     bl print_newline
 // === SALIDA EXITOSA DEL PROGRAMA ===
     mov   x0, #0                  // Exit status: success (0)
@@ -747,11 +319,7 @@ fn_main:
 // Programa termina aquí - no hay return a _start
     
 // === FUNCIONES DEFINIDAS POR EL USUARIO ===
-// Funciones registradas: 4
-// - Función: saludar
-// - Función: obtener_numero
-// - Función: sumar
-// - Función: saludar_persona
+// Funciones registradas: 0
 
 // --------------------------------------------------------
 //            FUNCIONES AUXILIARES ARM64
@@ -810,50 +378,6 @@ print_int:
     ldp   x5, x6, [sp], #16       // Restaurar registros
     ldp   x3, x4, [sp], #16
     ldp   x1, x2, [sp], #16
-    ldp   x29, x30, [sp], #16
-    ret
-
-print_float:
-    stp   x29, x30, [sp, #-16]!   // Guardar frame
-    mov   x29, sp
-    stp   x19, x20, [sp, #-16]!   // Guardar registros
-    stp   x21, x22, [sp, #-16]!
-
-    fcvtzs  x20, d0               // Convertir parte entera
-    mov     x0, x20
-    bl      print_int             // Imprimir parte entera
-
-    mov     x8, #64               // Imprimir punto decimal
-    ldr     x1, =msg_punto
-    mov     x2, #1
-    mov     x0, #1
-    svc     0
-
-    scvtf   d1, x20               // Convertir entero a float
-    fsub    d2, d0, d1            // d2 = parte fraccionaria
-    mov     x2, #100
-    scvtf   d1, x2                // d1 = 100.0
-    fmul    d2, d2, d1            // Multiplicar por 100
-    fcvtzs  x20, d2               // Convertir a entero
-
-    cmp     x20, #0               // Valor absoluto
-    bge     .Lpf_pos
-    neg     x20, x20
-.Lpf_pos:
-
-    mov     x19, #10              // Extraer dígitos
-    udiv    x21, x20, x19         // Decenas
-    msub    x22, x21, x19, x20    // Unidades
-    add     w21, w21, #48         // Convertir a ASCII
-    add     w22, w22, #48
-
-    mov     x0, x21               // Imprimir dígitos
-    bl      print_char
-    mov     x0, x22
-    bl      print_char
-
-    ldp   x21, x22, [sp], #16     // Restaurar registros
-    ldp   x19, x20, [sp], #16
     ldp   x29, x30, [sp], #16
     ret
 
