@@ -6,12 +6,15 @@ import (
 )
 
 // ResultadoExpresion representa el resultado de evaluar una expresión
+// 1.1 - Agregar campos a ResultadoExpresion
 type ResultadoExpresion struct {
-	Registro  string
-	Tipo      string
-	EsLiteral bool
-	Valor     interface{}
-	SliceInfo *SliceAccessInfo `json:"-"`
+	Registro       string
+	Tipo           string
+	EsLiteral      bool
+	Valor          interface{}
+	SliceInfo      *SliceAccessInfo `json:"-"`
+	EsTypeOfResult bool             // 🔥 AGREGAR ESTE CAMPO
+	TypeOfValue    string           // 🔥 AGREGAR ESTE CAMPO
 }
 
 type SliceAccessInfo struct {
